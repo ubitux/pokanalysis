@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>Pokanalysis</title>
+		<link rel="icon" type="image/png" href="favicon.png" />
+		<link rel="stylesheet" type="text/css" href="http://ubitux.fr/style.css" />
+	</head>
+	<body>
+		<h1>Pokanalysis</h1>
+		<p>
+			Pokanalysis analyses first generation Pokémons ROM… At
+			least Red and Blue… US. ☺
+		</p>
+		<p>
+			It's a totally useless application (unless you are just
+			curious about the game) since you can't edit the ROM
+			with it. I insist on it: Pokanalysis is a
+			<em><strong>VIEWER</strong></em>, not an editor.
+		</p>
+		<p>
+			Also, you won't find any ROM here.
+		</p>
+		<ul>
+			<li><a href="releases/pokanalysis-0.1.0.tar.gz">Get Pokanalysis 0.1.0</a> (4 Jul 2010)</li>
+			<li><a href="Changelog">View Changelog</a></li>
+		</ul>
+
+		<h2>Screenshots</h2>
+		<p style="text-align: center;">
+			<a href="shots/cerulean_city.png"><img src="shots/mini_cerulean_city.png" alt="Cerulean City" /></a>
+			<a href="shots/viridian_city.png"><img src="shots/mini_viridian_city.png" alt="Viridian city" /></a>
+			<a href="shots/safari_wild_pkmn.png"><img src="shots/mini_safari_wild_pkmn.png" alt="Safari Wild Pokémons" /></a>
+		</p>
+
+		<h2>Dependencies</h2>
+		<ul>
+			<li>python &gt;= 2.5</li>
+			<li>PyGTK</li>
+			<li>cmake (build only)</li>
+			<li>gcc (build only)</li>
+		</ul>
+
+		<h2>How to build & use</h2>
+<pre>
+% tar -zxf pokanalysis-*.tar.gz
+% cd pokanalysis-*
+% mkdir build
+% cd build
+% cmake ..
+% cd ..
+% make -C build
+% ./pokanalysis /path/to/your/pokemon/gb/rom.gb
+</pre>
+
+		<h2>Contact developer</h2>
+		<p>
+			The best way to contact me directly is to use jabber
+			(<i>ubitux</i>, on <i>jabber.fr</i>), or IRC (see you
+			on <i>freenode</i>).
+		</p>
+		<p>Feel free to send patches, docs and kisses ♥</p>
+
+		<h2>License</h2>
+		<p><a href="http://www.gnu.org/licenses/gpl.html">GPL v3</a>.</p>
+
+		<h2>TODO ideas</h2>
+		<p>I'm too lazy to enumerate the whole list…</p>
+	</body>
+</html>

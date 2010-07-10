@@ -1,0 +1,200 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#    Pokanalysis
+#    Copyright © 2010 Clément Bœsch
+#
+#    Pokanalysis is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Pokanalysis is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Pokanalysis.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import sys, pygtk, gtk, pango, pokerom
+
+class Core:
+
+    def get_map_pix(self, pkmn_map):
+        p1, p2, p3 = [None] * 3
+        if pkmn_map['map_pic']:
+            w = pkmn_map['map_w'] * 32
+            h = pkmn_map['map_h'] * 32
+            p1 = gtk.gdk.pixbuf_new_from_data(pkmn_map['map_pic'], gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3)
+            p2 = p1.scale_simple(150, 150, gtk.gdk.INTERP_BILINEAR)
+            p3 = p2.scale_simple(20, 20, gtk.gdk.INTERP_BILINEAR)
+        return p1, p2, p3
+
+    def get_map_str(self, i):
+        return 'Map #%03d' % i
+
+    def load_world(self):
+        model = self.gui.get_object('treestore_gameinfo')
+        self.map_store = {}
+        area_id = 1
+        for pkmn_map in pokerom.get_maps():
+            (p1, p2, p3) = self.get_map_pix(pkmn_map)
+            if len(pkmn_map['info']) > 1:
+                self.map_store['Area #%d' % area_id] = (pkmn_map['objects'], None, None, p1, p2)
+                area = model.append(None, (p3, 'Area #%d' % area_id, '%d maps' % len(pkmn_map['info'])))
+                area_id += 1
+                for info in pkmn_map['info']:
+                    (p1, p2, p3) = self.get_map_pix(info)
+                    self.map_store[self.add_info(info, p3, area)] = (info['objects'], info['wild-pkmn'], info['special-items'], p1, p2)
+            else:
+                self.map_store[self.add_info(pkmn_map['info'][0], p3)] = (pkmn_map['info'][0]['objects'], pkmn_map['info'][0]['wild-pkmn'], pkmn_map['info'][0]['special-items'], p1, p2)
+        self.select_map('Area #1')
+
+    def add_info(self, info, pic, area=None):
+        model = self.gui.get_object('treestore_gameinfo')
+        map_id = self.get_map_str(info['id'])
+
+        ### Map Header
+        map_boxes_y, map_boxes_x = info['map_h'] * 2, info['map_w'] * 2
+
+        model_map_node = model.append(area, (pic, map_id, '0x%06X' % info['rom-addr']))
+        model.append(model_map_node, (None, 'tileset', '0x%02X' % info['tileset']))
+        model.append(model_map_node, (None, 'dimensions', '%dx%d ' % (info['map_w'], info['map_h'])))
+        model.append(model_map_node, (None, 'map pointer', '0x%04X (0x%06X)' % info['map_pointer'] ))
+        model.append(model_map_node, (None, 'text pointer', '0x%04X (0x%06X)' % info['map_text_pointers']))
+        model.append(model_map_node, (None, 'scripts pointers', '0x%04X (0x%06X)' % info['map_scripts']))
+
+        # Connections
+        connections = info['connections']
+        model_connections_node = model.append(model_map_node, (None, '%d Connections' % len(connections), '-'.join(c['key'] for c in connections)))
+        for c_id, c in enumerate(connections):
+            c_info = info['connections'][c_id]
+            model_connection_node = model.append(model_connections_node, (None, c_info['key'], ''))
+            model.append(model_connection_node, (None, 'index', c_info['index']))
+            model.append(model_connection_node, (None, 'connected map', '0x%04X (0x%06X)' % c_info['connected_map']))
+            model.append(model_connection_node, (None, 'current map', '0x%04X (0x%06X)' % c_info['current_map']))
+            model.append(model_connection_node, (None, 'bigness', c_info['bigness']))
+            model.append(model_connection_node, (None, 'map width', c_info['map_width']))
+            model.append(model_connection_node, (None, 'x align', c_info['x_align']))
+            model.append(model_connection_node, (None, 'y align', c_info['y_align']))
+            model.append(model_connection_node, (None, 'window', '0x%04X (0x%06X)' % c_info['window']))
+
+        ### Object Data
+        model_object_data_node = model.append(model_map_node, (None, 'Object data', '0x%04X (0x%06X)' % info['object_data']))
+        model.append(model_object_data_node, (None, 'maps border tile', '0x%02x' % info['maps_border_tile']))
+
+        # Warps
+        warps_info = info['warps']
+        model_warps_node = model.append(model_object_data_node, (None, 'Warps', '(%d)' % len(warps_info)))
+        for (warp, warp_data) in enumerate(warps_info):
+            model_warp_node = model.append(model_warps_node, (None, warp, ''))
+            model.append(model_warp_node, (None, 'x', '%02d/%02d' % (warp_data['x'], map_boxes_x)))
+            model.append(model_warp_node, (None, 'y', '%02d/%02d' % (warp_data['y'], map_boxes_y)))
+            model.append(model_warp_node, (None, 'to point', '0x%02x' % warp_data['to_point']))
+            model.append(model_warp_node, (None, 'to map', '0x%02x' % warp_data['to_map']))
+
+        # Signs
+        signs_info = info['signs']
+        model_signs_node = model.append(model_object_data_node, (None, 'Signposts', '(%d)' % len(signs_info)))
+        for sign, sign_data in enumerate(signs_info):
+            model_sign_node = model.append(model_signs_node, (None, sign, ''))
+            model.append(model_sign_node, (None, 'x', '%02d/%02d' % (sign_data['x'], map_boxes_x)))
+            model.append(model_sign_node, (None, 'y', '%02d/%02d' % (sign_data['y'], map_boxes_y)))
+            model.append(model_sign_node, (None, 'text id', '%d' % sign_data['text_id']))
+
+        # Entities
+        entities_info = info['entities']
+        model_entities_node = model.append(model_object_data_node, (None, 'Entities', '(%d)' % len(entities_info)))
+        for entity, entity_data in enumerate(entities_info):
+            model_entity_node = model.append(model_entities_node, (None, entity, ''))
+            model.append(model_entity_node, (None, 'picture id', '%d' % entity_data['pic_id']))
+            model.append(model_entity_node, (None, 'x', '%02d/%02d' % (entity_data['x'], map_boxes_x)))
+            model.append(model_entity_node, (None, 'y', '%02d/%02d' % (entity_data['y'], map_boxes_y)))
+            model.append(model_entity_node, (None, 'movement 1', '%d' % entity_data['mvt_1']))
+            model.append(model_entity_node, (None, 'movement 2', '%d' % entity_data['mvt_2']))
+            model.append(model_entity_node, (None, 'text id', '%d' % entity_data['text_id']))
+            if 'item_id' in entity_data:
+                model.append(model_entity_node, (None, 'item id', '%d' % entity_data['item_id']))
+            elif 'trainer_type' in entity_data:
+                model.append(model_entity_node, (None, 'trainer type', '%d' % entity_data['trainer_type']))
+                model.append(model_entity_node, (None, 'pkmn set', '%d' % entity_data['pkmn_set']))
+
+        return map_id
+
+    def select_map(self, map_id):
+        if map_id not in self.map_store:
+            if map_id == self.get_map_str(255):
+                map_id = 'Area #1'
+            else:
+                return
+        (self.current_map, wild_pkmn, special_items, p1, p2) = self.map_store[map_id]
+        self.gui.get_object('image_map').set_from_pixbuf(p1)
+        self.gui.get_object('image_mini_map').set_from_pixbuf(p2)
+
+        model = self.gui.get_object('liststore_wild_pkmn')
+        model.clear()
+        if wild_pkmn:
+            for (level, pkmn, i) in wild_pkmn:
+                model.append(('<b>%s</b>' % pkmn.title(), level, '0x%02X' % i))
+
+        model = self.gui.get_object('liststore_specials')
+        model.clear()
+        if special_items:
+            for (y, x, item_id, itype, faddr) in special_items:
+                model.append(('<b>%d</b>' % item_id, x, y, '0x%02X' % itype, '0x%04X' % faddr))
+
+    def on_treeview_gameinfo_cursor_changed(self, treeview):
+        (path, column_focus) = treeview.get_cursor()
+        model = treeview.get_model()
+        self.select_map(model.get_value(model.get_iter(path), 1))
+
+    def on_eventbox_image_map_motion_notify_event(self, widget, event):
+        (x, y) = coords = (int(event.x / 16), int(event.y / 16))
+        info = [('X', x), ('Y', y)]
+        if coords in self.current_map:
+            info_data = self.current_map[coords].items()
+            info_data.sort()
+            info += info_data
+        if 'to_map' in dict(info).keys():
+            widget.window.set_cursor(self.focus_cursor)
+        else:
+            widget.window.set_cursor(None)
+        self.gui.get_object('label_mapinfo').set_markup('\n'.join(['<b>%s</b>: %s' % (k.title(), v) for (k, v) in info]))
+
+    def on_eventbox_image_map_button_press_event(self, widget, event):
+        coords = (int(event.x / 16), int(event.y / 16))
+        if coords in self.current_map:
+            info_data = self.current_map[coords]
+            map_id = info_data.get('to_map', None)
+            if map_id is not None:
+                self.select_map(self.get_map_str(map_id))
+
+    def __init__(self):
+        if len(sys.argv) != 2:
+            print('Usage: %s file' % sys.argv[0])
+            return
+
+        pokerom.load_rom(sys.argv[1])
+
+        self.focus_cursor = gtk.gdk.Cursor(gtk.gdk.HAND2)
+
+        self.gui = gtk.Builder()
+        self.gui.add_from_file('gui.glade')
+        self.gui.connect_signals({
+            'on_window_destroy': lambda w: gtk.main_quit(),
+            'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
+            'on_eventbox_image_map_button_press_event': self.on_eventbox_image_map_button_press_event,
+            'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
+            })
+
+        self.load_world()
+        self.run()
+
+    def run(self):
+        win = self.gui.get_object('window')
+        win.show()
+        gtk.main()
+
+Core()
