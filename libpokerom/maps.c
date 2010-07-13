@@ -62,8 +62,50 @@ static void load_tile(unsigned char *pixbuf, int addr, char *color_key) {
 	}
 }
 
+static void load_tile_from_ptr(unsigned char *pixbuf, unsigned char *src, char *color_key) {
+	int x, y, pixbuf_offset = 0;
+	char **colors = get_color_set(color_key);
+
+	for (y = 0; y < TILE_Y; y++) {
+		unsigned char bit1 = *src++;
+		unsigned char bit2 = *src++;
+		unsigned char mask = 1 << 7;
+
+		for (x = 0; x < TILE_X; x++, mask >>= 1) {
+			memcpy(&pixbuf[pixbuf_offset], colors[(!!(bit1 & mask) << 1) | !!(bit2 & mask)], 3);
+			pixbuf_offset += 3;
+		}
+	}
+}
+
 #define PIXBUF_TILE_SIZE	(TILE_Y * TILE_X * 3)
 #define PIXBUF_TILE_LINE_SIZE	(TILE_X * 3)
+
+/* 1 block = 4x4 tiles */
+/* 1 sprite = 7x7 tiles */
+
+#define SPRITE_X 7
+#define SPRITE_Y 7
+
+void rle_sprite(unsigned char *dst, unsigned char *src) {
+	int i, j, pixbuf_offset = 0;
+
+	for (j = 0; j < SPRITE_Y; j++) {
+		for (i = 0; i < SPRITE_X; i++) {
+			unsigned char tile_pixbuf[PIXBUF_TILE_SIZE];
+			int y, tile_offset = 0;
+
+			load_tile_from_ptr(tile_pixbuf, src, "default");
+			src += 0x10;
+			for (y = 0; y < TILE_Y; y++) {
+				memcpy(&dst[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
+				tile_offset += PIXBUF_TILE_LINE_SIZE;
+				pixbuf_offset += SPRITE_X * PIXBUF_TILE_LINE_SIZE;
+			}
+		}
+		pixbuf_offset = pixbuf_offset - (SPRITE_Y * (SPRITE_X * PIXBUF_TILE_LINE_SIZE) * TILE_Y) + PIXBUF_TILE_LINE_SIZE;
+	}
+}
 
 #define BOX_X 2
 #define BOX_Y 2

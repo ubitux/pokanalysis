@@ -28,6 +28,13 @@
 
 # define GET_ADDR(offset) (info->stream[(offset) + 1] << 8 | info->stream[(offset)])
 
+typedef uint8_t u8;
+typedef uint16_t u16;
+
+#define high_nibble(c)		((c) >> 4)
+#define low_nibble(c)		((c) & 0x0f)
+#define swap_u8(c)		(((c) << 4) | ((c) >> 4))
+
 typedef struct {
 	int fd;
 	struct stat rom_stat;
@@ -43,5 +50,7 @@ info_t* get_info();
 PyObject* get_map_pic(int r_map_pointer, unsigned char map_w, unsigned char map_h, int blockdata_addr, int tiles_addr, PyObject*);
 void apply_filter(unsigned char *pixbuf, int map_id, int w);
 PyObject *get_special_items(int map_id);
+void uncompress_sprite(unsigned char *dest, int addr, unsigned char *rom_data);
+void rle_sprite(unsigned char *dst, unsigned char *src);
 
 #endif

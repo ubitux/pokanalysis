@@ -12,16 +12,6 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="liststore_wild_pkmn">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name level -->
-      <column type="gint"/>
-      <!-- column-name rom_id -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="liststore_specials">
     <columns>
       <!-- column-name item -->
@@ -34,6 +24,18 @@
       <column type="gchararray"/>
       <!-- column-name f_address -->
       <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_wild_pkmn">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name level -->
+      <column type="gint"/>
+      <!-- column-name rom_id -->
+      <column type="gchararray"/>
+      <!-- column-name pixbuf -->
+      <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window">
@@ -202,6 +204,12 @@
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn_wild_pkmn_name">
                         <property name="title">Pok&#xE9;mon</property>
+                        <child>
+                          <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf_wild_pkmn_pixbuf"/>
+                          <attributes>
+                            <attribute name="pixbuf">3</attribute>
+                          </attributes>
+                        </child>
                         <child>
                           <object class="GtkCellRendererText" id="cellrenderertext_wild_pkmn_name"/>
                           <attributes>
