@@ -22,7 +22,8 @@
 
 #define MAP_IDS_ADDR	(0x11 * 0x4000 + 0x6a40 % 0x4000)
 
-PyObject *get_special_items(int map_id) {
+PyObject *get_special_items(int map_id)
+{
 	info_t *info = get_info();
 	int map_id_addr;
 	int index = 0;
@@ -46,7 +47,8 @@ PyObject *get_special_items(int map_id) {
 	return list;
 }
 
-void apply_filter(unsigned char *pixbuf, int map_id, int w) {
+void apply_filter(unsigned char *pixbuf, int map_id, int w)
+{
 	info_t *info = get_info();
 	int map_id_addr;
 	int index = 0;

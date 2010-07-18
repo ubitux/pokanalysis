@@ -32,7 +32,8 @@ static struct {
 
 #define ENTITY_OFFSET 3
 
-static char **get_color_set(char *color_key) {
+static char **get_color_set(char *color_key)
+{
 	size_t n;
 
 	for (n = 0; n < sizeof(color_set) / sizeof(*color_set); n++)
@@ -45,7 +46,8 @@ static char **get_color_set(char *color_key) {
 #define TILE_Y 8
 
 /* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
-static void load_tile(unsigned char *pixbuf, int addr, char *color_key) {
+static void load_tile(unsigned char *pixbuf, int addr, char *color_key)
+{
 	info_t *info = get_info();
 	int x, y, pixbuf_offset = 0;
 	char **colors = get_color_set(color_key);
@@ -62,7 +64,8 @@ static void load_tile(unsigned char *pixbuf, int addr, char *color_key) {
 	}
 }
 
-static void load_tile_from_ptr(unsigned char *pixbuf, unsigned char *src, char *color_key) {
+static void load_tile_from_ptr(unsigned char *pixbuf, unsigned char *src, char *color_key)
+{
 	int x, y, pixbuf_offset = 0;
 	char **colors = get_color_set(color_key);
 
@@ -87,7 +90,8 @@ static void load_tile_from_ptr(unsigned char *pixbuf, unsigned char *src, char *
 #define SPRITE_X 7
 #define SPRITE_Y 7
 
-void rle_sprite(unsigned char *dst, unsigned char *src) {
+void rle_sprite(unsigned char *dst, unsigned char *src)
+{
 	int i, j, pixbuf_offset = 0;
 
 	for (j = 0; j < SPRITE_Y; j++) {
@@ -116,7 +120,8 @@ typedef struct {
 	int flip;
 } box_info_type;
 
-static int get_entity_addr(PyObject *item, int decal_id) {
+static int get_entity_addr(PyObject *item, int decal_id)
+{
 	info_t *info = get_info();
 
 	if (!item)
@@ -128,7 +133,8 @@ static int get_entity_addr(PyObject *item, int decal_id) {
 	return bank_id * 0x4000 + (GET_ADDR(entity_info_addr) + decal_id) % 0x4000;
 }
 
-static box_info_type get_box_info(PyObject *od, int x, int y) {
+static box_info_type get_box_info(PyObject *od, int x, int y)
+{
 	unsigned int n;
 	box_info_type bi;
 
@@ -171,7 +177,8 @@ static box_info_type get_box_info(PyObject *od, int x, int y) {
 #define BLOCK_X 4
 #define BLOCK_Y 4
 
-static void merge_tiles(unsigned char *dst, unsigned char *src, char *alpha) {
+static void merge_tiles(unsigned char *dst, unsigned char *src, char *alpha)
+{
 	int i;
 
 	for (i = 0; i < PIXBUF_TILE_SIZE; i += 3) {
@@ -181,7 +188,8 @@ static void merge_tiles(unsigned char *dst, unsigned char *src, char *alpha) {
 	}
 }
 
-static void flip_tile(unsigned char *tile) {
+static void flip_tile(unsigned char *tile)
+{
 	unsigned char old_tile[PIXBUF_TILE_SIZE];
 	int x, y;
 
@@ -194,7 +202,8 @@ static void flip_tile(unsigned char *tile) {
 }
 
 /* 1 block = 4x4 tiles */
-static void load_block_from_tiles_addr(unsigned char *pixbuf, int *tiles_addr, PyObject *od, int bx, int by) {
+static void load_block_from_tiles_addr(unsigned char *pixbuf, int *tiles_addr, PyObject *od, int bx, int by)
+{
 	int i, j, pixbuf_offset = 0;
 
 	for (j = 0; j < BLOCK_Y; j++) {
@@ -235,11 +244,12 @@ static void load_block_from_tiles_addr(unsigned char *pixbuf, int *tiles_addr, P
 
 /* Map blocks */
 typedef struct {
-	int b[4*4];
+	int b[4 * 4];
 } blocks_type;
 
 /* 4x4 tiles (1 tile = 8x8px) */
-static blocks_type *get_blocks(int n, int addr, int tiles_addr) {
+static blocks_type *get_blocks(int n, int addr, int tiles_addr)
+{
 	blocks_type *blocks;
 	int i, j;
 	info_t *info = get_info();
@@ -259,7 +269,8 @@ static blocks_type *get_blocks(int n, int addr, int tiles_addr) {
 
 #define PIXEL_LINES_PER_BLOCK 32
 
-static unsigned char *get_map_pic_raw(int r_map_pointer, unsigned char map_w, unsigned char map_h, int blockdata_addr, int tiles_addr, PyObject *od) {
+static unsigned char *get_map_pic_raw(int r_map_pointer, unsigned char map_w, unsigned char map_h, int blockdata_addr, int tiles_addr, PyObject *od)
+{
 	unsigned char *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
 	info_t *info = get_info();
 	int i, j, pixbuf_offset = 0;
@@ -292,7 +303,8 @@ static unsigned char *get_map_pic_raw(int r_map_pointer, unsigned char map_w, un
 
 #define TILESET_HEADERS 0xC7BE
 
-static int get_blockdata_addr(unsigned char tileset_id) {
+static int get_blockdata_addr(unsigned char tileset_id)
+{
 	info_t *info = get_info();
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
 	int bank_id = info->stream[header_offset];
@@ -300,7 +312,8 @@ static int get_blockdata_addr(unsigned char tileset_id) {
 	return bank_id * 0x4000 + GET_ADDR(header_offset + 1) % 0x4000;
 }
 
-static int get_tiles_addr(unsigned char tileset_id) {
+static int get_tiles_addr(unsigned char tileset_id)
+{
 	info_t *info = get_info();
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
 	int bank_id = info->stream[header_offset];
@@ -325,7 +338,8 @@ static struct {
 
 static int loaded_maps[NB_MAPS] = {0};
 
-static int is_loaded(int addr) {
+static int is_loaded(int addr)
+{
 	int i;
 
 	for (i = 0; loaded_maps[i]; i++)
@@ -334,9 +348,9 @@ static int is_loaded(int addr) {
 	return 0;
 }
 
-static void add_loaded_map(int addr) {
+static void add_loaded_map(int addr)
+{
 	static int n = 0;
-
 	loaded_maps[n++] = addr;
 }
 
@@ -354,7 +368,8 @@ typedef struct {
 # define MAPS_BANK_LIST 0x01AE
 # define MAPS_BANK_ADDR 0xC23D
 
-static int get_map_addr(int i) {
+static int get_map_addr(int i)
+{
 	info_t *info = get_info();
 	int addr;
 
@@ -388,7 +403,8 @@ typedef struct {
 	PyObject *objects;
 } map_type;
 
-static void get_pkmn_name(int id, char *name) {
+static void get_pkmn_name(int id, char *name)
+{
 	info_t *info = get_info();
 	int i = 0, rom_addr = 7 * 0x4000 + (0x421E + 0x0A * (id - 1)) % 0x4000;
 	char *s;
@@ -400,7 +416,8 @@ static void get_pkmn_name(int id, char *name) {
 	name[i] = 0;
 }
 
-static PyObject *get_wild_pokemons(int id) {
+static PyObject *get_wild_pokemons(int id)
+{
 	PyObject *list = PyList_New(0);
 	info_t *info = get_info();
 	int addr = 3 * 0x4000 + GET_ADDR((3 * 0x4000) + (0x4EEB % 0x4000) + (id * 2)) % 0x4000 + 1;
@@ -415,7 +432,8 @@ static PyObject *get_wild_pokemons(int id) {
 	return list;
 }
 
-static submap_type *get_submap(int id, int addr, int x_init, int y_init) {
+static submap_type *get_submap(int id, int addr, int x_init, int y_init)
+{
 	info_t *info = get_info();
 	PyObject *dict = PyDict_New();
 	PyObject *list, *warp_list, *sign_list, *entity_list;
@@ -647,7 +665,8 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init) {
 	return current_map;
 }
 
-static coords_type process_submap(submap_type *map) {
+static coords_type process_submap(submap_type *map)
+{
 	int xmin = 0, ymin = 0, xmax = 0, ymax = 0;
 	coords_type s;
 	submap_type *map_start = map;
@@ -684,7 +703,8 @@ static coords_type process_submap(submap_type *map) {
 
 static char *items_keys[] = {"warps", "signs", "entities"};
 
-static void insert_objects(PyObject *objects, PyObject *items, int x0, int y0) {
+static void insert_objects(PyObject *objects, PyObject *items, int x0, int y0)
+{
 	unsigned int i;
 
 	for (i = 0; i < sizeof(items_keys) / sizeof(*items_keys); i++) {
@@ -701,7 +721,8 @@ static void insert_objects(PyObject *objects, PyObject *items, int x0, int y0) {
 	}
 }
 
-static map_type get_final_map(submap_type *map) {
+static map_type get_final_map(submap_type *map)
+{
 	coords_type map_info = process_submap(map);
 	map_type final_map;
 
@@ -749,7 +770,8 @@ static map_type get_final_map(submap_type *map) {
 	return final_map;
 }
 
-static PyObject *get_py_map(submap_type *map) {
+static PyObject *get_py_map(submap_type *map)
+{
 	PyObject *py_map = PyDict_New();
 	PyObject *map_pic;
 	map_type final_map;
@@ -774,7 +796,8 @@ static PyObject *get_py_map(submap_type *map) {
 	return py_map;
 }
 
-PyObject *get_maps(PyObject *self, PyObject *args) {
+PyObject *get_maps(PyObject *self, PyObject *args)
+{
 	(void)self;
 	(void)args;
 	int i, addr;

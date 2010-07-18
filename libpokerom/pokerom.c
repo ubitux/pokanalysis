@@ -47,12 +47,14 @@ static struct {
 	{0xFC, "6"}, {0xFD, "7"}, {0xFE, "8"}, {0xFF, "9"}
 };
 
-info_t* get_info() {
+info_t *get_info()
+{
 	static info_t i;
 	return &i;
 }
 
-char* get_pkmn_char(unsigned char c, char* def_ret) {
+char *get_pkmn_char(unsigned char c, char *def_ret)
+{
 	size_t i;
 
 	for (i = 0; i < sizeof(g_alphabet) / sizeof(*g_alphabet); i++)
@@ -61,12 +63,13 @@ char* get_pkmn_char(unsigned char c, char* def_ret) {
 	return def_ret;
 }
 
-PyObject* read_addr(PyObject* self, PyObject* args) {
+PyObject *read_addr(PyObject *self, PyObject *args)
+{
 	(void)self;
 	int offset = 0;
 	int addr, rom_addr;
 	int bank_id;
-	info_t* info = get_info();
+	info_t *info = get_info();
 
 	PyArg_ParseTuple(args, "i", &offset);
 	bank_id = offset / 0x4000;
@@ -75,12 +78,13 @@ PyObject* read_addr(PyObject* self, PyObject* args) {
 	return Py_BuildValue("ii", addr, rom_addr);
 }
 
-static PyObject* read_data(PyObject* self, PyObject* args) {
+static PyObject *read_data(PyObject *self, PyObject *args)
+{
 	(void)self;
-	unsigned char* s;
+	unsigned char *s;
 	int offset;
-	info_t* info = get_info();
-	PyObject* list = PyList_New(0);
+	info_t *info = get_info();
+	PyObject *list = PyList_New(0);
 
 	PyArg_ParseTuple(args, "is", &offset, &s);
 	for (; *s; s++) {
@@ -95,10 +99,11 @@ static PyObject* read_data(PyObject* self, PyObject* args) {
 	return list;
 }
 
-static PyObject* load_rom(PyObject* self, PyObject* args) {
+static PyObject *load_rom(PyObject *self, PyObject *args)
+{
 	(void)self;
-	char* fname;
-	info_t* info = get_info();
+	char *fname;
+	info_t *info = get_info();
 
 	PyArg_ParseTuple(args, "s", &fname);
 	if ((info->fd = open(fname, O_RDONLY)) < 0
@@ -109,7 +114,8 @@ static PyObject* load_rom(PyObject* self, PyObject* args) {
 	return Py_BuildValue("z", NULL);
 }
 
-static void merge_buffers(unsigned char *buffer) {
+static void merge_buffers(unsigned char *buffer)
+{
 	u8 *dest = buffer + 0x0497;
 	u8 *src1 = buffer + 0x030F;
 	u8 *src2 = buffer + 0x0187;
@@ -123,7 +129,8 @@ static void merge_buffers(unsigned char *buffer) {
 	}
 }
 
-static void fill_data(u8 *dst, u8 *src, u8 ff8b, u8 ff8c, u8 ff8d) {
+static void fill_data(u8 *dst, u8 *src, u8 ff8b, u8 ff8c, u8 ff8d)
+{
 	int a, c;
 
 	dst += ff8d;
@@ -132,7 +139,8 @@ static void fill_data(u8 *dst, u8 *src, u8 ff8b, u8 ff8c, u8 ff8d) {
 			dst[c] = *src++;
 }
 
-static int get_bank_from_stupid_pkmn_id(u8 pkmn_id) { /* Red: RO01:1637 */
+static int get_bank_from_stupid_pkmn_id(u8 pkmn_id) /* Red: RO01:1637 */
+{
 	if (pkmn_id == 0x15)	// Mew
 		return 0x01;
 	if (pkmn_id == 0xb6)
@@ -148,7 +156,8 @@ static int get_bank_from_stupid_pkmn_id(u8 pkmn_id) { /* Red: RO01:1637 */
 	return 0x0d;
 }
 
-static u8 get_pkmn_id_from_stupid_one(u8 id) { /* Red: RO10:5010 */
+static u8 get_pkmn_id_from_stupid_one(u8 id) /* Red: RO10:5010 */
+{
 	info_t *info = get_info();
 	return info->stream[0x10 * 0x4000 + (0x5024 + id - 1) % 0x4000];
 }
@@ -230,7 +239,8 @@ static PyObject *get_pokemons_info(PyObject *self, PyObject *args)
 	return list;
 }
 
-static PyObject *str_getbin(PyObject *self, PyObject *args) {
+static PyObject *str_getbin(PyObject *self, PyObject *args)
+{
 	(void)self;
 	int i, j = 0;
 	char *s;
@@ -244,7 +254,8 @@ static PyObject *str_getbin(PyObject *self, PyObject *args) {
 	return Py_BuildValue("s", b);
 }
 
-static PyObject *str_getascii(PyObject *self, PyObject *args) {
+static PyObject *str_getascii(PyObject *self, PyObject *args)
+{
 	(void)self;
 	int i, j = 0;
 	char *s;
@@ -262,7 +273,8 @@ static PyObject *str_getascii(PyObject *self, PyObject *args) {
 	return Py_BuildValue("s", b);
 }
 
-PyMODINIT_FUNC initpokerom(void) {
+PyMODINIT_FUNC initpokerom(void)
+{
 	static PyMethodDef m[] = {
 		{"load_rom", load_rom, METH_VARARGS, "Load ROM"},
 		{"read_addr", read_addr, METH_VARARGS, "Get 24-bits ROM address from 16-bit address read at the given offset"},
