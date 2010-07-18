@@ -14,7 +14,7 @@ static u8 current_byte;		// d0a5
 static u8 current_bit;		// d0a6
 static u8 p_flag;		// d0a7
 static u8 buffer_flag;		// d0a8
-static u8 d0a9;
+static u8 misc_flag;		// d0a9
 static u8 input_flag;		// d0aa
 static int current_addr;	// d0ab-d0ac
 static u16 p1;			// d0ad-d0ae
@@ -254,7 +254,7 @@ static int f25d8()
 	}
 
 	// 2646 (-> 26BF)
-	if (d0a9 == 2) {
+	if (misc_flag == 2) {
 		// 2877
 		u8 input_flag_backup = input_flag;
 
@@ -268,7 +268,7 @@ static int f25d8()
 	}
 
 	// 26C7
-	if (d0a9) {
+	if (misc_flag) {
 		sprite_uncompress_data(); // jp 27c7
 		return Z_END;
 	}
@@ -312,7 +312,7 @@ start:
 			b = sprite_get_next_bit();
 			b++;
 		}
-		d0a9 = b;
+		misc_flag = b;
 	}
 
 	// 257A
