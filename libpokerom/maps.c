@@ -128,9 +128,9 @@ static int get_entity_addr(PyObject *item, int decal_id)
 		return 0;
 
 	long pic_id = PyLong_AsLong(PyDict_GetItemString(item, "pic_id"));
-	int entity_info_addr = 5 * 0x4000 + (0x7b27 + 4 * (pic_id - 1)) % 0x4000;
+	int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (pic_id - 1));
 	int bank_id = info->stream[entity_info_addr + 3];
-	return bank_id * 0x4000 + (GET_ADDR(entity_info_addr) + decal_id) % 0x4000;
+	return ROM_ADDR(bank_id, GET_ADDR(entity_info_addr) + decal_id);
 }
 
 static box_info_type get_box_info(PyObject *od, int x, int y)
@@ -309,7 +309,7 @@ static int get_blockdata_addr(unsigned char tileset_id)
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
 	int bank_id = info->stream[header_offset];
 
-	return bank_id * 0x4000 + GET_ADDR(header_offset + 1) % 0x4000;
+	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 1));
 }
 
 static int get_tiles_addr(unsigned char tileset_id)
@@ -318,7 +318,7 @@ static int get_tiles_addr(unsigned char tileset_id)
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
 	int bank_id = info->stream[header_offset];
 
-	return bank_id * 0x4000 + GET_ADDR(header_offset + 2 + 1) % 0x4000;
+	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 2 + 1));
 }
 
 #define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", info->stream[addr++]))
@@ -406,7 +406,7 @@ typedef struct {
 static void get_pkmn_name(int id, char *name)
 {
 	info_t *info = get_info();
-	int i = 0, rom_addr = 7 * 0x4000 + (0x421E + 0x0A * (id - 1)) % 0x4000;
+	int i = 0, rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (id - 1));
 	char *s;
 
 	while (*(s = get_pkmn_char(info->stream[rom_addr++], "")) && i < 10) {
@@ -420,7 +420,7 @@ static PyObject *get_wild_pokemons(int id)
 {
 	PyObject *list = PyList_New(0);
 	info_t *info = get_info();
-	int addr = 3 * 0x4000 + GET_ADDR((3 * 0x4000) + (0x4EEB % 0x4000) + (id * 2)) % 0x4000 + 1;
+	int addr = ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + id * 2))) + 1;
 
 	while (info->stream[addr]) {
 		char name[10];

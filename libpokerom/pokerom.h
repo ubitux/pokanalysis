@@ -26,7 +26,8 @@
 # include <sys/mman.h>
 # include <fcntl.h>
 
-# define GET_ADDR(offset) (info->stream[(offset) + 1] << 8 | info->stream[(offset)])
+# define GET_ADDR(offset)	(info->stream[(offset) + 1] << 8 | info->stream[(offset)])
+# define ROM_ADDR(bank, addr)	((bank) * 0x4000 + (addr) % 0x4000)
 
 typedef uint8_t u8;
 typedef uint16_t u16;

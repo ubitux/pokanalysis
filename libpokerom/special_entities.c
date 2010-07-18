@@ -20,7 +20,7 @@
 
 #include "pokerom.h"
 
-#define MAP_IDS_ADDR	(0x11 * 0x4000 + 0x6a40 % 0x4000)
+#define MAP_IDS_ADDR	ROM_ADDR(0x11, 0x6a40)
 
 PyObject *get_special_items(int map_id)
 {
@@ -33,8 +33,8 @@ PyObject *get_special_items(int map_id)
 		if (info->stream[map_id_addr] != map_id)
 			continue;
 
-		int item_ptr_addr = 0x11 * 0x4000 + (0x6a96 + index) % 0x4000;
-		int item_addr = 0x11 * 0x4000 + GET_ADDR(item_ptr_addr) % 0x4000;
+		int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + index);
+		int item_addr = ROM_ADDR(0x11, GET_ADDR(item_ptr_addr));
 
 		// [MAP #%03d] Y=%03d X=%03d item-id=%03d type=0x%02x unknown-address=0x%04x,
 		PyList_Append(list, Py_BuildValue("iiiii",
@@ -60,8 +60,8 @@ void apply_filter(unsigned char *pixbuf, int map_id, int w)
 		if (info->stream[map_id_addr] != map_id)
 			continue;
 
-		int item_ptr_addr = 0x11 * 0x4000 + (0x6a96 + index) % 0x4000;
-		int item_addr = 0x11 * 0x4000 + GET_ADDR(item_ptr_addr) % 0x4000;
+		int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + index);
+		int item_addr = ROM_ADDR(0x11, GET_ADDR(item_ptr_addr));
 		int y = info->stream[item_addr];
 		int x = info->stream[item_addr + 1];
 		int offset = (y * 16 * (w * 16) + x * 16) * 3;

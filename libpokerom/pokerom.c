@@ -68,13 +68,11 @@ PyObject *read_addr(PyObject *self, PyObject *args)
 	(void)self;
 	int offset = 0;
 	int addr, rom_addr;
-	int bank_id;
 	info_t *info = get_info();
 
 	PyArg_ParseTuple(args, "i", &offset);
-	bank_id = offset / 0x4000;
 	addr = GET_ADDR(offset);
-	rom_addr = bank_id * 0x4000 + addr % 0x4000;
+	rom_addr = ROM_ADDR(offset / 0x4000, addr);
 	return Py_BuildValue("ii", addr, rom_addr);
 }
 
@@ -159,7 +157,7 @@ static int get_bank_from_stupid_pkmn_id(u8 pkmn_id) /* Red: RO01:1637 */
 static u8 get_pkmn_id_from_stupid_one(u8 id) /* Red: RO10:5010 */
 {
 	info_t *info = get_info();
-	return info->stream[0x10 * 0x4000 + (0x5024 + id - 1) % 0x4000];
+	return info->stream[ROM_ADDR(0x10, 0x5024 + id - 1)];
 }
 
 static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
@@ -178,7 +176,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 		pkmn_header_addr = 0x425B;
 	} else {
 		pkmn_header_bank_id = 0x0E;
-		pkmn_header_addr = pkmn_header_bank_id * 0x4000 + (0x43de + (real_pkmn_id - 1) * 0x1C) % 0x4000;
+		pkmn_header_addr = ROM_ADDR(pkmn_header_bank_id, 0x43de + (real_pkmn_id - 1) * 0x1C);
 	}
 
 	switch (stupid_pkmn_id) {
@@ -207,7 +205,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 	ff8c = 8 * high_nibble(sprite_dim);
 	ff8d = 8 * (ff8d + 7 - high_nibble(sprite_dim));
 
-	uncompress_sprite(b + 0x188, get_bank_from_stupid_pkmn_id(stupid_pkmn_id) * 0x4000 + sprite_addr % 0x4000, info->stream);
+	uncompress_sprite(b + 0x188, ROM_ADDR(get_bank_from_stupid_pkmn_id(stupid_pkmn_id), sprite_addr), info->stream);
 	//printf("pkmn_id=%02X sprite_addr=%04X dim=%02X ff8b=%02X ff8c=%02X ff8d=%02X\n", real_pkmn_id, sprite_addr, sprite_dim, ff8b, ff8c, ff8d);
 
 	memset(b, 0, 0x188);
