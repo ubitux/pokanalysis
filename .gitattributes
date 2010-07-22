@@ -1,0 +1,4 @@
+/www		export-ignore
+make-release.sh	export-ignore
+.gitignore	export-ignore
+.gitattributes	export-ignore
