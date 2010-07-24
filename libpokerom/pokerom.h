@@ -42,6 +42,7 @@ typedef struct {
 	u8* stream;
 } info_t;
 
+PyObject *disasm(PyObject *self, PyObject *args);
 PyObject *get_map_pic(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *);
 PyObject *get_maps(PyObject *, PyObject *);
 PyObject *get_pokedex(PyObject *, PyObject *);

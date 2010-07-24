@@ -280,6 +280,7 @@ PyMODINIT_FUNC initpokerom(void)
 
 		{"get_maps", get_maps, METH_VARARGS, "Game maps"},
 		{"get_pokemons_info", get_pokemons_info, METH_VARARGS, "Get all pokémons"},
+		{"disasm", disasm, METH_VARARGS, "Disassemble given bank"},
 
 		/* Utils */
 		{"str_getbin", str_getbin, METH_VARARGS, "Convert binary text to ascii"},

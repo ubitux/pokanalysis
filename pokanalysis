@@ -171,6 +171,13 @@ class Core:
             if map_id is not None:
                 self.select_map(self.get_map_str(map_id))
 
+    def on_combobox_asm_bank_changed(self, combobox):
+        bank_id = combobox.get_active()
+        tbuffer = self.gui.get_object('textview_asm').get_buffer()
+        if bank_id not in self.bank_asm:
+            self.bank_asm[bank_id] = pokerom.disasm(bank_id)
+        tbuffer.set_text(self.bank_asm[bank_id])
+
     def __init__(self):
         if len(sys.argv) != 2:
             print('Usage: %s file' % sys.argv[0])
@@ -183,11 +190,12 @@ class Core:
         self.gui = gtk.Builder()
         self.gui.add_from_file('gui.glade')
         self.gui.connect_signals({
-            'on_window_destroy': lambda w: gtk.main_quit(),
-            'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
+            'on_combobox_asm_bank_changed': self.on_combobox_asm_bank_changed,
             'on_eventbox_image_map_button_press_event': self.on_eventbox_image_map_button_press_event,
+            'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
-            })
+            'on_window_destroy': lambda w: gtk.main_quit(),
+        })
 
         self.pkmn_list = []
         w, h = 7 * 8, 7 * 8
@@ -196,6 +204,15 @@ class Core:
                 self.pkmn_list.append(gtk.gdk.pixbuf_new_from_data(pkmn, gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3))
             else:
                 self.pkmn_list.append(None)
+
+        tv_asm = self.gui.get_object('textview_asm')
+        tv_asm.modify_font(pango.FontDescription('monospace'))
+
+        self.bank_asm = {}
+        lss_banks = self.gui.get_object('liststore_asm_banks')
+        for bank_id in range(0x10):
+            lss_banks.append(('Bank %02X' % bank_id,))
+        self.gui.get_object('combobox_asm_banks').set_active(0)
 
         self.load_world()
         self.run()
