@@ -21,7 +21,7 @@
 #include "pokerom.h"
 
 static struct {
-	unsigned char c;
+	u8 c;
 	char *s;
 } g_alphabet[] = {
 	{0x4F, "\n"},
@@ -53,7 +53,7 @@ info_t *get_info()
 	return &i;
 }
 
-char *get_pkmn_char(unsigned char c, char *def_ret)
+char *get_pkmn_char(u8 c, char *def_ret)
 {
 	size_t i;
 
@@ -79,7 +79,7 @@ PyObject *read_addr(PyObject *self, PyObject *args)
 static PyObject *read_data(PyObject *self, PyObject *args)
 {
 	(void)self;
-	unsigned char *s;
+	u8 *s;
 	int offset;
 	info_t *info = get_info();
 	PyObject *list = PyList_New(0);
@@ -112,7 +112,7 @@ static PyObject *load_rom(PyObject *self, PyObject *args)
 	return Py_BuildValue("z", NULL);
 }
 
-static void merge_buffers(unsigned char *buffer)
+static void merge_buffers(u8 *buffer)
 {
 	u8 *dest = buffer + 0x0497;
 	u8 *src1 = buffer + 0x030F;
@@ -261,7 +261,7 @@ static PyObject *str_getascii(PyObject *self, PyObject *args)
 
 	for (PyArg_ParseTuple(args, "s", &s); *s; s++) {
 		for (i = 0; i < (int)(sizeof(g_alphabet) / sizeof(*g_alphabet)) && j < (int)sizeof(b); i++) {
-			if ((unsigned char)*s == g_alphabet[i].c) {
+			if ((u8)*s == g_alphabet[i].c) {
 				strcpy(&b[j], g_alphabet[i].s);
 				j += strlen(g_alphabet[i].s);
 			}

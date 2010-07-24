@@ -47,7 +47,7 @@ PyObject *get_special_items(int map_id)
 	return list;
 }
 
-void apply_filter(unsigned char *pixbuf, int map_id, int w)
+void apply_filter(u8 *pixbuf, int map_id, int w)
 {
 	info_t *info = get_info();
 	int map_id_addr;

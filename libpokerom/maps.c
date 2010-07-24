@@ -46,16 +46,16 @@ static char **get_color_set(char *color_key)
 #define TILE_Y 8
 
 /* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
-static void load_tile(unsigned char *pixbuf, int addr, char *color_key)
+static void load_tile(u8 *pixbuf, int addr, char *color_key)
 {
 	info_t *info = get_info();
 	int x, y, pixbuf_offset = 0;
 	char **colors = get_color_set(color_key);
 
 	for (y = 0; y < TILE_Y; y++) {
-		unsigned char bit1 = info->stream[addr++];
-		unsigned char bit2 = info->stream[addr++];
-		unsigned char mask = 1 << 7;
+		u8 bit1 = info->stream[addr++];
+		u8 bit2 = info->stream[addr++];
+		u8 mask = 1 << 7;
 
 		for (x = 0; x < TILE_X; x++, mask >>= 1) {
 			memcpy(&pixbuf[pixbuf_offset], colors[(!!(bit1 & mask) << 1) | !!(bit2 & mask)], 3);
@@ -64,15 +64,15 @@ static void load_tile(unsigned char *pixbuf, int addr, char *color_key)
 	}
 }
 
-static void load_tile_from_ptr(unsigned char *pixbuf, unsigned char *src, char *color_key)
+static void load_tile_from_ptr(u8 *pixbuf, u8 *src, char *color_key)
 {
 	int x, y, pixbuf_offset = 0;
 	char **colors = get_color_set(color_key);
 
 	for (y = 0; y < TILE_Y; y++) {
-		unsigned char bit1 = *src++;
-		unsigned char bit2 = *src++;
-		unsigned char mask = 1 << 7;
+		u8 bit1 = *src++;
+		u8 bit2 = *src++;
+		u8 mask = 1 << 7;
 
 		for (x = 0; x < TILE_X; x++, mask >>= 1) {
 			memcpy(&pixbuf[pixbuf_offset], colors[(!!(bit1 & mask) << 1) | !!(bit2 & mask)], 3);
@@ -90,13 +90,13 @@ static void load_tile_from_ptr(unsigned char *pixbuf, unsigned char *src, char *
 #define SPRITE_X 7
 #define SPRITE_Y 7
 
-void rle_sprite(unsigned char *dst, unsigned char *src)
+void rle_sprite(u8 *dst, u8 *src)
 {
 	int i, j, pixbuf_offset = 0;
 
 	for (j = 0; j < SPRITE_Y; j++) {
 		for (i = 0; i < SPRITE_X; i++) {
-			unsigned char tile_pixbuf[PIXBUF_TILE_SIZE];
+			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
 			int y, tile_offset = 0;
 
 			load_tile_from_ptr(tile_pixbuf, src, "default");
@@ -177,7 +177,7 @@ static box_info_type get_box_info(PyObject *od, int x, int y)
 #define BLOCK_X 4
 #define BLOCK_Y 4
 
-static void merge_tiles(unsigned char *dst, unsigned char *src, char *alpha)
+static void merge_tiles(u8 *dst, u8 *src, char *alpha)
 {
 	int i;
 
@@ -188,9 +188,9 @@ static void merge_tiles(unsigned char *dst, unsigned char *src, char *alpha)
 	}
 }
 
-static void flip_tile(unsigned char *tile)
+static void flip_tile(u8 *tile)
 {
-	unsigned char old_tile[PIXBUF_TILE_SIZE];
+	u8 old_tile[PIXBUF_TILE_SIZE];
 	int x, y;
 
 	memcpy(old_tile, tile, sizeof(old_tile));
@@ -202,19 +202,19 @@ static void flip_tile(unsigned char *tile)
 }
 
 /* 1 block = 4x4 tiles */
-static void load_block_from_tiles_addr(unsigned char *pixbuf, int *tiles_addr, PyObject *od, int bx, int by)
+static void load_block_from_tiles_addr(u8 *pixbuf, int *tiles_addr, PyObject *od, int bx, int by)
 {
 	int i, j, pixbuf_offset = 0;
 
 	for (j = 0; j < BLOCK_Y; j++) {
 		for (i = 0; i < BLOCK_X; i++) {
-			unsigned char tile_pixbuf[PIXBUF_TILE_SIZE];
+			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
 			int y, tile_offset = 0;
 			box_info_type bi = get_box_info(od, bx * 2 + i / 2, by * 2 + j / 2);
 
 			if (bi.entity_addr) {
 				int n = (j % 2) * 2 + (i + bi.flip) % 2;
-				unsigned char entity_pixbuf[PIXBUF_TILE_SIZE];
+				u8 entity_pixbuf[PIXBUF_TILE_SIZE];
 
 				load_tile(entity_pixbuf, bi.entity_addr + n * 16, bi.color_key);
 				if (bi.flip)
@@ -269,9 +269,9 @@ static blocks_type *get_blocks(int n, int addr, int tiles_addr)
 
 #define PIXEL_LINES_PER_BLOCK 32
 
-static unsigned char *get_map_pic_raw(int r_map_pointer, unsigned char map_w, unsigned char map_h, int blockdata_addr, int tiles_addr, PyObject *od)
+static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *od)
 {
-	unsigned char *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
+	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
 	info_t *info = get_info();
 	int i, j, pixbuf_offset = 0;
 
@@ -281,7 +281,7 @@ static unsigned char *get_map_pic_raw(int r_map_pointer, unsigned char map_w, un
 
 	for (j = 0; j < map_h; j++) {
 		for (i = 0; i < map_w; i++) {
-			unsigned char block_pixbuf[PIXBUF_BLOCK_SIZE];
+			u8 block_pixbuf[PIXBUF_BLOCK_SIZE];
 			int y, block_offset = 0;
 			int *block = blocks[info->stream[r_map_pointer + j * map_w + i]].b;
 
@@ -303,7 +303,7 @@ static unsigned char *get_map_pic_raw(int r_map_pointer, unsigned char map_w, un
 
 #define TILESET_HEADERS 0xC7BE
 
-static int get_blockdata_addr(unsigned char tileset_id)
+static int get_blockdata_addr(u8 tileset_id)
 {
 	info_t *info = get_info();
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
@@ -312,7 +312,7 @@ static int get_blockdata_addr(unsigned char tileset_id)
 	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 1));
 }
 
-static int get_tiles_addr(unsigned char tileset_id)
+static int get_tiles_addr(u8 tileset_id)
 {
 	info_t *info = get_info();
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
@@ -325,7 +325,7 @@ static int get_tiles_addr(unsigned char tileset_id)
 #define DICT_ADD_WORD(dict, key) PyDict_SetItemString(dict, key, read_addr(NULL, Py_BuildValue("(i)", addr, NULL))); addr += 2
 
 static struct {
-	unsigned char k;
+	u8 k;
 	char c;
 } cons[] = {
 	{1 << 3, 'N'},
@@ -355,13 +355,13 @@ static void add_loaded_map(int addr)
 }
 
 typedef struct {
-	unsigned char index;
+	u8 index;
 	uint16_t connected_map;
 	uint16_t current_map;
-	unsigned char bigness;
-	unsigned char map_width;
-	unsigned char y_align;
-	unsigned char x_align;
+	u8 bigness;
+	u8 map_width;
+	u8 y_align;
+	u8 x_align;
 	uint16_t window;
 } __attribute__((__packed__)) connection_type;
 
@@ -385,7 +385,7 @@ typedef struct {
 
 typedef struct submap_s {
 	coords_type coords;
-	unsigned char *pixbuf;
+	u8 *pixbuf;
 	int map_w;
 	int map_h;
 	struct submap_s *next;
@@ -397,7 +397,7 @@ typedef struct submap_s {
 typedef struct {
 	int w;
 	int h;
-	unsigned char *pixbuf;
+	u8 *pixbuf;
 	int id;
 	PyObject *info_list;
 	PyObject *objects;
@@ -438,8 +438,8 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	PyObject *dict = PyDict_New();
 	PyObject *list, *warp_list, *sign_list, *entity_list;
 	int blockdata_addr, tiles_addr, rom_addr;
-	unsigned char connect_byte, i;
-	unsigned char map_h, map_w;
+	u8 connect_byte, i;
+	u8 map_h, map_w;
 	int connection_addr;
 	submap_type *current_map, *last, *tmp, *to_add;
 	int text_pointers;
@@ -499,7 +499,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	connection_addr = addr;
 
 	list = PyList_New(0);
-	for (i = 0; i < (unsigned char)(sizeof(cons) / sizeof(*cons)); i++) {
+	for (i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
 		if (!(connect_byte & cons[i].k))
 			continue ;
 		PyObject *con_dict = PyDict_New();
@@ -520,7 +520,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	/* Object Data */
 	{
 		int word_addr;
-		unsigned char nb;
+		u8 nb;
 
 		DICT_ADD_WORD(dict, "object_data");
 
@@ -553,13 +553,13 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 			DICT_ADD_BYTE(sign_dict, "x");
 
 			{
-				unsigned char tid = info->stream[addr];
+				u8 tid = info->stream[addr];
 				int base_addr = (addr / 0x4000) * 0x4000;
 				int text_pointer = GET_ADDR(base_addr + (text_pointers + ((tid - 1) << 1)) % 0x4000);
 				int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
 				int rom_text_addr = info->stream[rom_text_pointer + 3] * 0x4000 + GET_ADDR(rom_text_pointer + 1) % 0x4000 + 1;
 				char buffer[512] = {0};
-				unsigned char c;
+				u8 c;
 				unsigned int d = 0;
 
 				if (info->stream[rom_text_pointer] == 0x17) {
@@ -585,7 +585,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		entity_list = PyList_New(0);
 		nb = info->stream[addr++];
 		for (i = 0; i < nb; i++) {
-			unsigned char tid;
+			u8 tid;
 			PyObject *entities_dict = PyDict_New();
 
 			DICT_ADD_BYTE(entities_dict, "pic_id");
@@ -624,7 +624,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	current_map->coords.x = x_init;
 	current_map->coords.y = y_init;
 
-	for (i = 0; i < (unsigned char)(sizeof(cons) / sizeof(*cons)); i++) {
+	for (i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
 		connection_type con;
 		int nx = 0, ny = 0;
 
@@ -637,7 +637,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 			// FIXME: I'm sure there is something wrong here...
 			case 'N':
 				nx = x_init - (char)(con.x_align);
-				ny = y_init - (unsigned char)(con.y_align) - 1;
+				ny = y_init - (u8)(con.y_align) - 1;
 				break;
 			case 'S':
 				nx = x_init - (char)(con.x_align);

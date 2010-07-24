@@ -39,19 +39,19 @@ typedef uint16_t u16;
 typedef struct {
 	int fd;
 	struct stat rom_stat;
-	unsigned char* stream;
+	u8* stream;
 } info_t;
 
-PyObject *get_map_pic(int r_map_pointer, unsigned char map_w, unsigned char map_h, int blockdata_addr, int tiles_addr, PyObject *);
+PyObject *get_map_pic(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *);
 PyObject *get_maps(PyObject *, PyObject *);
 PyObject *get_pokedex(PyObject *, PyObject *);
 PyObject *get_special_items(int map_id);
 PyObject *grab_tile(PyObject *, PyObject *);
 PyObject *read_addr(PyObject *, PyObject *);
-char *get_pkmn_char(unsigned char, char *);
+char *get_pkmn_char(u8, char *);
 info_t *get_info();
-void apply_filter(unsigned char *pixbuf, int map_id, int w);
-void rle_sprite(unsigned char *dst, unsigned char *src);
-void uncompress_sprite(unsigned char *dest, int addr, unsigned char *rom_data);
+void apply_filter(u8 *pixbuf, int map_id, int w);
+void rle_sprite(u8 *dst, u8 *src);
+void uncompress_sprite(u8 *dest, int addr, u8 *rom_data);
 
 #endif
