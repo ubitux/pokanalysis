@@ -301,7 +301,7 @@ static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_
 	return pixbuf;
 }
 
-#define TILESET_HEADERS 0xC7BE
+#define TILESET_HEADERS ROM_ADDR(3, 0x47BE)
 
 static int get_blockdata_addr(u8 tileset_id)
 {
