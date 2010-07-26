@@ -151,7 +151,7 @@ static box_info_type get_box_info(PyObject *od, int x, int y)
 			if (PyLong_AsLong(PyDict_GetItemString(item, "x")) == x && PyLong_AsLong(PyDict_GetItemString(item, "y")) == y) {
 				bi.color_key = color_set[n].key;
 				if (strcmp(bi.color_key, "entities") == 0) {
-					uint16_t orientation = PyLong_AsLong(PyDict_GetItemString(item, "mvt_2")) & 0xF;
+					u8 orientation = PyLong_AsLong(PyDict_GetItemString(item, "mvt_2")) & 0xF;
 					int decal_id = 0;
 
 					if (orientation == 1) {		// North
