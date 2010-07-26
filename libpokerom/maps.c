@@ -550,7 +550,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 				int base_addr = (addr / 0x4000) * 0x4000;
 				int text_pointer = GET_ADDR(base_addr + (text_pointers + ((tid - 1) << 1)) % 0x4000);
 				int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
-				int rom_text_addr = info->stream[rom_text_pointer + 3] * 0x4000 + GET_ADDR(rom_text_pointer + 1) % 0x4000 + 1;
+				int rom_text_addr = ROM_ADDR(info->stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
 				char buffer[512] = {0};
 				u8 c;
 				unsigned int d = 0;
