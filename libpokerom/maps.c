@@ -366,16 +366,12 @@ typedef struct {
 } __attribute__((__packed__)) connection_type;
 
 # define MAPS_BANK_LIST 0x01AE
-# define MAPS_BANK_ADDR 0xC23D
+# define MAPS_BANK_ADDR ROM_ADDR(3, 0x423D)
 
 static int get_map_addr(int i)
 {
 	info_t *info = get_info();
-	int addr;
-
-	addr = info->stream[MAPS_BANK_ADDR + i] * 0x4000;
-	addr |= GET_ADDR(MAPS_BANK_LIST + i * 2) % 0x4000;
-	return addr;
+	return info->stream[MAPS_BANK_ADDR + i] * 0x4000 + GET_ADDR(MAPS_BANK_LIST + i * 2) % 0x4000;
 }
 
 typedef struct {
