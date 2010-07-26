@@ -356,13 +356,13 @@ static void add_loaded_map(int addr)
 
 typedef struct {
 	u8 index;
-	uint16_t connected_map;
-	uint16_t current_map;
+	u16 connected_map;
+	u16 current_map;
 	u8 bigness;
 	u8 map_width;
 	u8 y_align;
 	u8 x_align;
-	uint16_t window;
+	u16 window;
 } __attribute__((__packed__)) connection_type;
 
 static int get_map_addr(int i)
