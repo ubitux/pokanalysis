@@ -7,6 +7,7 @@ include_directories(${PYTHON_INCLUDE_DIR})
 set(sources
 	libpokerom/disasm.c
 	libpokerom/maps.c
+	libpokerom/pokedex.c
 	libpokerom/pokerom.c
 	libpokerom/special_entities.c
 	libpokerom/sprites.c

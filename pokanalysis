@@ -136,8 +136,9 @@ class Core:
         model = self.gui.get_object('liststore_wild_pkmn')
         model.clear()
         if wild_pkmn:
-            for (level, pkmn, i) in wild_pkmn:
-                model.append(('<b>%s</b>' % pkmn.title(), level, '0x%02X' % i, self.pkmn_list[i]))
+            for (level, i) in wild_pkmn:
+                pkmn = self.pokedex[i]
+                model.append((pkmn['fmt_name'], level, pkmn['fmt_rom_id'], pkmn['pic']))
 
         model = self.gui.get_object('liststore_specials')
         model.clear()
@@ -197,13 +198,17 @@ class Core:
             'on_window_destroy': lambda w: gtk.main_quit(),
         })
 
-        self.pkmn_list = []
+        self.pokedex = {}
+        pokedex_widget = self.gui.get_object('liststore_pokedex')
         w, h = 7 * 8, 7 * 8
-        for pkmn in pokerom.get_pokemons_info():
-            if pkmn:
-                self.pkmn_list.append(gtk.gdk.pixbuf_new_from_data(pkmn, gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3))
-            else:
-                self.pkmn_list.append(None)
+        for i, pkmn in enumerate(pokerom.get_pokedex(), 1):
+            pic = pkmn['pic']
+            pkmn['pic'] = gtk.gdk.pixbuf_new_from_data(pic, gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3) if pic else None
+            pkmn['fmt_name'] = '<b>%s</b>' % pkmn['name'].title()
+            pkmn['fmt_id'] = '%03d' % i
+            pkmn['fmt_rom_id'] = '0x%02X' % pkmn['rom_id']
+            pokedex_widget.append((pkmn['fmt_id'], pkmn['fmt_name'], pkmn['pic'], pkmn['fmt_rom_id']))
+            self.pokedex[pkmn['rom_id']] = pkmn
 
         tv_asm = self.gui.get_object('textview_asm')
         tv_asm.modify_font(pango.FontDescription('monospace'))

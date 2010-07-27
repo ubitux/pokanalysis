@@ -396,19 +396,6 @@ typedef struct {
 	PyObject *objects;
 } map_type;
 
-static void get_pkmn_name(int id, char *name)
-{
-	info_t *info = get_info();
-	int i = 0, rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (id - 1));
-	char *s;
-
-	while (*(s = get_pkmn_char(info->stream[rom_addr++], "")) && i < 10) {
-		strcpy(&name[i], s);
-		i += strlen(s);
-	}
-	name[i] = 0;
-}
-
 static PyObject *get_wild_pokemons(int id)
 {
 	PyObject *list = PyList_New(0);
@@ -416,10 +403,7 @@ static PyObject *get_wild_pokemons(int id)
 	int addr = ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + id * 2))) + 1;
 
 	while (info->stream[addr]) {
-		char name[10];
-
-		get_pkmn_name(info->stream[addr + 1], name);
-		PyList_Append(list, Py_BuildValue("isi", info->stream[addr], name, info->stream[addr + 1]));
+		PyList_Append(list, Py_BuildValue("ii", info->stream[addr], info->stream[addr + 1]));
 		addr += 2;
 	}
 	return list;

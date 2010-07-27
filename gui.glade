@@ -44,6 +44,18 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="liststore_pokedex">
+    <columns>
+      <!-- column-name id -->
+      <column type="gchararray"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name pixbuf -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name rom_id -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="window">
     <property name="width_request">640</property>
     <property name="height_request">480</property>
@@ -55,6 +67,69 @@
       <object class="GtkNotebook" id="notebook_main">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow_pokedex">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hscrollbar_policy">automatic</property>
+            <property name="vscrollbar_policy">automatic</property>
+            <child>
+              <object class="GtkTreeView" id="treeview_pokedex">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">liststore_pokedex</property>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn_id">
+                    <property name="title">#</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertext_id"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn_pkmn">
+                    <property name="title">Pok&#xE9;mon</property>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf"/>
+                      <attributes>
+                        <attribute name="pixbuf">2</attribute>
+                      </attributes>
+                    </child>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertext_name"/>
+                      <attributes>
+                        <attribute name="markup">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn_romid">
+                    <property name="title">ROM ID</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertext_romid"/>
+                      <attributes>
+                        <attribute name="text">3</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child type="tab">
+          <object class="GtkLabel" id="label_pokedex">
+            <property name="visible">True</property>
+            <property name="label" translatable="yes">Pok&#xE9;dex</property>
+          </object>
+          <packing>
+            <property name="tab_fill">False</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkHPaned" id="hpaned_maps">
             <property name="visible">True</property>
@@ -351,6 +426,9 @@
               </packing>
             </child>
           </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
         </child>
         <child type="tab">
           <object class="GtkLabel" id="label_maps">
@@ -358,6 +436,7 @@
             <property name="label" translatable="yes">Maps</property>
           </object>
           <packing>
+            <property name="position">1</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
@@ -404,7 +483,7 @@
             </child>
           </object>
           <packing>
-            <property name="position">1</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child type="tab">
@@ -413,7 +492,7 @@
             <property name="label" translatable="yes">ASM</property>
           </object>
           <packing>
-            <property name="position">1</property>
+            <property name="position">2</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>
