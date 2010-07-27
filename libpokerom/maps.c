@@ -136,11 +136,8 @@ static int get_entity_addr(PyObject *item, int decal_id)
 static box_info_type get_box_info(PyObject *od, int x, int y)
 {
 	unsigned int n;
-	box_info_type bi;
+	box_info_type bi = {.color_key = "default", .entity_addr = 0, .flip = 0};
 
-	bi.color_key = "default";
-	bi.entity_addr = 0;
-	bi.flip = 0;
 	for (n = 1; n < sizeof(color_set) / sizeof(*color_set); n++) {
 		PyObject *list = PyDict_GetItemString(od, color_set[n].key);
 		Py_ssize_t i, len = PyList_Size(list);
