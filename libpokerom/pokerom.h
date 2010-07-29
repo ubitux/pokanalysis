@@ -33,9 +33,9 @@
 typedef uint8_t u8;
 typedef uint16_t u16;
 
-#define high_nibble(c)		((c) >> 4)
-#define low_nibble(c)		((c) & 0x0f)
-#define swap_u8(c)		(((c) << 4) | ((c) >> 4))
+# define high_nibble(c)		((c) >> 4)
+# define low_nibble(c)		((c) & 0x0f)
+# define swap_u8(c)		(((c) << 4) | ((c) >> 4))
 
 typedef struct {
 	int fd;
