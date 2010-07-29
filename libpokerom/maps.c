@@ -365,7 +365,7 @@ typedef struct {
 static int get_map_addr(int i)
 {
 	info_t *info = get_info();
-	return info->stream[ROM_ADDR(3, 0x423D) + i] * 0x4000 + GET_ADDR(0x01AE + i * 2) % 0x4000;
+	return ROM_ADDR(info->stream[ROM_ADDR(3, 0x423D) + i], GET_ADDR(0x01AE + i * 2));
 }
 
 typedef struct {
