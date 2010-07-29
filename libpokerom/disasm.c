@@ -712,9 +712,9 @@ static struct line *next_ins(struct line *prev_line)
 			sprintf(&linebuff[27], label, p);
 			if (ins_set == default_ins_set) {
 				if (index(CALL_INS, ins))
-					add_label(pc - 1, p, JMP_CALL);
+					add_label(REL_ADDR(pc - 1), p, JMP_CALL);
 				else if (index(JP_INS, ins))
-					add_label(pc - 1, p, JMP_JP);
+					add_label(REL_ADDR(pc - 1), p, JMP_JP);
 			}
 			pc += 2;
 			break;
@@ -732,14 +732,13 @@ static struct line *next_ins(struct line *prev_line)
 		case P_CHAR8:
 		{
 			int8_t p = info->stream[pc];
-			int addr = pc + p + 1;
+			int rom_addr = pc + p + 1;
+			u16 addr = REL_ADDR(rom_addr);
 			sprintf(&linebuff[13], "%02X", (u8)p);
 			linebuff[15] = ' ';
-			if (pc / 0x4000)
-				addr = addr % 0x4000 + 0x4000;
 			sprintf(&linebuff[27], label, addr);
 			if (ins_set == default_ins_set && index(JR_INS, ins))
-				add_label(pc - 1, addr, JMP_JR);
+				add_label(REL_ADDR(pc - 1), addr, JMP_JR);
 			pc++;
 			break;
 		}

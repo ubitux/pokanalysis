@@ -28,6 +28,7 @@
 
 # define GET_ADDR(offset)	(info->stream[(offset) + 1] << 8 | info->stream[(offset)])
 # define ROM_ADDR(bank, addr)	((bank) * 0x4000 + (addr) % 0x4000)
+# define REL_ADDR(addr)		(((addr) > 0x3fff) ? (addr) % 0x4000 + 0x4000 : (addr))
 
 typedef uint8_t u8;
 typedef uint16_t u16;
