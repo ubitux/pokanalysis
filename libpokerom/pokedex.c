@@ -79,24 +79,23 @@ static u8 get_rom_id_from_pkmn_id(u8 pkmn_id) /* Red: RO10:4FFB */
 	return pos;
 }
 
+static int get_pkmn_header_address(u8 rom_pkmn_id)
+{
+	if (rom_pkmn_id == 0x15)	// Mew
+		return ROM_ADDR(0x01, 0x425B);
+	return ROM_ADDR(0x0E, 0x43de + (get_pkmn_id_from_stupid_one(rom_pkmn_id) - 1) * 0x1C);
+}
+
 static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 {
 	info_t *info = get_info();
-	int pkmn_header_addr, pkmn_header_bank_id;
+	int pkmn_header_addr;
 	u8 b[3 * 0x188];
-	u8 real_pkmn_id, sprite_dim;
+	u8 sprite_dim;
 	u8 ff8b, ff8c, ff8d;
 	u16 sprite_addr;
 
-	real_pkmn_id = get_pkmn_id_from_stupid_one(stupid_pkmn_id);
-
-	if (stupid_pkmn_id == 0x15) {	// Mew
-		pkmn_header_bank_id = 0x3A;
-		pkmn_header_addr = 0x425B;
-	} else {
-		pkmn_header_bank_id = 0x0E;
-		pkmn_header_addr = ROM_ADDR(pkmn_header_bank_id, 0x43de + (real_pkmn_id - 1) * 0x1C);
-	}
+	pkmn_header_addr = get_pkmn_header_address(stupid_pkmn_id);
 
 	switch (stupid_pkmn_id) {
 		case 0xb6:
