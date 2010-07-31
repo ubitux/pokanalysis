@@ -79,6 +79,41 @@ static u8 get_rom_id_from_pkmn_id(u8 pkmn_id) /* Red: RO10:4FFB */
 	return pos;
 }
 
+static PyObject *get_pkmn_header(u8 *pkmn_header)
+{
+	PyObject *dict = PyDict_New();
+
+	PyDict_SetItemString(dict, "0x00_pokemon_id", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x01_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x02_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x03_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x04_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x05_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x06_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x07_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x08_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x09_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x0a_sprite_dim", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x0b_sprite_addr", Py_BuildValue("i", *(pkmn_header + 1) << 8 | *pkmn_header)); pkmn_header += 2;
+	PyDict_SetItemString(dict, "0x0d_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x0e_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x0f_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x10_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x11_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x12_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x13_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x14_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x15_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x16_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x17_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x18_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x19_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x1a_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x1b_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x1c_unknown", Py_BuildValue("i", *pkmn_header++));
+	return dict;
+}
+
 static int get_pkmn_header_address(u8 rom_pkmn_id)
 {
 	if (rom_pkmn_id == 0x15)	// Mew
@@ -146,7 +181,6 @@ PyObject *get_pixbuf(u8 pkmn_id)
 	return Py_BuildValue("s#", pixbuf, sizeof(pixbuf));
 }
 
-
 static PyObject *get_pkmn_name(int rom_id)
 {
 	info_t *info = get_info();
@@ -162,21 +196,106 @@ static PyObject *get_pkmn_name(int rom_id)
 	return Py_BuildValue("s", name);
 }
 
+void ntm(u8 *b)
+{
+	for (; *b; b++) {
+		//printf(" %02X (%d) ", *b, *b - 0xf6);
+		if (*b != ' ')
+			*b = *b - 0xF6 + '0';
+	}
+	//printf("\n");
+}
+
+static void set_pkmn_texts(PyObject *dict, int rom_id)
+{
+	info_t *info = get_info();
+	int i, rom_addr;
+	char *s;
+	char b[128];
+
+	i = 0;
+	rom_addr = ROM_ADDR2(0x10, GET_ADDR(ROM_ADDR2(0x10, 0x447E + 2 * (rom_id - 1))));
+	while (info->stream[rom_addr] != 0x50) {
+		s = get_pkmn_char(info->stream[rom_addr++], "¿?");
+		strcpy(&b[i], s);
+		i += strlen(s);
+	}
+	PyDict_SetItemString(dict, "class", Py_BuildValue("s", b));
+	rom_addr++; // skip 0x50
+
+	//{
+	//	int n;
+
+	//	printf("[ID:%02X (%03d)] [0x%04X] ", rom_id, get_pkmn_id_from_stupid_one(rom_id), REL_ADDR(rom_addr));
+	//	for (n = 2; n < 6; n++) {
+	//		printf("%02X ", info->stream[rom_addr + n]);
+	//	}
+	//	printf("\n");
+	//}
+
+	sprintf(b, "%d'%02d\"", info->stream[rom_addr], info->stream[rom_addr + 1]);
+	rom_addr += 2;
+	PyDict_SetItemString(dict, "height", Py_BuildValue("s", b));
+
+	{
+		u8 input[2];
+		char *dest;
+		char *b_trim;
+
+		strcpy(b, "   ???lb");
+		input[1] = info->stream[rom_addr++];
+		input[0] = info->stream[rom_addr++];
+
+		pkmn_put_nbr((u8*)b, input, 0x02, 0x05);
+		ntm((u8*)b);
+
+		dest = b + 3;
+		if (input[0] < (input[1] < 10))
+			*dest = '0';
+		dest++;
+		*(dest + 1) = *dest;
+		*dest = '.';
+
+		strcpy(b + 6, "lb");
+		for (b_trim = b; *b_trim == ' '; b_trim++);
+
+		PyDict_SetItemString(dict, "weight", Py_BuildValue("s", b_trim));
+		rom_addr++;
+	}
+
+	i = 0;
+	rom_addr = ROM_ADDR2(info->stream[rom_addr + 2], GET_ADDR(rom_addr)) + 1;
+	while (info->stream[rom_addr] != 0x50) {
+		s = get_pkmn_char(info->stream[rom_addr++], "¿?");
+		strcpy(&b[i], s);
+		i += strlen(s);
+	}
+	b[i] = 0;
+	PyDict_SetItemString(dict, "desc", Py_BuildValue("s", b));
+}
+
 PyObject* get_pokedex(PyObject* self, PyObject* args)
 {
 	(void)self;
 	(void)args;
-	//info_t *info = get_info();
+	info_t *info = get_info();
 	int real_pkmn_id;
 	PyObject *list = PyList_New(0);
 
 	for (real_pkmn_id = 1; real_pkmn_id <= 151; real_pkmn_id++) {
 		PyObject *pkmn = PyDict_New();
 		u8 rom_id = get_rom_id_from_pkmn_id(real_pkmn_id) + 1;
+		int header_addr = get_pkmn_header_address(rom_id);
 
 		PyDict_SetItemString(pkmn, "pic", get_pixbuf(rom_id));
 		PyDict_SetItemString(pkmn, "name", get_pkmn_name(rom_id));
+
+		set_pkmn_texts(pkmn, rom_id);
+
+		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
+		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&info->stream[header_addr]));
 		PyDict_SetItemString(pkmn, "rom_id", Py_BuildValue("i", rom_id));
+
 		PyList_Append(list, pkmn);
 	}
 	return list;

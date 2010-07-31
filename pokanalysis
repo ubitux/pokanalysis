@@ -137,7 +137,7 @@ class Core:
         model.clear()
         if wild_pkmn:
             for (level, i) in wild_pkmn:
-                pkmn = self.pokedex[i]
+                pkmn = self.pokedex_rom_id[i]
                 model.append((pkmn['fmt_name'], level, pkmn['fmt_rom_id'], pkmn['pic']))
 
         model = self.gui.get_object('liststore_specials')
@@ -179,6 +179,28 @@ class Core:
             self.bank_asm[bank_id] = pokerom.disasm(bank_id)
         tbuffer.set_text(self.bank_asm[bank_id])
 
+    def on_treeview_pokedex_cursor_changed(self, treeview):
+        (path, column_focus) = treeview.get_cursor()
+        pkmn = self.pokedex[path[0]]
+        pic = pkmn['pic'].scale_simple(160, 160, gtk.gdk.INTERP_NEAREST)
+        self.gui.get_object('image_pkmn').set_from_pixbuf(pic)
+        keys = pkmn['header_values'].keys()
+        keys.sort()
+
+        header = ''
+        for key in keys:
+            v = pkmn['header_values'][key]
+            if v > 0xff:
+                header += '%s: 0x%04X\n' % (key, v)
+            else:
+                header += '%s: 0x%02X\n' % (key, v)
+
+        self.gui.get_object('textview_pkmn_info_small').get_buffer().set_text('%s\nHeight: %s\nWeight: %s\n\n%s' %
+                (pkmn['class'], pkmn['height'], pkmn['weight'], pkmn['desc']))
+        self.gui.get_object('textview_pkmn_info').get_buffer().set_text(
+                'ROM ID: 0x%02X\nROM header addr: 0x%06x\n\n[HEADER]\n%s' % (pkmn['rom_id'], pkmn['rom_header_addr'], header))
+        self.gui.get_object('label_pkmn').set_markup('#%s <b>%s</b>' % (pkmn['fmt_id'], pkmn['name']))
+
     def __init__(self):
         if len(sys.argv) != 2:
             print('Usage: %s file' % sys.argv[0])
@@ -195,23 +217,28 @@ class Core:
             'on_eventbox_image_map_button_press_event': self.on_eventbox_image_map_button_press_event,
             'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
+            'on_treeview_pokedex_cursor_changed': self.on_treeview_pokedex_cursor_changed,
             'on_window_destroy': lambda w: gtk.main_quit(),
         })
 
-        self.pokedex = {}
+        self.pokedex_rom_id = {}
+        self.pokedex = pokerom.get_pokedex()
         pokedex_widget = self.gui.get_object('liststore_pokedex')
         w, h = 7 * 8, 7 * 8
-        for i, pkmn in enumerate(pokerom.get_pokedex(), 1):
+        for i, pkmn in enumerate(self.pokedex, 1):
             pic = pkmn['pic']
             pkmn['pic'] = gtk.gdk.pixbuf_new_from_data(pic, gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3) if pic else None
             pkmn['fmt_name'] = '<b>%s</b>' % pkmn['name'].title()
             pkmn['fmt_id'] = '%03d' % i
             pkmn['fmt_rom_id'] = '0x%02X' % pkmn['rom_id']
-            pokedex_widget.append((pkmn['fmt_id'], pkmn['fmt_name'], pkmn['pic'], pkmn['fmt_rom_id']))
-            self.pokedex[pkmn['rom_id']] = pkmn
+            pokedex_widget.append((pkmn['fmt_id'], pkmn['fmt_name'], pkmn['pic']))
+            self.pokedex_rom_id[pkmn['rom_id']] = pkmn
+        self.gui.get_object('treeview_pokedex').set_cursor((0,))
 
-        tv_asm = self.gui.get_object('textview_asm')
-        tv_asm.modify_font(pango.FontDescription('monospace'))
+        monospaced_font = pango.FontDescription('monospace')
+        self.gui.get_object('textview_asm').modify_font(monospaced_font)
+        self.gui.get_object('textview_pkmn_info').modify_font(monospaced_font)
+        self.gui.get_object('textview_pkmn_info_small').modify_font(monospaced_font)
 
         self.bank_asm = {}
         lss_banks = self.gui.get_object('liststore_asm_banks')

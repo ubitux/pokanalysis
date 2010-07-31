@@ -28,6 +28,7 @@
 
 # define GET_ADDR(offset)	(info->stream[(offset) + 1] << 8 | info->stream[(offset)])
 # define ROM_ADDR(bank, addr)	((bank) * 0x4000 + (addr) % 0x4000)
+# define ROM_ADDR2(bank, addr)	(((addr) > 0x3fff) ? (bank) * 0x4000 + (addr) % 0x4000 : (addr))
 # define REL_ADDR(addr)		(((addr) > 0x3fff) ? (addr) % 0x4000 + 0x4000 : (addr))
 
 typedef uint8_t u8;
@@ -55,5 +56,6 @@ info_t *get_info();
 void apply_filter(u8 *pixbuf, int map_id, int w);
 void rle_sprite(u8 *dst, u8 *src);
 void uncompress_sprite(u8 *dest, int addr, u8 *rom_data);
+void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);
 
 #endif

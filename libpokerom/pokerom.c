@@ -24,11 +24,14 @@ static struct {
 	u8 c;
 	char *s;
 } g_alphabet[] = {
+	{0x49, "\n"},	// pokédex desc sentence separator
+	{0x4E, "\n"},	// pokédex desc normal \n
 	{0x4F, "\n"},
 	{0x51, "\n\n"},
 	{0x54, "POKé"},
 	{0x55, "\n"},	// stop with arrow indicator
 	{0x57, ""},	// ending stop without arrow
+	{0x5F, ""},	// pokémon cry?
 	{0x7F, " "}, {0x80, "A"}, {0x81, "B"}, {0x82, "C"}, {0x83, "D"}, {0x84, "E"},
 	{0x85, "F"}, {0x86, "G"}, {0x87, "H"}, {0x88, "I"}, {0x89, "J"}, {0x8A, "K"},
 	{0x8B, "L"}, {0x8C, "M"}, {0x8D, "N"}, {0x8E, "O"}, {0x8F, "P"}, {0x90, "Q"},
