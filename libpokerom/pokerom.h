@@ -53,8 +53,8 @@ PyObject *read_addr(PyObject *, PyObject *);
 char *get_pkmn_char(u8, char *);
 info_t *get_info();
 void apply_filter(u8 *pixbuf, int map_id, int w);
+void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);
 void rle_sprite(u8 *dst, u8 *src);
 void uncompress_sprite(u8 *dest, int addr, u8 *rom_data);
-void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);
 
 #endif
