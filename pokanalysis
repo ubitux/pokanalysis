@@ -42,15 +42,16 @@ class Core:
         for pkmn_map in pokerom.get_maps():
             (p1, p2, p3) = self.get_map_pix(pkmn_map)
             if len(pkmn_map['info']) > 1:
-                self.map_store['Area #%d' % area_id] = (pkmn_map['objects'], None, None, p1, p2)
+                self.map_store['Area #%d' % area_id] = (pkmn_map, p1, p2)
                 area = model.append(None, (p3, 'Area #%d' % area_id, '%d maps' % len(pkmn_map['info'])))
                 self.map_nodes['Area #%d' % area_id] = area
                 area_id += 1
                 for info in pkmn_map['info']:
                     (p1, p2, p3) = self.get_map_pix(info)
-                    self.map_store[self.add_info(info, p3, area)] = (info['objects'], info['wild-pkmn'], info['special-items'], p1, p2)
+                    self.map_store[self.add_info(info, p3, area)] = (info, p1, p2)
             else:
-                self.map_store[self.add_info(pkmn_map['info'][0], p3)] = (pkmn_map['info'][0]['objects'], pkmn_map['info'][0]['wild-pkmn'], pkmn_map['info'][0]['special-items'], p1, p2)
+                data = pkmn_map['info'][0]
+                self.map_store[self.add_info(data, p3)] = (data, p1, p2)
         self.select_map('Area #1')
 
     def on_treeview_gameinfo_row_activated(self, treeview, path, column):
@@ -153,7 +154,10 @@ class Core:
             tview.set_cursor(path)
             tview.scroll_to_cell(path, use_align=True, row_align=.5)
 
-        (self.current_map, wild_pkmn, special_items, p1, p2) = self.map_store[map_id]
+        (data, p1, p2) = self.map_store[map_id]
+        self.current_map = data['objects']
+        wild_pkmn = data.get('wild-pkmn')
+        special_items = data.get('special-items')
         self.gui.get_object('image_map').set_from_pixbuf(p1)
         self.gui.get_object('image_mini_map').set_from_pixbuf(p2)
 
