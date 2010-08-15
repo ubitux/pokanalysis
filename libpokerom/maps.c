@@ -51,11 +51,10 @@ static void load_tile(u8 *pixbuf, int addr, char *color_key)
 	int x, y, pixbuf_offset = 0;
 	char **colors = get_color_set(color_key);
 
-	/* Uncomment this if you have plan trying to load crazy stuff like map 11 */
-	//if (addr > gl_rom_stat.st_size) {
-	//	memset(pixbuf, 0, TILE_X * TILE_Y * 3);
-	//	return;
-	//}
+	if (addr > gl_rom_stat.st_size) {
+		memset(pixbuf, 0, TILE_X * TILE_Y * 3);
+		return;
+	}
 	for (y = 0; y < TILE_Y; y++) {
 		u8 bit1 = gl_stream[addr++];
 		u8 bit2 = gl_stream[addr++];
