@@ -4,7 +4,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<title>Pokanalysis</title>
 		<link rel="icon" type="image/png" href="favicon.png" />
-		<link rel="stylesheet" type="text/css" href="http://ubitux.fr/style.css" />
+		<link rel="stylesheet" type="text/css" href="/common.css" />
 		<style type="text/css">li { background-image:url('favicon.png'); padding-left: 20px; background-repeat: no-repeat; list-style-type: none; }</style>
 	</head>
 	<body>
@@ -39,7 +39,7 @@
 		<h2>Current features</h2>
 		<ul>
 			<li>Main game area (Kanto) with merged or split maps</li>
-			<li>Houses, cave, etc. maps</li>
+			<li>Interior maps (houses, caves, etc.)</li>
 			<li>Entering maps by clicking on warps/doors</li>
 			<li>Wild pokémons with their names and sprites</li>
 			<li>Text of most of the signs</li>
@@ -57,7 +57,7 @@
 		<h2>Dependencies</h2>
 		<ul>
 			<li>Python &gt;= 2.5</li>
-			<li>PyGTK</li>
+			<li>PyGTK (GTK+ >= 2.16)</li>
 			<li>CMake (build only)</li>
 			<li>GCC (build only)</li>
 		</ul>
@@ -71,7 +71,7 @@
 % cmake ..
 % cd ..
 % make -C build
-% ./pokanalysis /path/to/your/pokemon/gb/rom.gb
+% ./pokanalysis /path/to/your/pokemon/rom.gb
 </pre>
 
 		<h2>Contact developer</h2>
@@ -85,7 +85,7 @@
 		<h2>License</h2>
 		<p><a href="http://www.gnu.org/licenses/gpl.html">GPL v3</a>.</p>
 
-		<h2>TODO ideas</h2>
+		<h2 id="TODO">TODO ideas</h2>
 		<ul>
 			<li>Map names</li>
 			<li>Special items text and type</li>
@@ -93,6 +93,7 @@
 			<li>Trainers pokémons</li>
 			<li>Pokémons information (stats, evolutions, …)</li>
 			<li>More ROMS support (better addresses support)</li>
+			<li>Disassembler in order to see map scripts</li>
 			<li>Collisions</li>
 			<li>Search engine (wild pokémons, items, …)</li>
 			<li>Better GUI (treeview autofocus, previous/next, …)</li>
