@@ -104,12 +104,13 @@ static PyObject *load_rom(PyObject *self, PyObject *args)
 {
 	(void)self;
 	char *fname;
+	int fd;
 	info_t *info = get_info();
 
 	PyArg_ParseTuple(args, "s", &fname);
-	if ((info->fd = open(fname, O_RDONLY)) < 0
-			|| fstat(info->fd, &info->rom_stat)
-			|| (info->stream = mmap(0, info->rom_stat.st_size, PROT_READ, MAP_PRIVATE, info->fd, 0)) == MAP_FAILED) {
+	if ((fd = open(fname, O_RDONLY)) < 0
+			|| fstat(fd, &info->rom_stat)
+			|| (info->stream = mmap(0, info->rom_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
 		return PyErr_SetFromErrnoWithFilename(PyExc_IOError, fname);
 	}
 	return Py_BuildValue("z", NULL);

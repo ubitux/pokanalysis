@@ -38,7 +38,6 @@ typedef uint16_t u16;
 # define swap_u8(c)		(((c) << 4) | ((c) >> 4))
 
 typedef struct {
-	int fd;
 	struct stat rom_stat;
 	u8* stream;
 } info_t;
