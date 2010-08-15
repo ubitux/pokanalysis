@@ -319,7 +319,10 @@ static int get_tiles_addr(u8 tileset_id)
 }
 
 #define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", info->stream[addr++]))
-#define DICT_ADD_WORD(dict, key) PyDict_SetItemString(dict, key, read_addr(NULL, Py_BuildValue("(i)", addr, NULL))); addr += 2
+#define DICT_ADD_ADDR(dict, key) do {\
+	PyDict_SetItemString(dict, key, Py_BuildValue("i", GET_ADDR(addr)));\
+	addr += 2;\
+} while (0)
 
 static struct {
 	u8 k;
@@ -417,6 +420,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	int connection_addr;
 	submap_type *current_map, *last, *tmp, *to_add;
 	int text_pointers;
+	u8 bank_id;
 
 	if (is_loaded(addr)) {
 		//printf("0x%06x -> previously loaded\n", addr);
@@ -437,8 +441,11 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	current_map->id = id;
 	current_map->objects = PyDict_New();
 
+	bank_id = addr / 0x4000;
+
 	PyDict_SetItemString(dict, "id", Py_BuildValue("i", id));
-	PyDict_SetItemString(dict, "rom-addr", Py_BuildValue("i", addr));
+	PyDict_SetItemString(dict, "bank-id", Py_BuildValue("i", bank_id));
+	PyDict_SetItemString(dict, "addr", Py_BuildValue("i", REL_ADDR(addr)));
 	PyDict_SetItemString(dict, "wild-pkmn", get_wild_pokemons(id));
 	PyDict_SetItemString(dict, "special-items", get_special_items(id));
 
@@ -454,16 +461,20 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		DICT_ADD_BYTE(dict, "map_h");
 		map_w = info->stream[addr];
 		DICT_ADD_BYTE(dict, "map_w");
-		DICT_ADD_WORD(dict, "map_pointer");
+
+		word_addr = GET_ADDR(addr);
+		rom_addr = ROM_ADDR2(bank_id, word_addr);
+		PyDict_SetItemString(dict, "map-pointer", Py_BuildValue("i", word_addr));
+		addr += 2;
 
 		current_map->map_w = map_w;
 		current_map->map_h = map_h;
 
-		PyArg_ParseTuple(PyDict_GetItemString(dict, "map_pointer"), "ii", &word_addr, &rom_addr);
-
 		text_pointers = GET_ADDR(addr);
-		DICT_ADD_WORD(dict, "map_text_pointers");
-		DICT_ADD_WORD(dict, "map_scripts");
+
+		DICT_ADD_ADDR(dict, "map-text-pointer");
+		DICT_ADD_ADDR(dict, "map-script-pointer");
+
 		connect_byte = info->stream[addr];
 		DICT_ADD_BYTE(dict, "connect_byte");
 	}
@@ -480,26 +491,26 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 
 		PyDict_SetItemString(con_dict, "key", Py_BuildValue("c", cons[i].c));
 		DICT_ADD_BYTE(con_dict, "index");
-		DICT_ADD_WORD(con_dict, "connected_map");
-		DICT_ADD_WORD(con_dict, "current_map");
+		DICT_ADD_ADDR(con_dict, "connected-map");
+		DICT_ADD_ADDR(con_dict, "current-map");
 		DICT_ADD_BYTE(con_dict, "bigness");
 		DICT_ADD_BYTE(con_dict, "map_width");
 		DICT_ADD_BYTE(con_dict, "y_align");
 		DICT_ADD_BYTE(con_dict, "x_align");
-		DICT_ADD_WORD(con_dict, "window");
+		DICT_ADD_ADDR(con_dict, "window");
 		PyList_Append(list, con_dict);
 	}
 	PyDict_SetItemString(dict, "connections", list);
 
 	/* Object Data */
 	{
-		int word_addr;
+		int word_addr = GET_ADDR(addr);
 		u8 nb;
 
-		DICT_ADD_WORD(dict, "object_data");
+		DICT_ADD_ADDR(dict, "object-data");
 
 		/* Seek to the object data address */
-		PyArg_ParseTuple(PyDict_GetItemString(dict, "object_data"), "ii", &word_addr, &addr);
+		addr = ROM_ADDR2(bank_id, word_addr);
 
 		DICT_ADD_BYTE(dict, "maps_border_tile");
 

@@ -18,7 +18,7 @@
 #    along with Pokanalysis.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys, pygtk, gtk, pango, pokerom
+import sys, pygtk, gtk, pango, pokerom, re
 
 class Core:
 
@@ -52,6 +52,22 @@ class Core:
                 self.map_store[self.add_info(pkmn_map['info'][0], p3)] = (pkmn_map['info'][0]['objects'], pkmn_map['info'][0]['wild-pkmn'], pkmn_map['info'][0]['special-items'], p1, p2)
         self.select_map('Area #1')
 
+    def on_treeview_gameinfo_row_activated(self, treeview, path, column):
+        model = treeview.get_model()
+        value = model.get_value(model.get_iter(path), 2)
+        if re.match("[A-F0-9]{2}:[A-F0-9]{4}", value):
+            (bank_id, addr) = value.split(':')
+            self.gui.get_object('notebook_main').set_current_page(2)
+            self.gui.get_object('combobox_asm_banks').set_active(int(bank_id, 16))
+            text_buffer = self.gui.get_object('textview_asm').get_buffer()
+            text_start_iter = text_buffer.get_start_iter()
+            goto_str = 'RO%s%s:%s' % ('M' % bank_id if bank_id < 0x10 else '', bank_id, addr)
+            match = text_start_iter.forward_search(goto_str, 0)
+            if match:
+                text_buffer.select_range(*match)
+                mark = text_buffer.create_mark('end', match[0], False)
+                self.gui.get_object('textview_asm').scroll_to_mark(mark, 0.05, True, 0.0, 0.1)
+
     def add_info(self, info, pic, area=None):
         model = self.gui.get_object('treestore_gameinfo')
         map_id = self.get_map_str(info['id'])
@@ -59,12 +75,12 @@ class Core:
         ### Map Header
         map_boxes_y, map_boxes_x = info['map_h'] * 2, info['map_w'] * 2
 
-        model_map_node = model.append(area, (pic, map_id, '0x%06X' % info['rom-addr']))
+        model_map_node = model.append(area, (pic, map_id, '%02X:%04X' % (info['bank-id'], info['addr'])))
         model.append(model_map_node, (None, 'tileset', '0x%02X' % info['tileset']))
         model.append(model_map_node, (None, 'dimensions', '%dx%d ' % (info['map_w'], info['map_h'])))
-        model.append(model_map_node, (None, 'map pointer', '0x%04X (0x%06X)' % info['map_pointer'] ))
-        model.append(model_map_node, (None, 'text pointer', '0x%04X (0x%06X)' % info['map_text_pointers']))
-        model.append(model_map_node, (None, 'scripts pointers', '0x%04X (0x%06X)' % info['map_scripts']))
+        model.append(model_map_node, (None, 'map pointer', '%02X:%04X' % (info['bank-id'], info['map-pointer'])))
+        model.append(model_map_node, (None, 'text pointer', '%02X:%04X' % (info['bank-id'], info['map-text-pointer'])))
+        model.append(model_map_node, (None, 'script pointer', '%02X:%04X' % (info['bank-id'], info['map-script-pointer'])))
 
         # Connections
         connections = info['connections']
@@ -73,16 +89,16 @@ class Core:
             c_info = info['connections'][c_id]
             model_connection_node = model.append(model_connections_node, (None, c_info['key'], ''))
             model.append(model_connection_node, (None, 'index', c_info['index']))
-            model.append(model_connection_node, (None, 'connected map', '0x%04X (0x%06X)' % c_info['connected_map']))
-            model.append(model_connection_node, (None, 'current map', '0x%04X (0x%06X)' % c_info['current_map']))
+            model.append(model_connection_node, (None, 'connected map', '%02X:%04X' % (info['bank-id'], c_info['connected-map'])))
+            model.append(model_connection_node, (None, 'current map', '%02X:%04X' % (info['bank-id'], c_info['current-map'])))
             model.append(model_connection_node, (None, 'bigness', c_info['bigness']))
             model.append(model_connection_node, (None, 'map width', c_info['map_width']))
             model.append(model_connection_node, (None, 'x align', c_info['x_align']))
             model.append(model_connection_node, (None, 'y align', c_info['y_align']))
-            model.append(model_connection_node, (None, 'window', '0x%04X (0x%06X)' % c_info['window']))
+            model.append(model_connection_node, (None, 'window', '%02X:%04X' % (info['bank-id'], c_info['window'])))
 
         ### Object Data
-        model_object_data_node = model.append(model_map_node, (None, 'Object data', '0x%04X (0x%06X)' % info['object_data']))
+        model_object_data_node = model.append(model_map_node, (None, 'Object data', '%02X:%04X' % (info['bank-id'], info['object-data'])))
         model.append(model_object_data_node, (None, 'maps border tile', '0x%02x' % info['maps_border_tile']))
 
         # Warps
@@ -217,6 +233,7 @@ class Core:
             'on_eventbox_image_map_button_press_event': self.on_eventbox_image_map_button_press_event,
             'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
+            'on_treeview_gameinfo_row_activated': self.on_treeview_gameinfo_row_activated,
             'on_treeview_pokedex_cursor_changed': self.on_treeview_pokedex_cursor_changed,
             'on_window_destroy': lambda w: gtk.main_quit(),
         })
@@ -242,7 +259,7 @@ class Core:
 
         self.bank_asm = {}
         lss_banks = self.gui.get_object('liststore_asm_banks')
-        for bank_id in range(0x10):
+        for bank_id in range(64):
             lss_banks.append(('Bank %02X' % bank_id,))
         self.gui.get_object('combobox_asm_banks').set_active(0)
 
