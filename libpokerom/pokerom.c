@@ -75,7 +75,7 @@ PyObject *read_addr(PyObject *self, PyObject *args)
 
 	PyArg_ParseTuple(args, "i", &offset);
 	addr = GET_ADDR(offset);
-	rom_addr = ROM_ADDR(offset / 0x4000, addr);
+	rom_addr = ROM_ADDR2(offset / 0x4000, addr);
 	return Py_BuildValue("ii", addr, rom_addr);
 }
 
@@ -153,8 +153,6 @@ PyMODINIT_FUNC initpokerom(void)
 {
 	static PyMethodDef m[] = {
 		{"load_rom", load_rom, METH_VARARGS, "Load ROM"},
-		{"read_addr", read_addr, METH_VARARGS, "Get 24-bits ROM address from 16-bit address read at the given offset"},
-		{"read_data", read_data, METH_VARARGS, "Return list of 8-bit char and 16-bit address (same return as read_addr)"},
 
 		{"get_maps", get_maps, METH_VARARGS, "Game maps"},
 		{"get_pokedex", get_pokedex, METH_VARARGS, "Get all pokémons"},
@@ -163,6 +161,8 @@ PyMODINIT_FUNC initpokerom(void)
 		/* Utils */
 		{"str_getbin", str_getbin, METH_VARARGS, "Convert binary text to ascii"},
 		{"str_getascii", str_getascii, METH_VARARGS, "Convert ascii text to binary"},
+		{"read_addr", read_addr, METH_VARARGS, "Get 24-bits ROM address from 16-bit address read at the given offset"},
+		{"read_data", read_data, METH_VARARGS, "Return list of 8-bit char and 16-bit address (same return as read_addr)"},
 		{NULL, NULL, 0, NULL}
 	};
 	Py_InitModule("pokerom", m);

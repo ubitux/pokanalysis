@@ -223,16 +223,6 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 	PyDict_SetItemString(dict, "class", Py_BuildValue("s", b));
 	rom_addr++; // skip 0x50
 
-	//{
-	//	int n;
-
-	//	printf("[ID:%02X (%03d)] [0x%04X] ", rom_id, get_pkmn_id_from_stupid_one(rom_id), REL_ADDR(rom_addr));
-	//	for (n = 2; n < 6; n++) {
-	//		printf("%02X ", info->stream[rom_addr + n]);
-	//	}
-	//	printf("\n");
-	//}
-
 	sprintf(b, "%d'%02d\"", info->stream[rom_addr], info->stream[rom_addr + 1]);
 	rom_addr += 2;
 	PyDict_SetItemString(dict, "height", Py_BuildValue("s", b));
