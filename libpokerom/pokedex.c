@@ -214,7 +214,7 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 	char b[128];
 
 	i = 0;
-	rom_addr = ROM_ADDR2(0x10, GET_ADDR(ROM_ADDR2(0x10, 0x447E + 2 * (rom_id - 1))));
+	rom_addr = ROM_ADDR(0x10, GET_ADDR(ROM_ADDR(0x10, 0x447E + 2 * (rom_id - 1))));
 	while (info->stream[rom_addr] != 0x50) {
 		s = get_pkmn_char(info->stream[rom_addr++], "¿?");
 		strcpy(&b[i], s);
@@ -254,7 +254,7 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 	}
 
 	i = 0;
-	rom_addr = ROM_ADDR2(info->stream[rom_addr + 2], GET_ADDR(rom_addr)) + 1;
+	rom_addr = ROM_ADDR(info->stream[rom_addr + 2], GET_ADDR(rom_addr)) + 1;
 	while (info->stream[rom_addr] != 0x50) {
 		s = get_pkmn_char(info->stream[rom_addr++], "¿?");
 		strcpy(&b[i], s);

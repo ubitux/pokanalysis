@@ -52,6 +52,11 @@ static void load_tile(u8 *pixbuf, int addr, char *color_key)
 	int x, y, pixbuf_offset = 0;
 	char **colors = get_color_set(color_key);
 
+	/* Uncomment this if you have plan trying to load crazy stuff like map 11 */
+	//if (addr > info->rom_stat.st_size) {
+	//	memset(pixbuf, 0, TILE_X * TILE_Y * 3);
+	//	return;
+	//}
 	for (y = 0; y < TILE_Y; y++) {
 		u8 bit1 = info->stream[addr++];
 		u8 bit2 = info->stream[addr++];
@@ -463,7 +468,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		DICT_ADD_BYTE(dict, "map_w");
 
 		word_addr = GET_ADDR(addr);
-		rom_addr = ROM_ADDR2(bank_id, word_addr);
+		rom_addr = ROM_ADDR(bank_id, word_addr);
 		PyDict_SetItemString(dict, "map-pointer", Py_BuildValue("i", word_addr));
 		addr += 2;
 
@@ -510,7 +515,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		DICT_ADD_ADDR(dict, "object-data");
 
 		/* Seek to the object data address */
-		addr = ROM_ADDR2(bank_id, word_addr);
+		addr = ROM_ADDR(bank_id, word_addr);
 
 		DICT_ADD_BYTE(dict, "maps_border_tile");
 
@@ -790,6 +795,8 @@ PyObject *get_maps(PyObject *self, PyObject *args)
 
 	for (i = 0; i < NB_MAPS; i++) {
 		addr = get_map_addr(i);
+		if (i == 11) // wtf is this crazy area?
+			continue;
 		if (is_loaded(addr))
 			continue;
 		if (!(map = get_py_map(get_submap(i, addr, 0, 0))))

@@ -75,7 +75,7 @@ PyObject *read_addr(PyObject *self, PyObject *args)
 
 	PyArg_ParseTuple(args, "i", &offset);
 	addr = GET_ADDR(offset);
-	rom_addr = ROM_ADDR2(offset / 0x4000, addr);
+	rom_addr = ROM_ADDR(offset / 0x4000, addr);
 	return Py_BuildValue("ii", addr, rom_addr);
 }
 
