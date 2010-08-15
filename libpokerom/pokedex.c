@@ -62,17 +62,15 @@ static int get_bank_from_stupid_pkmn_id(u8 pkmn_id) /* Red: RO01:1637 */
 	return 0x0d;
 }
 
-#define PKMN_IDS_TAB(id)	info->stream[ROM_ADDR(0x10, 0x5024 + id)]
+#define PKMN_IDS_TAB(id)	gl_stream[ROM_ADDR(0x10, 0x5024 + id)]
 
 static u8 get_pkmn_id_from_stupid_one(u8 id) /* Red: RO10:5010 */
 {
-	info_t *info = get_info();
 	return PKMN_IDS_TAB(id - 1);
 }
 
 static u8 get_rom_id_from_pkmn_id(u8 pkmn_id) /* Red: RO10:4FFB */
 {
-	info_t *info = get_info();
 	u8 pos;
 
 	for (pos = 0; PKMN_IDS_TAB(pos) != pkmn_id; pos++);
@@ -123,7 +121,6 @@ static int get_pkmn_header_address(u8 rom_pkmn_id)
 
 static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 {
-	info_t *info = get_info();
 	int pkmn_header_addr;
 	u8 b[3 * 0x188];
 	u8 sprite_dim;
@@ -150,7 +147,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 
 		default:
 			sprite_addr = GET_ADDR(pkmn_header_addr + 0x0B);
-			sprite_dim = info->stream[pkmn_header_addr + 0x0A];
+			sprite_dim = gl_stream[pkmn_header_addr + 0x0A];
 	}
 
 	ff8b = low_nibble(sprite_dim);
@@ -158,7 +155,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 	ff8c = 8 * high_nibble(sprite_dim);
 	ff8d = 8 * (ff8d + 7 - high_nibble(sprite_dim));
 
-	uncompress_sprite(b + 0x188, ROM_ADDR(get_bank_from_stupid_pkmn_id(stupid_pkmn_id), sprite_addr), info->stream);
+	uncompress_sprite(b + 0x188, ROM_ADDR(get_bank_from_stupid_pkmn_id(stupid_pkmn_id), sprite_addr), gl_stream);
 	//printf("pkmn_id=%02X sprite_addr=%04X dim=%02X ff8b=%02X ff8c=%02X ff8d=%02X\n", real_pkmn_id, sprite_addr, sprite_dim, ff8b, ff8c, ff8d);
 
 	memset(b, 0, 0x188);
@@ -183,12 +180,11 @@ PyObject *get_pixbuf(u8 pkmn_id)
 
 static PyObject *get_pkmn_name(int rom_id)
 {
-	info_t *info = get_info();
 	int i = 0, rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (rom_id - 1));
 	char *s;
 	char name[10];
 
-	while (*(s = get_pkmn_char(info->stream[rom_addr++], "")) && i < 10) {
+	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 10) {
 		strcpy(&name[i], s);
 		i += strlen(s);
 	}
@@ -208,22 +204,21 @@ void ntm(u8 *b)
 
 static void set_pkmn_texts(PyObject *dict, int rom_id)
 {
-	info_t *info = get_info();
 	int i, rom_addr;
 	char *s;
 	char b[128];
 
 	i = 0;
 	rom_addr = ROM_ADDR(0x10, GET_ADDR(ROM_ADDR(0x10, 0x447E + 2 * (rom_id - 1))));
-	while (info->stream[rom_addr] != 0x50) {
-		s = get_pkmn_char(info->stream[rom_addr++], "¿?");
+	while (gl_stream[rom_addr] != 0x50) {
+		s = get_pkmn_char(gl_stream[rom_addr++], "¿?");
 		strcpy(&b[i], s);
 		i += strlen(s);
 	}
 	PyDict_SetItemString(dict, "class", Py_BuildValue("s", b));
 	rom_addr++; // skip 0x50
 
-	sprintf(b, "%d'%02d\"", info->stream[rom_addr], info->stream[rom_addr + 1]);
+	sprintf(b, "%d'%02d\"", gl_stream[rom_addr], gl_stream[rom_addr + 1]);
 	rom_addr += 2;
 	PyDict_SetItemString(dict, "height", Py_BuildValue("s", b));
 
@@ -233,8 +228,8 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 		char *b_trim;
 
 		strcpy(b, "   ???lb");
-		input[1] = info->stream[rom_addr++];
-		input[0] = info->stream[rom_addr++];
+		input[1] = gl_stream[rom_addr++];
+		input[0] = gl_stream[rom_addr++];
 
 		pkmn_put_nbr((u8*)b, input, 0x02, 0x05);
 		ntm((u8*)b);
@@ -254,9 +249,9 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 	}
 
 	i = 0;
-	rom_addr = ROM_ADDR(info->stream[rom_addr + 2], GET_ADDR(rom_addr)) + 1;
-	while (info->stream[rom_addr] != 0x50) {
-		s = get_pkmn_char(info->stream[rom_addr++], "¿?");
+	rom_addr = ROM_ADDR(gl_stream[rom_addr + 2], GET_ADDR(rom_addr)) + 1;
+	while (gl_stream[rom_addr] != 0x50) {
+		s = get_pkmn_char(gl_stream[rom_addr++], "¿?");
 		strcpy(&b[i], s);
 		i += strlen(s);
 	}
@@ -268,7 +263,6 @@ PyObject* get_pokedex(PyObject* self, PyObject* args)
 {
 	(void)self;
 	(void)args;
-	info_t *info = get_info();
 	int real_pkmn_id;
 	PyObject *list = PyList_New(0);
 
@@ -283,7 +277,7 @@ PyObject* get_pokedex(PyObject* self, PyObject* args)
 		set_pkmn_texts(pkmn, rom_id);
 
 		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
-		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&info->stream[header_addr]));
+		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&gl_stream[header_addr]));
 		PyDict_SetItemString(pkmn, "rom_id", Py_BuildValue("i", rom_id));
 
 		PyList_Append(list, pkmn);

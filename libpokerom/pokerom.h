@@ -26,7 +26,7 @@
 # include <sys/mman.h>
 # include <fcntl.h>
 
-# define GET_ADDR(offset)	(info->stream[(offset) + 1] << 8 | info->stream[(offset)])
+# define GET_ADDR(offset)	(gl_stream[(offset) + 1] << 8 | gl_stream[(offset)])
 # define ROM_ADDR(bank, addr)	(((addr) > 0x3fff) ? (bank) * 0x4000 + (addr) % 0x4000 : (addr))
 # define REL_ADDR(addr)		(((addr) > 0x3fff) ? (addr) % 0x4000 + 0x4000 : (addr))
 
@@ -37,10 +37,8 @@ typedef uint16_t u16;
 # define low_nibble(c)		((c) & 0x0f)
 # define swap_u8(c)		(((c) << 4) | ((c) >> 4))
 
-typedef struct {
-	struct stat rom_stat;
-	u8* stream;
-} info_t;
+extern u8 *gl_stream;
+extern struct stat gl_rom_stat;
 
 PyObject *disasm(PyObject *self, PyObject *args);
 PyObject *get_map_pic(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *);
@@ -50,7 +48,6 @@ PyObject *get_special_items(int map_id);
 PyObject *grab_tile(PyObject *, PyObject *);
 PyObject *read_addr(PyObject *, PyObject *);
 char *get_pkmn_char(u8, char *);
-info_t *get_info();
 void apply_filter(u8 *pixbuf, int map_id, int w);
 void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);
 void rle_sprite(u8 *dst, u8 *src);

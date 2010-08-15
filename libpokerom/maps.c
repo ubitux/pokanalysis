@@ -48,18 +48,17 @@ static char **get_color_set(char *color_key)
 /* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
 static void load_tile(u8 *pixbuf, int addr, char *color_key)
 {
-	info_t *info = get_info();
 	int x, y, pixbuf_offset = 0;
 	char **colors = get_color_set(color_key);
 
 	/* Uncomment this if you have plan trying to load crazy stuff like map 11 */
-	//if (addr > info->rom_stat.st_size) {
+	//if (addr > gl_rom_stat.st_size) {
 	//	memset(pixbuf, 0, TILE_X * TILE_Y * 3);
 	//	return;
 	//}
 	for (y = 0; y < TILE_Y; y++) {
-		u8 bit1 = info->stream[addr++];
-		u8 bit2 = info->stream[addr++];
+		u8 bit1 = gl_stream[addr++];
+		u8 bit2 = gl_stream[addr++];
 		u8 mask = 1 << 7;
 
 		for (x = 0; x < TILE_X; x++, mask >>= 1) {
@@ -127,14 +126,12 @@ typedef struct {
 
 static int get_entity_addr(PyObject *item, int decal_id)
 {
-	info_t *info = get_info();
-
 	if (!item)
 		return 0;
 
 	long pic_id = PyLong_AsLong(PyDict_GetItemString(item, "pic_id"));
 	int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (pic_id - 1));
-	int bank_id = info->stream[entity_info_addr + 3];
+	int bank_id = gl_stream[entity_info_addr + 3];
 	return ROM_ADDR(bank_id, GET_ADDR(entity_info_addr) + decal_id);
 }
 
@@ -254,16 +251,15 @@ static blocks_type *get_blocks(int n, int addr, int tiles_addr)
 {
 	blocks_type *blocks;
 	int i, j;
-	info_t *info = get_info();
 
-	if (addr > info->rom_stat.st_size) {
+	if (addr > gl_rom_stat.st_size) {
 		return NULL;
 	}
 	if ((blocks = calloc(n, sizeof(*blocks))) == NULL)
 		return NULL;
 	for (i = 0; i < n; i++) {
 		for (j = 0; j < 16; j++) {
-			blocks[i].b[j] = (info->stream[addr++] << 4) + tiles_addr;
+			blocks[i].b[j] = (gl_stream[addr++] << 4) + tiles_addr;
 		}
 	}
 	return blocks;
@@ -274,7 +270,6 @@ static blocks_type *get_blocks(int n, int addr, int tiles_addr)
 static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *od)
 {
 	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
-	info_t *info = get_info();
 	int i, j, pixbuf_offset = 0;
 
 	blocks_type *blocks = get_blocks(256, blockdata_addr, tiles_addr);
@@ -285,7 +280,7 @@ static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_
 		for (i = 0; i < map_w; i++) {
 			u8 block_pixbuf[PIXBUF_BLOCK_SIZE];
 			int y, block_offset = 0;
-			int *block = blocks[info->stream[r_map_pointer + j * map_w + i]].b;
+			int *block = blocks[gl_stream[r_map_pointer + j * map_w + i]].b;
 
 			if (!block)
 				return NULL;
@@ -307,23 +302,21 @@ static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_
 
 static int get_blockdata_addr(u8 tileset_id)
 {
-	info_t *info = get_info();
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
-	int bank_id = info->stream[header_offset];
+	int bank_id = gl_stream[header_offset];
 
 	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 1));
 }
 
 static int get_tiles_addr(u8 tileset_id)
 {
-	info_t *info = get_info();
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
-	int bank_id = info->stream[header_offset];
+	int bank_id = gl_stream[header_offset];
 
 	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 2 + 1));
 }
 
-#define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", info->stream[addr++]))
+#define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", gl_stream[addr++]))
 #define DICT_ADD_ADDR(dict, key) do {\
 	PyDict_SetItemString(dict, key, Py_BuildValue("i", GET_ADDR(addr)));\
 	addr += 2;\
@@ -372,8 +365,7 @@ typedef struct {
 
 static int get_map_addr(int i)
 {
-	info_t *info = get_info();
-	return ROM_ADDR(info->stream[ROM_ADDR(3, 0x423D) + i], GET_ADDR(0x01AE + i * 2));
+	return ROM_ADDR(gl_stream[ROM_ADDR(3, 0x423D) + i], GET_ADDR(0x01AE + i * 2));
 }
 
 typedef struct {
@@ -404,11 +396,10 @@ typedef struct {
 static PyObject *get_wild_pokemons(int id)
 {
 	PyObject *list = PyList_New(0);
-	info_t *info = get_info();
 	int addr = ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + id * 2))) + 1;
 
-	while (info->stream[addr]) {
-		PyList_Append(list, Py_BuildValue("ii", info->stream[addr], info->stream[addr + 1]));
+	while (gl_stream[addr]) {
+		PyList_Append(list, Py_BuildValue("ii", gl_stream[addr], gl_stream[addr + 1]));
 		addr += 2;
 	}
 	return list;
@@ -416,7 +407,6 @@ static PyObject *get_wild_pokemons(int id)
 
 static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 {
-	info_t *info = get_info();
 	PyObject *dict = PyDict_New();
 	PyObject *list, *warp_list, *sign_list, *entity_list;
 	int blockdata_addr, tiles_addr, rom_addr;
@@ -435,7 +425,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	add_loaded_map(addr);
 
 	//printf("0x%06x\n", addr);
-	if (addr > info->rom_stat.st_size) {
+	if (addr > gl_rom_stat.st_size) {
 		return NULL;
 	}
 
@@ -458,13 +448,13 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	{
 		int word_addr;
 
-		blockdata_addr = get_blockdata_addr(info->stream[addr]);
-		tiles_addr = get_tiles_addr(info->stream[addr]);
+		blockdata_addr = get_blockdata_addr(gl_stream[addr]);
+		tiles_addr = get_tiles_addr(gl_stream[addr]);
 
 		DICT_ADD_BYTE(dict, "tileset");
-		map_h = info->stream[addr];
+		map_h = gl_stream[addr];
 		DICT_ADD_BYTE(dict, "map_h");
-		map_w = info->stream[addr];
+		map_w = gl_stream[addr];
 		DICT_ADD_BYTE(dict, "map_w");
 
 		word_addr = GET_ADDR(addr);
@@ -480,7 +470,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		DICT_ADD_ADDR(dict, "map-text-pointer");
 		DICT_ADD_ADDR(dict, "map-script-pointer");
 
-		connect_byte = info->stream[addr];
+		connect_byte = gl_stream[addr];
 		DICT_ADD_BYTE(dict, "connect_byte");
 	}
 
@@ -521,7 +511,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 
 		/* Warps */
 		warp_list = PyList_New(0);
-		nb = info->stream[addr++];
+		nb = gl_stream[addr++];
 		for (i = 0; i < nb; i++) {
 			PyObject *warp_dict = PyDict_New();
 
@@ -535,7 +525,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 
 		/* Signs */
 		sign_list = PyList_New(0);
-		nb = info->stream[addr++];
+		nb = gl_stream[addr++];
 		for (i = 0; i < nb; i++) {
 			PyObject *sign_dict = PyDict_New();
 
@@ -543,17 +533,17 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 			DICT_ADD_BYTE(sign_dict, "x");
 
 			{
-				u8 tid = info->stream[addr];
+				u8 tid = gl_stream[addr];
 				int base_addr = (addr / 0x4000) * 0x4000;
 				int text_pointer = GET_ADDR(base_addr + (text_pointers + ((tid - 1) << 1)) % 0x4000);
 				int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
-				int rom_text_addr = ROM_ADDR(info->stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
+				int rom_text_addr = ROM_ADDR(gl_stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
 				char buffer[512] = {0};
 				u8 c;
 				unsigned int d = 0;
 
-				if (info->stream[rom_text_pointer] == 0x17) {
-					while ((c = info->stream[rom_text_addr])) {
+				if (gl_stream[rom_text_pointer] == 0x17) {
+					while ((c = gl_stream[rom_text_addr])) {
 						char *append = get_pkmn_char(c, "¿?");
 
 						memcpy(buffer + d, append, strlen(append));
@@ -573,17 +563,17 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 
 		/* Entities (normal people, trainers, items) */
 		entity_list = PyList_New(0);
-		nb = info->stream[addr++];
+		nb = gl_stream[addr++];
 		for (i = 0; i < nb; i++) {
 			u8 tid;
 			PyObject *entities_dict = PyDict_New();
 
 			DICT_ADD_BYTE(entities_dict, "pic_id");
-			PyDict_SetItemString(entities_dict, "y", Py_BuildValue("i", info->stream[addr++] - 4));	// -4 for some reason. Don't ask me why.
-			PyDict_SetItemString(entities_dict, "x", Py_BuildValue("i", info->stream[addr++] - 4));
+			PyDict_SetItemString(entities_dict, "y", Py_BuildValue("i", gl_stream[addr++] - 4));	// -4 for some reason. Don't ask me why.
+			PyDict_SetItemString(entities_dict, "x", Py_BuildValue("i", gl_stream[addr++] - 4));
 			DICT_ADD_BYTE(entities_dict, "mvt_1");
 			DICT_ADD_BYTE(entities_dict, "mvt_2");
-			tid = info->stream[addr];
+			tid = gl_stream[addr];
 			DICT_ADD_BYTE(entities_dict, "text_id");
 
 			if (tid & (1 << 6)) {
@@ -620,7 +610,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 
 		if (!(connect_byte & cons[i].k))
 			continue;
-		memcpy(&con, &info->stream[connection_addr], sizeof(con));
+		memcpy(&con, &gl_stream[connection_addr], sizeof(con));
 		connection_addr += sizeof(con);
 
 		switch (cons[i].c) {

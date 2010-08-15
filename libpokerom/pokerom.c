@@ -20,6 +20,9 @@
 
 #include "pokerom.h"
 
+u8 *gl_stream;
+struct stat gl_rom_stat;
+
 static struct {
 	u8 c;
 	char *s;
@@ -50,12 +53,6 @@ static struct {
 	{0xFC, "6"}, {0xFD, "7"}, {0xFE, "8"}, {0xFF, "9"}
 };
 
-info_t *get_info()
-{
-	static info_t i;
-	return &i;
-}
-
 char *get_pkmn_char(u8 c, char *def_ret)
 {
 	size_t i;
@@ -71,7 +68,6 @@ PyObject *read_addr(PyObject *self, PyObject *args)
 	(void)self;
 	int offset = 0;
 	int addr, rom_addr;
-	info_t *info = get_info();
 
 	PyArg_ParseTuple(args, "i", &offset);
 	addr = GET_ADDR(offset);
@@ -84,13 +80,12 @@ static PyObject *read_data(PyObject *self, PyObject *args)
 	(void)self;
 	u8 *s;
 	int offset;
-	info_t *info = get_info();
 	PyObject *list = PyList_New(0);
 
 	PyArg_ParseTuple(args, "is", &offset, &s);
 	for (; *s; s++) {
 		if (*s == 'B') { /* 8-bit */
-			PyList_Append(list, Py_BuildValue("i", info->stream[offset]));
+			PyList_Append(list, Py_BuildValue("i", gl_stream[offset]));
 			offset++;
 		} else if (*s == 'W') { /* 16-bit */
 			PyList_Append(list, read_addr(NULL, Py_BuildValue("(i)", offset, NULL)));
@@ -105,12 +100,11 @@ static PyObject *load_rom(PyObject *self, PyObject *args)
 	(void)self;
 	char *fname;
 	int fd;
-	info_t *info = get_info();
 
 	PyArg_ParseTuple(args, "s", &fname);
 	if ((fd = open(fname, O_RDONLY)) < 0
-			|| fstat(fd, &info->rom_stat)
-			|| (info->stream = mmap(0, info->rom_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
+			|| fstat(fd, &gl_rom_stat)
+			|| (gl_stream = mmap(0, gl_rom_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
 		return PyErr_SetFromErrnoWithFilename(PyExc_IOError, fname);
 	}
 	return Py_BuildValue("z", NULL);

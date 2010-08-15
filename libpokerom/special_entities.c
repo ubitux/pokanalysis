@@ -24,13 +24,12 @@
 
 PyObject *get_special_items(int map_id)
 {
-	info_t *info = get_info();
 	int map_id_addr;
 	int index = 0;
 	PyObject *list = PyList_New(0);
 
-	for (map_id_addr = MAP_IDS_ADDR; info->stream[map_id_addr] != 0xff; map_id_addr++, index += 2) {
-		if (info->stream[map_id_addr] != map_id)
+	for (map_id_addr = MAP_IDS_ADDR; gl_stream[map_id_addr] != 0xff; map_id_addr++, index += 2) {
+		if (gl_stream[map_id_addr] != map_id)
 			continue;
 
 		int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + index);
@@ -38,32 +37,31 @@ PyObject *get_special_items(int map_id)
 
 		// [MAP #%03d] Y=%03d X=%03d item-id=%03d type=0x%02x unknown-address=0x%04x,
 		PyList_Append(list, Py_BuildValue("iiiii",
-					info->stream[item_addr],
-					info->stream[item_addr + 1],
-					info->stream[item_addr + 2],
-					info->stream[item_addr + 3],
-					GET_ADDR(info->stream[item_addr + 4])));
+					gl_stream[item_addr],
+					gl_stream[item_addr + 1],
+					gl_stream[item_addr + 2],
+					gl_stream[item_addr + 3],
+					GET_ADDR(gl_stream[item_addr + 4])));
 	}
 	return list;
 }
 
 void apply_filter(u8 *pixbuf, int map_id, int w)
 {
-	info_t *info = get_info();
 	int map_id_addr;
 	int index = 0;
 
 	if (!pixbuf)
 		return;
 
-	for (map_id_addr = MAP_IDS_ADDR; info->stream[map_id_addr] != 0xff; map_id_addr++, index += 2) {
-		if (info->stream[map_id_addr] != map_id)
+	for (map_id_addr = MAP_IDS_ADDR; gl_stream[map_id_addr] != 0xff; map_id_addr++, index += 2) {
+		if (gl_stream[map_id_addr] != map_id)
 			continue;
 
 		int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + index);
 		int item_addr = ROM_ADDR(0x11, GET_ADDR(item_ptr_addr));
-		int y = info->stream[item_addr];
-		int x = info->stream[item_addr + 1];
+		int y = gl_stream[item_addr];
+		int x = gl_stream[item_addr + 1];
 		int offset = (y * 16 * (w * 16) + x * 16) * 3;
 		int i;
 
