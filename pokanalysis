@@ -54,22 +54,6 @@ class Core:
                 self.map_store[self.add_info(data, p3)] = (data, p1, p2)
         self.select_map('Area #1')
 
-    def on_treeview_gameinfo_row_activated(self, treeview, path, column):
-        model = treeview.get_model()
-        value = model.get_value(model.get_iter(path), 2)
-        if re.match("[A-F0-9]{2}:[A-F0-9]{4}", value):
-            (bank_id, addr) = value.split(':')
-            self.gui.get_object('notebook_main').set_current_page(2)
-            self.gui.get_object('combobox_asm_banks').set_active(int(bank_id, 16))
-            text_buffer = self.gui.get_object('textview_asm').get_buffer()
-            text_start_iter = text_buffer.get_start_iter()
-            goto_str = 'RO%s%s:%s' % ('M' % bank_id if bank_id < 0x10 else '', bank_id, addr)
-            match = text_start_iter.forward_search(goto_str, 0)
-            if match:
-                text_buffer.select_range(*match)
-                mark = text_buffer.create_mark('end', match[0], False)
-                self.gui.get_object('textview_asm').scroll_to_mark(mark, 0.05, True, 0.0, 0.1)
-
     def add_info(self, info, pic, area=None):
         model = self.gui.get_object('treestore_gameinfo')
         map_id = self.get_map_str(info['id'])
@@ -174,10 +158,20 @@ class Core:
             for (y, x, item_id, itype, faddr) in special_items:
                 model.append(('<b>%d</b>' % item_id, x, y, '0x%02X' % itype, '0x%04X' % faddr))
 
-    def on_treeview_gameinfo_cursor_changed(self, treeview):
-        (path, column_focus) = treeview.get_cursor()
-        model = treeview.get_model()
-        self.select_map(model.get_value(model.get_iter(path), 1))
+    def on_combobox_asm_bank_changed(self, combobox):
+        bank_id = combobox.get_active()
+        tbuffer = self.gui.get_object('textview_asm').get_buffer()
+        if bank_id not in self.bank_asm:
+            self.bank_asm[bank_id] = pokerom.disasm(bank_id)
+        tbuffer.set_text(self.bank_asm[bank_id])
+
+    def on_eventbox_image_map_button_press_event(self, widget, event):
+        coords = (int(event.x / 16), int(event.y / 16))
+        if coords in self.current_map:
+            info_data = self.current_map[coords]
+            map_id = info_data.get('to_map', None)
+            if map_id is not None:
+                self.select_map(self.get_map_str(map_id), True)
 
     def on_eventbox_image_map_motion_notify_event(self, widget, event):
         (x, y) = coords = (int(event.x / 16), int(event.y / 16))
@@ -192,20 +186,26 @@ class Core:
             widget.window.set_cursor(None)
         self.gui.get_object('label_mapinfo').set_markup('\n'.join(['<b>%s</b>: %s' % (k.title(), v) for (k, v) in info]))
 
-    def on_eventbox_image_map_button_press_event(self, widget, event):
-        coords = (int(event.x / 16), int(event.y / 16))
-        if coords in self.current_map:
-            info_data = self.current_map[coords]
-            map_id = info_data.get('to_map', None)
-            if map_id is not None:
-                self.select_map(self.get_map_str(map_id), True)
+    def on_treeview_gameinfo_cursor_changed(self, treeview):
+        (path, column_focus) = treeview.get_cursor()
+        model = treeview.get_model()
+        self.select_map(model.get_value(model.get_iter(path), 1))
 
-    def on_combobox_asm_bank_changed(self, combobox):
-        bank_id = combobox.get_active()
-        tbuffer = self.gui.get_object('textview_asm').get_buffer()
-        if bank_id not in self.bank_asm:
-            self.bank_asm[bank_id] = pokerom.disasm(bank_id)
-        tbuffer.set_text(self.bank_asm[bank_id])
+    def on_treeview_gameinfo_row_activated(self, treeview, path, column):
+        model = treeview.get_model()
+        value = model.get_value(model.get_iter(path), 2)
+        if re.match("[A-F0-9]{2}:[A-F0-9]{4}", value):
+            (bank_id, addr) = value.split(':')
+            self.gui.get_object('notebook_main').set_current_page(2)
+            self.gui.get_object('combobox_asm_banks').set_active(int(bank_id, 16))
+            text_buffer = self.gui.get_object('textview_asm').get_buffer()
+            text_start_iter = text_buffer.get_start_iter()
+            goto_str = 'RO%s%s:%s' % ('M' % bank_id if bank_id < 0x10 else '', bank_id, addr)
+            match = text_start_iter.forward_search(goto_str, 0)
+            if match:
+                text_buffer.select_range(*match)
+                mark = text_buffer.create_mark('end', match[0], False)
+                self.gui.get_object('textview_asm').scroll_to_mark(mark, 0.05, True, 0.0, 0.1)
 
     def on_treeview_pokedex_cursor_changed(self, treeview):
         (path, column_focus) = treeview.get_cursor()
