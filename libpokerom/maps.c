@@ -45,28 +45,6 @@ static char **get_color_set(char *color_key)
 #define TILE_X 8
 #define TILE_Y 8
 
-/* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
-static void load_tile(u8 *pixbuf, int addr, char *color_key)
-{
-	int x, y, pixbuf_offset = 0;
-	char **colors = get_color_set(color_key);
-
-	if (addr > gl_rom_stat.st_size) {
-		memset(pixbuf, 0, TILE_X * TILE_Y * 3);
-		return;
-	}
-	for (y = 0; y < TILE_Y; y++) {
-		u8 bit1 = gl_stream[addr++];
-		u8 bit2 = gl_stream[addr++];
-		u8 mask = 1 << 7;
-
-		for (x = 0; x < TILE_X; x++, mask >>= 1) {
-			memcpy(&pixbuf[pixbuf_offset], colors[(!!(bit1 & mask) << 1) | !!(bit2 & mask)], 3);
-			pixbuf_offset += 3;
-		}
-	}
-}
-
 static void load_tile_from_ptr(u8 *pixbuf, u8 *src, char *color_key)
 {
 	int x, y, pixbuf_offset = 0;
@@ -82,6 +60,16 @@ static void load_tile_from_ptr(u8 *pixbuf, u8 *src, char *color_key)
 			pixbuf_offset += 3;
 		}
 	}
+}
+
+/* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
+static void load_tile(u8 *pixbuf, int addr, char *color_key)
+{
+	if (addr > gl_rom_stat.st_size) {
+		memset(pixbuf, 0, TILE_X * TILE_Y * 3);
+		return;
+	}
+	load_tile_from_ptr(pixbuf, &gl_stream[addr], color_key);
 }
 
 #define PIXBUF_TILE_SIZE	(TILE_Y * TILE_X * 3)
