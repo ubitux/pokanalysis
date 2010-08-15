@@ -768,15 +768,15 @@ static PyObject *get_buffer()
 	struct line *line = lines;
 	PyObject *buffer = PyString_FromString("");
 
-	// TODO: free label list
 	while (line) {
 		struct line *old_line;
-		struct label *lbl;
+		struct label *lbl = labels, *old_lbl = NULL;
 		int first = 1;
 
-		for (lbl = labels; lbl; lbl = lbl->next) {
+		while (lbl) {
 			if (lbl->to == line->addr) {
 				char addr[5];
+				struct label *next = lbl->next;
 
 				snprintf(addr, sizeof(addr), "%04X", lbl->from);
 				if (first) {
@@ -789,7 +789,16 @@ static PyObject *get_buffer()
 								", %s (%s)",
 								addr, get_type_str(lbl->type)));
 				}
+				free(lbl);
+				if (!old_lbl)
+					labels = next;
+				else
+					old_lbl->next = next;
+				lbl = next;
+				continue;
 			}
+			old_lbl = lbl;
+			lbl = lbl->next;
 		}
 		if (!first)
 			PyString_ConcatAndDel(&buffer, PyString_FromString("\n"));
