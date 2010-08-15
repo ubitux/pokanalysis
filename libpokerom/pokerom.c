@@ -65,7 +65,6 @@ char *get_pkmn_char(u8 c, char *def_ret)
 
 PyObject *read_addr(PyObject *self, PyObject *args)
 {
-	(void)self;
 	int offset = 0;
 	int addr, rom_addr;
 
@@ -77,7 +76,6 @@ PyObject *read_addr(PyObject *self, PyObject *args)
 
 static PyObject *read_data(PyObject *self, PyObject *args)
 {
-	(void)self;
 	u8 *s;
 	int offset;
 	PyObject *list = PyList_New(0);
@@ -97,7 +95,6 @@ static PyObject *read_data(PyObject *self, PyObject *args)
 
 static PyObject *load_rom(PyObject *self, PyObject *args)
 {
-	(void)self;
 	char *fname;
 	int fd;
 
@@ -112,7 +109,6 @@ static PyObject *load_rom(PyObject *self, PyObject *args)
 
 static PyObject *str_getbin(PyObject *self, PyObject *args)
 {
-	(void)self;
 	int i, j = 0;
 	char *s;
 	char b[64];
@@ -127,7 +123,6 @@ static PyObject *str_getbin(PyObject *self, PyObject *args)
 
 static PyObject *str_getascii(PyObject *self, PyObject *args)
 {
-	(void)self;
 	int i, j = 0;
 	char *s;
 	char b[64];

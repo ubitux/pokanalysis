@@ -259,9 +259,8 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 	PyDict_SetItemString(dict, "desc", Py_BuildValue("s", b));
 }
 
-PyObject* get_pokedex(PyObject* self)
+PyObject *get_pokedex(PyObject *self)
 {
-	(void)self;
 	int real_pkmn_id;
 	PyObject *list = PyList_New(0);
 

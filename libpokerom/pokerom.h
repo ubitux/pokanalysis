@@ -37,10 +37,14 @@ typedef uint16_t u16;
 # define low_nibble(c)		((c) & 0x0f)
 # define swap_u8(c)		(((c) << 4) | ((c) >> 4))
 
+# ifdef __GNUC__
+#  define self self __attribute__((__unused__))
+# endif
+
 extern u8 *gl_stream;
 extern struct stat gl_rom_stat;
 
-PyObject *disasm(PyObject *self, PyObject *args);
+PyObject *disasm(PyObject *, PyObject *);
 PyObject *get_map_pic(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *);
 PyObject *get_maps(PyObject *);
 PyObject *get_pokedex(PyObject *);
