@@ -776,10 +776,9 @@ static PyObject *get_py_map(submap_type *map)
 	return py_map;
 }
 
-PyObject *get_maps(PyObject *self, PyObject *args)
+PyObject *get_maps(PyObject *self)
 {
 	(void)self;
-	(void)args;
 	int i, addr;
 	PyObject *map, *list = PyList_New(0);
 

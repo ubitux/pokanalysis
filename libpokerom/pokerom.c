@@ -149,8 +149,8 @@ PyMODINIT_FUNC initpokerom(void)
 	static PyMethodDef m[] = {
 		{"load_rom", load_rom, METH_VARARGS, "Load ROM"},
 
-		{"get_maps", get_maps, METH_VARARGS, "Game maps"},
-		{"get_pokedex", get_pokedex, METH_VARARGS, "Get all pokémons"},
+		{"get_maps", (PyCFunction)get_maps, METH_NOARGS, "Game maps"},
+		{"get_pokedex", (PyCFunction)get_pokedex, METH_NOARGS, "Get all pokémons"},
 		{"disasm", disasm, METH_VARARGS, "Disassemble given bank"},
 
 		/* Utils */

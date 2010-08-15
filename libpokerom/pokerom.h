@@ -42,11 +42,12 @@ extern struct stat gl_rom_stat;
 
 PyObject *disasm(PyObject *self, PyObject *args);
 PyObject *get_map_pic(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *);
-PyObject *get_maps(PyObject *, PyObject *);
-PyObject *get_pokedex(PyObject *, PyObject *);
+PyObject *get_maps(PyObject *);
+PyObject *get_pokedex(PyObject *);
 PyObject *get_special_items(int map_id);
 PyObject *grab_tile(PyObject *, PyObject *);
 PyObject *read_addr(PyObject *, PyObject *);
+
 char *get_pkmn_char(u8, char *);
 void apply_filter(u8 *pixbuf, int map_id, int w);
 void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);

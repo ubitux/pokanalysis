@@ -804,7 +804,6 @@ static PyObject *get_buffer()
 PyObject *disasm(PyObject *self, PyObject *args)
 {
 	(void)self;
-	(void)args;
 	int bank_id = 0;
 	struct line *line;
 
