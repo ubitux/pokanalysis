@@ -44,6 +44,7 @@ class Core:
             if len(pkmn_map['info']) > 1:
                 self.map_store['Area #%d' % area_id] = (pkmn_map['objects'], None, None, p1, p2)
                 area = model.append(None, (p3, 'Area #%d' % area_id, '%d maps' % len(pkmn_map['info'])))
+                self.map_nodes['Area #%d' % area_id] = area
                 area_id += 1
                 for info in pkmn_map['info']:
                     (p1, p2, p3) = self.get_map_pix(info)
@@ -75,7 +76,7 @@ class Core:
         ### Map Header
         map_boxes_y, map_boxes_x = info['map_h'] * 2, info['map_w'] * 2
 
-        model_map_node = model.append(area, (pic, map_id, '%02X:%04X' % (info['bank-id'], info['addr'])))
+        self.map_nodes[map_id] = model_map_node = model.append(area, (pic, map_id, '%02X:%04X' % (info['bank-id'], info['addr'])))
         model.append(model_map_node, (None, 'tileset', '0x%02X' % info['tileset']))
         model.append(model_map_node, (None, 'dimensions', '%dx%d ' % (info['map_w'], info['map_h'])))
         model.append(model_map_node, (None, 'map pointer', '%02X:%04X' % (info['bank-id'], info['map-pointer'])))
@@ -139,12 +140,19 @@ class Core:
 
         return map_id
 
-    def select_map(self, map_id):
+    def select_map(self, map_id, set_focus=False):
         if map_id not in self.map_store:
             if map_id == self.get_map_str(255):
                 map_id = 'Area #1'
             else:
                 return
+
+        if set_focus:
+            tview = self.gui.get_object('treeview_gameinfo')
+            path = tview.get_model().get_path(self.map_nodes[map_id])
+            tview.set_cursor(path)
+            tview.scroll_to_cell(path, use_align=True, row_align=.5)
+
         (self.current_map, wild_pkmn, special_items, p1, p2) = self.map_store[map_id]
         self.gui.get_object('image_map').set_from_pixbuf(p1)
         self.gui.get_object('image_mini_map').set_from_pixbuf(p2)
@@ -186,7 +194,7 @@ class Core:
             info_data = self.current_map[coords]
             map_id = info_data.get('to_map', None)
             if map_id is not None:
-                self.select_map(self.get_map_str(map_id))
+                self.select_map(self.get_map_str(map_id), True)
 
     def on_combobox_asm_bank_changed(self, combobox):
         bank_id = combobox.get_active()
@@ -263,7 +271,9 @@ class Core:
             lss_banks.append(('Bank %02X' % bank_id,))
         self.gui.get_object('combobox_asm_banks').set_active(0)
 
+        self.map_nodes = {}
         self.load_world()
+
         self.run()
 
     def run(self):
