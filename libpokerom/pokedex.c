@@ -192,14 +192,11 @@ static PyObject *get_pkmn_name(int rom_id)
 	return Py_BuildValue("s", name);
 }
 
-void ntm(u8 *b)
+void trad_num(u8 *b)
 {
-	for (; *b; b++) {
-		//printf(" %02X (%d) ", *b, *b - 0xf6);
+	for (; *b; b++)
 		if (*b != ' ')
 			*b = *b - 0xF6 + '0';
-	}
-	//printf("\n");
 }
 
 static void set_pkmn_texts(PyObject *dict, int rom_id)
@@ -232,7 +229,7 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 		input[0] = gl_stream[rom_addr++];
 
 		pkmn_put_nbr((u8*)b, input, 0x02, 0x05);
-		ntm((u8*)b);
+		trad_num((u8*)b);
 
 		dest = b + 3;
 		if (input[0] < (input[1] < 10))
