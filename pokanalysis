@@ -184,7 +184,12 @@ class Core:
             widget.window.set_cursor(self.focus_cursor)
         else:
             widget.window.set_cursor(None)
-        self.gui.get_object('label_mapinfo').set_markup('\n'.join(['<b>%s</b>: %s' % (k.title(), v) for (k, v) in info]))
+        markup_info = []
+        for k, v in info:
+            if k in ('x', 'y'):
+                k = 'map %c' % k
+            markup_info.append('<b>%s</b>: %s' % (k.title(), v))
+        self.gui.get_object('label_mapinfo').set_markup('\n'.join(markup_info))
 
     def on_treeview_gameinfo_cursor_changed(self, treeview):
         (path, column_focus) = treeview.get_cursor()
