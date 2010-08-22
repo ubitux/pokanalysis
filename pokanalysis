@@ -235,6 +235,13 @@ class Core:
                 'ROM ID: 0x%02X\nROM header addr: 0x%06x\n\n[HEADER]\n%s' % (pkmn['rom_id'], pkmn['rom_header_addr'], header))
         self.gui.get_object('label_pkmn').set_markup('#%s <b>%s</b>' % (pkmn['fmt_id'], pkmn['name']))
 
+        stats = ('HP', 'ATK', 'DEF', 'SPD', 'SPE')
+        for i, stat in enumerate(stats, 1):
+            value = pkmn['header_values'][keys[i]]
+            pgbar = self.gui.get_object('progressbar_stat_' + stat)
+            pgbar.set_fraction(value / 255.)
+            pgbar.set_text('%d' % value)
+
     def __init__(self):
         if len(sys.argv) != 2:
             print('Usage: %s file' % sys.argv[0])

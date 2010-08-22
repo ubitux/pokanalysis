@@ -82,11 +82,11 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	PyObject *dict = PyDict_New();
 
 	PyDict_SetItemString(dict, "0x00_pokemon_id", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x01_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x02_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x03_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x04_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x05_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x01_base_HP", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x02_base_ATK", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x03_base_DEF", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x04_base_SPD", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x05_base_SPE", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x06_unknown", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x07_unknown", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x08_unknown", Py_BuildValue("i", *pkmn_header++));
