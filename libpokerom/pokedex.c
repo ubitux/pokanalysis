@@ -87,18 +87,17 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	PyDict_SetItemString(dict, "0x03_base_DEF", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x04_base_SPD", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x05_base_SPE", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x06_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x07_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x06_type1", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x07_type2", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x08_unknown", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x09_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x0a_sprite_dim", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x0b_sprite_addr", Py_BuildValue("i", *(pkmn_header + 1) << 8 | *pkmn_header)); pkmn_header += 2;
-	PyDict_SetItemString(dict, "0x0d_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x0e_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x0f_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x10_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x11_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x12_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x0a_sprite_front_dim", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x0b_sprite_front_addr", Py_BuildValue("i", *(pkmn_header + 1) << 8 | *pkmn_header)); pkmn_header += 2;
+	PyDict_SetItemString(dict, "0x0d_sprite_back_addr", Py_BuildValue("i", *(pkmn_header + 1) << 8 | *pkmn_header)); pkmn_header += 2;
+	PyDict_SetItemString(dict, "0x0f_initial_attack_1", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x10_initial_attack_2", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x11_initial_attack_3", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x12_initial_attack_4", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x13_unknown", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x14_unknown", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x15_unknown", Py_BuildValue("i", *pkmn_header++));
@@ -108,7 +107,6 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	PyDict_SetItemString(dict, "0x19_unknown", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x1a_unknown", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x1b_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x1c_unknown", Py_BuildValue("i", *pkmn_header++));
 	return dict;
 }
 
