@@ -153,7 +153,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 	ff8c = 8 * high_nibble(sprite_dim);
 	ff8d = 8 * (ff8d + 7 - high_nibble(sprite_dim));
 
-	uncompress_sprite(b + 0x188, ROM_ADDR(get_bank_from_stupid_pkmn_id(stupid_pkmn_id), sprite_addr), gl_stream);
+	uncompress_sprite(b + 0x188, ROM_ADDR(get_bank_from_stupid_pkmn_id(stupid_pkmn_id), sprite_addr));
 	//printf("pkmn_id=%02X sprite_addr=%04X dim=%02X ff8b=%02X ff8c=%02X ff8d=%02X\n", real_pkmn_id, sprite_addr, sprite_dim, ff8b, ff8c, ff8d);
 
 	memset(b, 0, 0x188);

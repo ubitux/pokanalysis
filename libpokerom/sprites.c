@@ -1,7 +1,5 @@
 #include "pokerom.h"
 
-static u8 *input_data;
-
 static u8 *buffer;		// output buffer
 static u16 a188 = 0x0000;	// focus part1
 static u16 a310 = 0x0188;	// focus part2
@@ -35,7 +33,7 @@ static u8 read_buffer(u16 addr)
 
 static u8 sprite_get_next_byte() // 268B
 {
-	return input_data[current_addr++];
+	return gl_stream[current_addr++];
 }
 
 static u8 sprite_get_next_bit() // 2670
@@ -97,7 +95,7 @@ static u8 sprite_update_input_ptr(u8 nibble, u16 *_hl, u16 *_de) // 276D
 	hl = (condition == 0) ? input_p1 : input_p2;
 	hl += (de & 0x00ff);
 
-	a = input_data[hl];
+	a = gl_stream[hl];
 	if (swap_flag == 0)
 		a = swap_u8(a);
 
@@ -185,9 +183,9 @@ static void sprite_uncompress_data() // 27C7
 			u8 a, c, v;
 
 			v = read_buffer(de);
-			a = input_data[0x2867 + high_nibble(v)];
+			a = gl_stream[0x2867 + high_nibble(v)];
 			c = swap_u8(a);
-			a = input_data[0x2867 + low_nibble(v)];
+			a = gl_stream[0x2867 + low_nibble(v)];
 			a |= c;
 			write_buffer(de, a);
 		}
@@ -279,13 +277,12 @@ static int f25d8()
 	return Z_END;
 }
 
-void uncompress_sprite(u8 *dest, int addr, u8 *rom_data) // 251A
+void uncompress_sprite(u8 *dest, int addr) // 251A
 {
 	u8 byte, b, b1, b2, c;
 	u16 p, de;
 	int r;
 
-	input_data = rom_data;
 	current_addr = addr;
 	buffer = dest;
 
@@ -337,7 +334,7 @@ lbl_2595:
 		c++;
 
 	p = 0x269f + 2 * c;
-	p = (rom_data[p + 1] << 8) | rom_data[p];
+	p = (gl_stream[p + 1] << 8) | gl_stream[p];
 
 	c++;
 	de = 0x0000;
