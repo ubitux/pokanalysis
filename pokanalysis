@@ -150,7 +150,7 @@ class Core:
         if wild_pkmn:
             for (level, i) in wild_pkmn:
                 pkmn = self.pokedex_rom_id[i]
-                model.append((pkmn['fmt_name'], level, pkmn['fmt_rom_id'], pkmn['pic']))
+                model.append((pkmn['fmt_name'], level, pkmn['id'], pkmn['pic']))
 
         model = self.gui.get_object('liststore_specials')
         model.clear()
@@ -159,7 +159,8 @@ class Core:
                 model.append(('<b>%d</b>' % item_id, x, y, '0x%02X' % itype, '0x%04X' % faddr))
 
     def select_pkmn(self, pkmn_id):
-        self.gui.get_object('treeview_pokedex').set_cursor(pkmn_id - 1)
+        tview = self.gui.get_object('treeview_pokedex')
+        tview.set_cursor(pkmn_id - 1)
 
     def on_combobox_asm_bank_changed(self, combobox):
         bank_id = combobox.get_active()
@@ -266,6 +267,11 @@ class Core:
                 txt += ' (%d)' % evol['stone-id']
             evol_lstore.append((pkmn_id, pkmn['pic'], pkmn['fmt_name'], txt))
 
+    def on_treeview_wild_pkmn_row_activated(self, treeview, path, column):
+        self.gui.get_object('notebook_main').set_current_page(0)
+        model = treeview.get_model()
+        self.gui.get_object('treeview_pokedex').set_cursor(model.get_value(model.get_iter(path), 2) - 1)
+
     def __init__(self):
         if len(sys.argv) != 2:
             print('Usage: %s file' % sys.argv[0])
@@ -285,6 +291,7 @@ class Core:
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
             'on_treeview_gameinfo_row_activated': self.on_treeview_gameinfo_row_activated,
             'on_treeview_pokedex_cursor_changed': self.on_treeview_pokedex_cursor_changed,
+            'on_treeview_wild_pkmn_row_activated': self.on_treeview_wild_pkmn_row_activated,
             'on_window_destroy': lambda w: gtk.main_quit(),
         })
 

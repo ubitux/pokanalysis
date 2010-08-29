@@ -26,18 +26,6 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="liststore_wild_pkmn">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name level -->
-      <column type="gint"/>
-      <!-- column-name rom_id -->
-      <column type="gchararray"/>
-      <!-- column-name pixbuf -->
-      <column type="GdkPixbuf"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="liststore_asm_banks">
     <columns>
       <!-- column-name bank -->
@@ -72,6 +60,18 @@
       <column type="gchararray"/>
       <!-- column-name condition -->
       <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_wild_pkmn">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name level -->
+      <column type="gint"/>
+      <!-- column-name rom_id -->
+      <column type="gint"/>
+      <!-- column-name pixbuf -->
+      <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window">
@@ -643,6 +643,7 @@
                         <property name="model">liststore_wild_pkmn</property>
                         <property name="headers_clickable">False</property>
                         <property name="search_column">0</property>
+                        <signal name="row_activated" handler="on_treeview_wild_pkmn_row_activated"/>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeviewcolumn_wild_pkmn_name">
                             <property name="title">Pok&#xE9;mon</property>
@@ -667,17 +668,6 @@
                               <object class="GtkCellRendererText" id="cellrenderertext_wild_pkmn_level"/>
                               <attributes>
                                 <attribute name="text">1</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="treeviewcolumn_wild_pkmn_romid">
-                            <property name="title">ROM ID</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext_wild_pkmn_romid"/>
-                              <attributes>
-                                <attribute name="text">2</attribute>
                               </attributes>
                             </child>
                           </object>
