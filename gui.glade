@@ -54,6 +54,26 @@
       <column type="GdkPixbuf"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="liststore_pkmn_attacks">
+    <columns>
+      <!-- column-name level -->
+      <column type="gchararray"/>
+      <!-- column-name attack -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_evolutions">
+    <columns>
+      <!-- column-name pkmn_id -->
+      <column type="gint"/>
+      <!-- column-name pic -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name condition -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="window">
     <property name="width_request">640</property>
     <property name="height_request">480</property>
@@ -186,6 +206,43 @@
                                 <property name="position">1</property>
                               </packing>
                             </child>
+                            <child>
+                              <object class="GtkScrolledWindow" id="scrolledwindow_evolutions">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hscrollbar_policy">automatic</property>
+                                <property name="vscrollbar_policy">automatic</property>
+                                <child>
+                                  <object class="GtkIconView" id="iconview_evolutions">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="model">liststore_evolutions</property>
+                                    <signal name="item_activated" handler="on_iconview_evolutions_item_activated"/>
+                                    <child>
+                                      <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf_evol_pic"/>
+                                      <attributes>
+                                        <attribute name="pixbuf">1</attribute>
+                                      </attributes>
+                                    </child>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="cellrenderertext_evol_name"/>
+                                      <attributes>
+                                        <attribute name="markup">2</attribute>
+                                      </attributes>
+                                    </child>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="cellrenderertext_evol_condition"/>
+                                      <attributes>
+                                        <attribute name="text">3</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -193,127 +250,180 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkHBox" id="hbox1">
+                          <object class="GtkHBox" id="hbox_pkmn_info">
                             <property name="visible">True</property>
                             <property name="spacing">5</property>
                             <child>
-                              <object class="GtkAlignment" id="alignment_stats">
+                              <object class="GtkVBox" id="vbox_pkmn_info">
                                 <property name="visible">True</property>
-                                <property name="yalign">0</property>
-                                <property name="yscale">0</property>
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">10</property>
                                 <child>
-                                  <object class="GtkHBox" id="hbox_stats">
+                                  <object class="GtkAlignment" id="alignment_stats">
                                     <property name="visible">True</property>
-                                    <property name="spacing">5</property>
+                                    <property name="yalign">0</property>
+                                    <property name="yscale">0</property>
                                     <child>
-                                      <object class="GtkVBox" id="vbox_stats_labels">
+                                      <object class="GtkHBox" id="hbox_stats">
                                         <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
+                                        <property name="spacing">5</property>
                                         <child>
-                                          <object class="GtkLabel" id="label_stat_HP">
+                                          <object class="GtkVBox" id="vbox_stats_labels">
                                             <property name="visible">True</property>
-                                            <property name="xalign">1</property>
-                                            <property name="label" translatable="yes">Health Point</property>
+                                            <property name="orientation">vertical</property>
+                                            <child>
+                                              <object class="GtkLabel" id="label_stat_HP">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">1</property>
+                                                <property name="label" translatable="yes">Health Point</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="label_stat_ATK">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">1</property>
+                                                <property name="label" translatable="yes">Attack</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="label_stat_DEF">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">1</property>
+                                                <property name="label" translatable="yes">Defense</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">2</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="label_stat_SPD">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">1</property>
+                                                <property name="label" translatable="yes">Speed</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">3</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="label_stat_SPE">
+                                                <property name="visible">True</property>
+                                                <property name="xalign">1</property>
+                                                <property name="label" translatable="yes">Special</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">4</property>
+                                              </packing>
+                                            </child>
                                           </object>
                                           <packing>
                                             <property name="position">0</property>
                                           </packing>
                                         </child>
                                         <child>
-                                          <object class="GtkLabel" id="label_stat_ATK">
+                                          <object class="GtkVBox" id="vbox_stats_progressbars">
                                             <property name="visible">True</property>
-                                            <property name="xalign">1</property>
-                                            <property name="label" translatable="yes">Attack</property>
+                                            <property name="orientation">vertical</property>
+                                            <child>
+                                              <object class="GtkProgressBar" id="progressbar_stat_HP">
+                                                <property name="visible">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkProgressBar" id="progressbar_stat_ATK">
+                                                <property name="visible">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkProgressBar" id="progressbar_stat_DEF">
+                                                <property name="visible">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">2</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkProgressBar" id="progressbar_stat_SPD">
+                                                <property name="visible">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">3</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkProgressBar" id="progressbar_stat_SPE">
+                                                <property name="visible">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="position">4</property>
+                                              </packing>
+                                            </child>
                                           </object>
                                           <packing>
                                             <property name="position">1</property>
                                           </packing>
                                         </child>
-                                        <child>
-                                          <object class="GtkLabel" id="label_stat_DEF">
-                                            <property name="visible">True</property>
-                                            <property name="xalign">1</property>
-                                            <property name="label" translatable="yes">Defense</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">2</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkLabel" id="label_stat_SPD">
-                                            <property name="visible">True</property>
-                                            <property name="xalign">1</property>
-                                            <property name="label" translatable="yes">Speed</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">3</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkLabel" id="label_stat_SPE">
-                                            <property name="visible">True</property>
-                                            <property name="xalign">1</property>
-                                            <property name="label" translatable="yes">Special</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">4</property>
-                                          </packing>
-                                        </child>
                                       </object>
-                                      <packing>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkVBox" id="vbox_stats_progressbars">
-                                        <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
-                                        <child>
-                                          <object class="GtkProgressBar" id="progressbar_stat_HP">
-                                            <property name="visible">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">0</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkProgressBar" id="progressbar_stat_ATK">
-                                            <property name="visible">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">1</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkProgressBar" id="progressbar_stat_DEF">
-                                            <property name="visible">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">2</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkProgressBar" id="progressbar_stat_SPD">
-                                            <property name="visible">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">3</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkProgressBar" id="progressbar_stat_SPE">
-                                            <property name="visible">True</property>
-                                          </object>
-                                          <packing>
-                                            <property name="position">4</property>
-                                          </packing>
-                                        </child>
-                                      </object>
-                                      <packing>
-                                        <property name="position">1</property>
-                                      </packing>
                                     </child>
                                   </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_attacks">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="hscrollbar_policy">automatic</property>
+                                    <property name="vscrollbar_policy">automatic</property>
+                                    <child>
+                                      <object class="GtkTreeView" id="treeview_pkmn_attacks">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="model">liststore_pkmn_attacks</property>
+                                        <property name="headers_clickable">False</property>
+                                        <property name="search_column">0</property>
+                                        <child>
+                                          <object class="GtkTreeViewColumn" id="treeviewcolumn_level">
+                                            <property name="title">Level</property>
+                                            <child>
+                                              <object class="GtkCellRendererText" id="cellrenderertext_level"/>
+                                              <attributes>
+                                                <attribute name="text">0</attribute>
+                                              </attributes>
+                                            </child>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkTreeViewColumn" id="treeviewcolumn_attack">
+                                            <property name="title">Attack</property>
+                                            <child>
+                                              <object class="GtkCellRendererText" id="cellrenderertext_attack"/>
+                                              <attributes>
+                                                <attribute name="markup">1</attribute>
+                                              </attributes>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="position">1</property>
+                                  </packing>
                                 </child>
                               </object>
                               <packing>

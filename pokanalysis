@@ -158,6 +158,9 @@ class Core:
             for (y, x, item_id, itype, faddr) in special_items:
                 model.append(('<b>%d</b>' % item_id, x, y, '0x%02X' % itype, '0x%04X' % faddr))
 
+    def select_pkmn(self, pkmn_id):
+        self.gui.get_object('treeview_pokedex').set_cursor(pkmn_id - 1)
+
     def on_combobox_asm_bank_changed(self, combobox):
         bank_id = combobox.get_active()
         tbuffer = self.gui.get_object('textview_asm').get_buffer()
@@ -190,6 +193,10 @@ class Core:
                 k = 'map %c' % k
             markup_info.append('<b>%s</b>: %s' % (k.title(), v))
         self.gui.get_object('label_mapinfo').set_markup('\n'.join(markup_info))
+
+    def on_iconview_evolutions_item_activated(self, iconview, path):
+        model = iconview.get_model()
+        self.select_pkmn(self.pokedex_rom_id[model.get_value(model.get_iter(path), 0)]['id'])
 
     def on_treeview_gameinfo_cursor_changed(self, treeview):
         (path, column_focus) = treeview.get_cursor()
@@ -242,6 +249,23 @@ class Core:
             pgbar.set_fraction(value / 255.)
             pgbar.set_text('%d' % value)
 
+        atk_lstore = self.gui.get_object('liststore_pkmn_attacks')
+        atk_lstore.clear()
+        for (level, atk) in pkmn['attacks']:
+            atk_lstore.append(('Native' if not level else '%d' % level, '<b>%s</b>' % atk))
+
+        evol_lstore = self.gui.get_object('liststore_evolutions')
+        evol_lstore.clear()
+        for evol in pkmn['evolutions']:
+            pkmn_id = evol['pkmn-id']
+            pkmn = self.pokedex_rom_id[pkmn_id]
+            txt = evol['type']
+            if txt == 'level':
+                txt += ' %d' % evol['level']
+            elif txt == 'stone':
+                txt += ' (%d)' % evol['stone-id']
+            evol_lstore.append((pkmn_id, pkmn['pic'], pkmn['fmt_name'], txt))
+
     def __init__(self):
         if len(sys.argv) != 2:
             print('Usage: %s file' % sys.argv[0])
@@ -257,6 +281,7 @@ class Core:
             'on_combobox_asm_bank_changed': self.on_combobox_asm_bank_changed,
             'on_eventbox_image_map_button_press_event': self.on_eventbox_image_map_button_press_event,
             'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
+            'on_iconview_evolutions_item_activated': self.on_iconview_evolutions_item_activated,
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
             'on_treeview_gameinfo_row_activated': self.on_treeview_gameinfo_row_activated,
             'on_treeview_pokedex_cursor_changed': self.on_treeview_pokedex_cursor_changed,

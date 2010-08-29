@@ -110,6 +110,67 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	return dict;
 }
 
+#define PKMN_EVENTS_ADDR(i)	ROM_ADDR(0x0E, GET_ADDR(ROM_ADDR(0x0E, 0x705c + (i - 1) * 2)))
+
+static PyObject *get_pkmn_evolutions(u8 rom_pkmn_id)
+{
+	u8 *ptr = &gl_stream[PKMN_EVENTS_ADDR(rom_pkmn_id)];
+	PyObject *list = PyList_New(0);
+
+	while (*ptr) {
+		PyObject *evol = PyDict_New();
+
+		switch (*ptr++) {
+		case 1:
+			PyDict_SetItemString(evol, "type", Py_BuildValue("s", "level"));
+			PyDict_SetItemString(evol, "level", Py_BuildValue("i", *ptr++));
+			PyDict_SetItemString(evol, "pkmn-id", Py_BuildValue("i", *ptr++));
+			break;
+		case 2:
+			PyDict_SetItemString(evol, "type", Py_BuildValue("s", "stone"));
+			PyDict_SetItemString(evol, "stone-id", Py_BuildValue("i", *ptr++));
+			PyDict_SetItemString(evol, "level", Py_BuildValue("i", *ptr++));
+			PyDict_SetItemString(evol, "pkmn-id", Py_BuildValue("i", *ptr++));
+			break;
+		case 3:
+			PyDict_SetItemString(evol, "type", Py_BuildValue("s", "exchange"));
+			PyDict_SetItemString(evol, "level", Py_BuildValue("i", *ptr++));
+			PyDict_SetItemString(evol, "pkmn-id", Py_BuildValue("i", *ptr++));
+			break;
+		}
+		PyList_Append(list, evol);
+	}
+	return list;
+}
+
+static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
+{
+	PyObject *list = PyList_New(0);
+	int n = 0;
+
+	/* Native attacks */
+	for (ptr += 0x0f; ptr[n] && n < 4; n++) {
+		char attack[20];
+
+		sprintf(attack, "ATK %d", ptr[n] & 0xff);
+		PyList_Append(list, Py_BuildValue("is", 0, attack));
+	}
+
+	/* Levels attacks */
+	ptr = &gl_stream[PKMN_EVENTS_ADDR(rom_pkmn_id)];
+	while (*ptr != 0x00)
+		ptr++;
+	ptr++;
+	while (*ptr) {
+		char attack[20];
+
+		PyList_Append(list, Py_BuildValue("is", *ptr++, attack));
+		sprintf(attack, "ATK %d", *ptr++ & 0xff);
+	}
+
+	return list;
+}
+
 static int get_pkmn_header_address(u8 rom_pkmn_id)
 {
 	if (rom_pkmn_id == 0x15)	// Mew
@@ -269,8 +330,11 @@ PyObject *get_pokedex(PyObject *self)
 
 		set_pkmn_texts(pkmn, rom_id);
 
+		PyDict_SetItemString(pkmn, "attacks", get_pkmn_attacks(&gl_stream[header_addr], rom_id));
+		PyDict_SetItemString(pkmn, "evolutions", get_pkmn_evolutions(rom_id));
 		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
 		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&gl_stream[header_addr]));
+		PyDict_SetItemString(pkmn, "id", Py_BuildValue("i", real_pkmn_id));
 		PyDict_SetItemString(pkmn, "rom_id", Py_BuildValue("i", rom_id));
 
 		PyList_Append(list, pkmn);
