@@ -110,6 +110,24 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	return dict;
 }
 
+static void get_pkmn_item_name(char *iname, u8 item_id)
+{
+	int i = 0, rom_addr = ROM_ADDR(0x1, GET_ADDR(0x375d + (4 - 1) * 2));
+	char *s;
+
+	while (--item_id) {
+		while (gl_stream[rom_addr] != 0x50)
+			rom_addr++;
+		rom_addr++;
+	}
+
+	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 30) {
+		strcpy(&iname[i], s);
+		i += strlen(s);
+	}
+	iname[i] = 0;
+}
+
 #define PKMN_EVENTS_ADDR(i)	ROM_ADDR(0x0E, GET_ADDR(ROM_ADDR(0x0E, 0x705c + (i - 1) * 2)))
 
 static PyObject *get_pkmn_evolutions(u8 rom_pkmn_id)
@@ -127,11 +145,16 @@ static PyObject *get_pkmn_evolutions(u8 rom_pkmn_id)
 			PyDict_SetItemString(evol, "pkmn-id", Py_BuildValue("i", *ptr++));
 			break;
 		case 2:
+		{
+			char iname[30];
+
 			PyDict_SetItemString(evol, "type", Py_BuildValue("s", "stone"));
-			PyDict_SetItemString(evol, "stone-id", Py_BuildValue("i", *ptr++));
+			get_pkmn_item_name(iname, *ptr++);
+			PyDict_SetItemString(evol, "stone", Py_BuildValue("s", iname));
 			PyDict_SetItemString(evol, "level", Py_BuildValue("i", *ptr++));
 			PyDict_SetItemString(evol, "pkmn-id", Py_BuildValue("i", *ptr++));
 			break;
+		}
 		case 3:
 			PyDict_SetItemString(evol, "type", Py_BuildValue("s", "exchange"));
 			PyDict_SetItemString(evol, "level", Py_BuildValue("i", *ptr++));

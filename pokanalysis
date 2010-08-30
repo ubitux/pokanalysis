@@ -267,8 +267,8 @@ class Core:
             if txt == 'level':
                 txt += ' %d' % evol['level']
             elif txt == 'stone':
-                txt += ' (%d)' % evol['stone-id']
-            evol_lstore.append((pkmn_id, pkmn['pic'], pkmn['fmt_name'], txt))
+                txt = evol['stone']
+            evol_lstore.append((pkmn_id, pkmn['pic'], pkmn['fmt_name'], txt.title()))
 
     def on_treeview_wild_pkmn_row_activated(self, treeview, path, column):
         self.gui.get_object('notebook_main').set_current_page(0)
