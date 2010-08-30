@@ -256,7 +256,7 @@ class Core:
         atk_lstore = self.gui.get_object('liststore_pkmn_attacks')
         atk_lstore.clear()
         for (level, atk) in pkmn['attacks']:
-            atk_lstore.append(('Native' if not level else '%d' % level, '<b>%s</b>' % atk))
+            atk_lstore.append(('<i>Native</i>' if not level else '%d' % level, '<b>%s</b>' % atk.title()))
 
         evol_lstore = self.gui.get_object('liststore_evolutions')
         evol_lstore.clear()

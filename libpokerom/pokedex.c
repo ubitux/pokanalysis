@@ -166,6 +166,24 @@ static PyObject *get_pkmn_types(u8 *type_ids)
 	return list;
 }
 
+static void get_pkmn_move_name(char *mname, u8 move_id)
+{
+	int i = 0, rom_addr = ROM_ADDR(0x2C, GET_ADDR(0x375d + (2 - 1) * 2));
+	char *s;
+
+	while (--move_id) {
+		while (gl_stream[rom_addr] != 0x50)
+			rom_addr++;
+		rom_addr++;
+	}
+
+	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 30) {
+		strcpy(&mname[i], s);
+		i += strlen(s);
+	}
+	mname[i] = 0;
+}
+
 static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
 {
 	PyObject *list = PyList_New(0);
@@ -173,10 +191,10 @@ static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
 
 	/* Native attacks */
 	for (ptr += 0x0f; ptr[n] && n < 4; n++) {
-		char attack[20];
+		char mname[30];
 
-		sprintf(attack, "ATK %d", ptr[n] & 0xff);
-		PyList_Append(list, Py_BuildValue("is", 0, attack));
+		get_pkmn_move_name(mname, ptr[n]);
+		PyList_Append(list, Py_BuildValue("is", 0, mname));
 	}
 
 	/* Levels attacks */
@@ -185,10 +203,11 @@ static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
 		ptr++;
 	ptr++;
 	while (*ptr) {
-		char attack[20];
+		char mname[30];
 
-		PyList_Append(list, Py_BuildValue("is", *ptr++, attack));
-		sprintf(attack, "ATK %d", *ptr++ & 0xff);
+		get_pkmn_move_name(mname, ptr[1]);
+		PyList_Append(list, Py_BuildValue("is", ptr[0], mname));
+		ptr += 2;
 	}
 
 	return list;
