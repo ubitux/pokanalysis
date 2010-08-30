@@ -143,6 +143,29 @@ static PyObject *get_pkmn_evolutions(u8 rom_pkmn_id)
 	return list;
 }
 
+static PyObject *get_pkmn_type(u8 type_id)
+{
+	int i = 0, rom_addr = ROM_ADDR(0x09, GET_ADDR(ROM_ADDR(0x09, 0x7DAE + type_id * 2)));
+	char *s;
+	char tname[20];
+
+	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 10) {
+		strcpy(&tname[i], s);
+		i += strlen(s);
+	}
+	tname[i] = 0;
+	return Py_BuildValue("s", tname);
+}
+
+static PyObject *get_pkmn_types(u8 *type_ids)
+{
+	PyObject *list = PyList_New(0);
+
+	PyList_Append(list, get_pkmn_type(type_ids[0]));
+	PyList_Append(list, (type_ids[1] == type_ids[0]) ? Py_BuildValue("z", NULL) : get_pkmn_type(type_ids[1]));
+	return list;
+}
+
 static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
 {
 	PyObject *list = PyList_New(0);
@@ -332,6 +355,7 @@ PyObject *get_pokedex(PyObject *self)
 
 		PyDict_SetItemString(pkmn, "attacks", get_pkmn_attacks(&gl_stream[header_addr], rom_id));
 		PyDict_SetItemString(pkmn, "evolutions", get_pkmn_evolutions(rom_id));
+		PyDict_SetItemString(pkmn, "types", get_pkmn_types(&gl_stream[header_addr + 0x06]));
 		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
 		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&gl_stream[header_addr]));
 		PyDict_SetItemString(pkmn, "id", Py_BuildValue("i", real_pkmn_id));
