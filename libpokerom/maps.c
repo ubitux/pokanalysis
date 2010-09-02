@@ -111,49 +111,74 @@ typedef struct {
 	int flip;
 } box_info_type;
 
-static int get_entity_addr(PyObject *item, int decal_id)
-{
-	if (!item)
-		return 0;
+struct warp_raw { u8 y, x, to_point, to_map; } PACKED;
+typedef struct warp_item {
+	struct warp_raw data;
+	struct warp_item *next;
+} warp_item_type;
 
-	long pic_id = PyLong_AsLong(PyDict_GetItemString(item, "pic_id"));
-	int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (pic_id - 1));
-	int bank_id = gl_stream[entity_info_addr + 3];
-	return ROM_ADDR(bank_id, GET_ADDR(entity_info_addr) + decal_id);
-}
+struct sign_raw { u8 y, x, tid; } PACKED;
+typedef struct sign_item {
+	struct sign_raw data;
+	PyObject *py_text_string;
+	struct sign_item *next;
+} sign_item_type;
 
-static box_info_type get_box_info(PyObject *od, int x, int y)
+struct entity_raw { u8 pic_id, y, x, mvt_1, mvt_2, tid, extra_1, extra_2; } PACKED;
+typedef struct entity_item {
+	struct entity_raw data;
+	char *type;
+	struct entity_item *next;
+} entity_item_type;
+
+struct map_things {
+	warp_item_type *warps;
+	sign_item_type *signs;
+	entity_item_type *entities;
+};
+
+static box_info_type get_box_info(struct map_things *mt, int x, int y)
 {
-	unsigned int n;
 	box_info_type bi = {.color_key = "default", .entity_addr = 0, .flip = 0};
 
-	for (n = 1; n < sizeof(color_set) / sizeof(*color_set); n++) {
-		PyObject *list = PyDict_GetItemString(od, color_set[n].key);
-		Py_ssize_t i, len = PyList_Size(list);
-
-		for (i = 0; i < len; i++) {
-			PyObject *item = PyList_GetItem(list, i);
-
-			if (PyLong_AsLong(PyDict_GetItemString(item, "x")) == x && PyLong_AsLong(PyDict_GetItemString(item, "y")) == y) {
-				bi.color_key = color_set[n].key;
-				if (strcmp(bi.color_key, "entities") == 0) {
-					u8 orientation = PyLong_AsLong(PyDict_GetItemString(item, "mvt_2")) & 0xF;
-					int decal_id = 0;
-
-					if (orientation == 1) {		// North
-						decal_id = 1 * 64;
-					} else if (orientation == 2) {	// West
-						decal_id = 2 * 64;
-					} else if (orientation == 3) {	// East
-						decal_id = 2 * 64;
-						bi.flip = 1;
-					}
-					bi.entity_addr = get_entity_addr(item, decal_id);
-				}
-				break;
-			}
+	warp_item_type *warp;
+	for (warp = mt->warps; warp; warp = warp->next) {
+		if (warp->data.x == x && warp->data.y == y) {
+			bi.color_key = "warps";
+			return bi;
 		}
 	}
+
+	sign_item_type *sign;
+	for (sign = mt->signs; sign; sign = sign->next) {
+		if (sign->data.x == x && sign->data.y == y) {
+			bi.color_key = "signs";
+			return bi;
+		}
+	}
+
+	entity_item_type *entity;
+	for (entity = mt->entities; entity; entity = entity->next) {
+		if (entity->data.x == x && entity->data.y == y) {
+			int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (entity->data.pic_id - 1));
+			int bank_id = gl_stream[entity_info_addr + 3];
+			u8 orientation = entity->data.mvt_2 & 0xF;
+			int decal_id = 0;
+
+			if (orientation == 1) {		// North
+				decal_id = 1 * 64;
+			} else if (orientation == 2) {	// West
+				decal_id = 2 * 64;
+			} else if (orientation == 3) {	// East
+				decal_id = 2 * 64;
+				bi.flip = 1;
+			}
+			bi.color_key = "entities";
+			bi.entity_addr = ROM_ADDR(bank_id, GET_ADDR(entity_info_addr) + decal_id);
+			return bi;
+		}
+	}
+
 	return bi;
 }
 
@@ -188,7 +213,7 @@ static void flip_tile(u8 *tile)
 }
 
 /* 1 block = 4x4 tiles */
-static void load_block_from_tiles_addr(u8 *pixbuf, int *tiles_addr, PyObject *od, int bx, int by)
+static void load_block_from_tiles_addr(u8 *pixbuf, int *tiles_addr, void *mt, int bx, int by)
 {
 	int i, j, pixbuf_offset = 0;
 
@@ -196,7 +221,7 @@ static void load_block_from_tiles_addr(u8 *pixbuf, int *tiles_addr, PyObject *od
 		for (i = 0; i < BLOCK_X; i++) {
 			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
 			int y, tile_offset = 0;
-			box_info_type bi = get_box_info(od, bx * 2 + i / 2, by * 2 + j / 2);
+			box_info_type bi = get_box_info(mt, bx * 2 + i / 2, by * 2 + j / 2);
 
 			if (bi.entity_addr) {
 				int n = (j % 2) * 2 + (i + bi.flip) % 2;
@@ -254,7 +279,7 @@ static blocks_type *get_blocks(int n, int addr, int tiles_addr)
 
 #define PIXEL_LINES_PER_BLOCK 32
 
-static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, PyObject *od)
+static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, void *mt)
 {
 	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
 	int i, j, pixbuf_offset = 0;
@@ -272,7 +297,7 @@ static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_
 			if (!block)
 				return NULL;
 
-			load_block_from_tiles_addr(block_pixbuf, block, od, i, j);
+			load_block_from_tiles_addr(block_pixbuf, block, mt, i, j);
 			for (y = 0; y < PIXEL_LINES_PER_BLOCK; y++) {
 				memcpy(&pixbuf[pixbuf_offset], &block_pixbuf[block_offset], PIXBUF_BLOCK_LINE_SIZE);
 				block_offset += PIXBUF_BLOCK_LINE_SIZE;
@@ -348,7 +373,7 @@ typedef struct {
 	u8 y_align;
 	u8 x_align;
 	u16 window;
-} __attribute__((__packed__)) connection_type;
+} PACKED connection_type;
 
 static int get_map_addr(int i)
 {
@@ -392,10 +417,100 @@ static PyObject *get_wild_pokemons(int id)
 	return list;
 }
 
+static void set_map_things_in_python_dict(PyObject *dict, struct map_things *things)
+{
+	entity_item_type *entity = things->entities;
+	sign_item_type *sign = things->signs;
+	warp_item_type *warp = things->warps;
+	PyObject *list;
+
+	/* Warps */
+	list = PyList_New(0);
+	while (warp) {
+		struct warp_raw *data = &warp->data;
+		PyObject *py_warp = PyDict_New();
+
+		PyDict_SetItemString(py_warp, "y", Py_BuildValue("i", data->y));
+		PyDict_SetItemString(py_warp, "x", Py_BuildValue("i", data->x));
+		PyDict_SetItemString(py_warp, "to_point", Py_BuildValue("i", data->to_point));
+		PyDict_SetItemString(py_warp, "to_map", Py_BuildValue("i", data->to_map));
+		PyList_Append(list, py_warp);
+		warp = warp->next;
+	}
+	PyDict_SetItemString(dict, "warps", list);
+
+	/* Signs */
+	list = PyList_New(0);
+	while (sign) {
+		struct sign_raw *data = &sign->data;
+		PyObject *py_sign = PyDict_New();
+
+		PyDict_SetItemString(py_sign, "y", Py_BuildValue("i", data->y));
+		PyDict_SetItemString(py_sign, "x", Py_BuildValue("i", data->x));
+		PyDict_SetItemString(py_sign, "text_id", Py_BuildValue("i", data->tid));
+		if (sign->py_text_string)
+			PyDict_SetItemString(py_sign, "text", sign->py_text_string);
+		PyList_Append(list, py_sign);
+		sign = sign->next;
+	}
+	PyDict_SetItemString(dict, "signs", list);
+
+	/* Entities */
+	list = PyList_New(0);
+	while (entity) {
+		struct entity_raw *data = &entity->data;
+		PyObject *py_entity = PyDict_New();
+
+		PyDict_SetItemString(py_entity, "pic_id", Py_BuildValue("i", data->pic_id));
+		PyDict_SetItemString(py_entity, "y", Py_BuildValue("i", data->y));
+		PyDict_SetItemString(py_entity, "x", Py_BuildValue("i", data->x));
+		PyDict_SetItemString(py_entity, "mvt_1", Py_BuildValue("i", data->mvt_1));
+		PyDict_SetItemString(py_entity, "mvt_2", Py_BuildValue("i", data->mvt_2));
+		PyDict_SetItemString(py_entity, "text_id", Py_BuildValue("i", data->tid));
+		if (strcmp(entity->type, "trainer") == 0) {
+			PyDict_SetItemString(py_entity, "trainer_type", Py_BuildValue("i", data->extra_1));
+			PyDict_SetItemString(py_entity, "pkmn_set", Py_BuildValue("i", data->extra_2));
+		} else if (strcmp(entity->type, "item") == 0) {
+			PyDict_SetItemString(py_entity, "pkmn_set", Py_BuildValue("i", data->extra_1));
+		}
+		PyList_Append(list, py_entity);
+		entity = entity->next;
+	}
+	PyDict_SetItemString(dict, "entities", list);
+}
+
+#define FREE_THINGS_LIST(list) do {\
+	while (list) {\
+		void *last = list;\
+		list = (list)->next;\
+		free(last);\
+	}\
+} while(0)
+
+static void free_map_things(struct map_things *things) {
+	entity_item_type *entity = things->entities;
+	sign_item_type *sign = things->signs;
+	warp_item_type *warp = things->warps;
+
+	FREE_THINGS_LIST(entity);
+	FREE_THINGS_LIST(sign);
+	FREE_THINGS_LIST(warp);
+}
+
+#define ADD_ITEM_IN_LIST(list) do {\
+	item->next = NULL;\
+	if (!last) {\
+		list = last = item;\
+	} else {\
+		last->next = item;\
+		last = item;\
+	}\
+} while (0)
+
 static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 {
-	PyObject *dict = PyDict_New();
-	PyObject *list, *warp_list, *sign_list, *entity_list;
+	PyObject *dict = PyDict_New(), *list;
+	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
 	int blockdata_addr, tiles_addr, rom_addr;
 	u8 connect_byte, i;
 	u8 map_h, map_w;
@@ -497,85 +612,89 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		DICT_ADD_BYTE(dict, "maps_border_tile");
 
 		/* Warps */
-		warp_list = PyList_New(0);
 		nb = gl_stream[addr++];
-		for (i = 0; i < nb; i++) {
-			PyObject *warp_dict = PyDict_New();
+		{
+			warp_item_type *last = NULL;
 
-			DICT_ADD_BYTE(warp_dict, "y");
-			DICT_ADD_BYTE(warp_dict, "x");
-			DICT_ADD_BYTE(warp_dict, "to_point");
-			DICT_ADD_BYTE(warp_dict, "to_map");
-			PyList_Append(warp_list, warp_dict);
+			for (i = 0; i < nb; i++) {
+				warp_item_type *item = malloc(sizeof(*item));
+				struct warp_raw *data = &item->data;
+
+				memcpy(data, &gl_stream[addr], sizeof(*data));
+				addr += sizeof(*data);
+				ADD_ITEM_IN_LIST(map_things.warps);
+			}
 		}
-		PyDict_SetItemString(dict, "warps", warp_list);
 
 		/* Signs */
-		sign_list = PyList_New(0);
 		nb = gl_stream[addr++];
-		for (i = 0; i < nb; i++) {
-			PyObject *sign_dict = PyDict_New();
+		{
+			sign_item_type *last = NULL;
 
-			DICT_ADD_BYTE(sign_dict, "y");
-			DICT_ADD_BYTE(sign_dict, "x");
+			for (i = 0; i < nb; i++) {
+				sign_item_type *item = malloc(sizeof(*item));
+				struct sign_raw *data = &item->data;
 
-			{
-				u8 tid = gl_stream[addr];
-				int base_addr = (addr / 0x4000) * 0x4000;
-				int text_pointer = GET_ADDR(base_addr + (text_pointers + ((tid - 1) << 1)) % 0x4000);
-				int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
-				int rom_text_addr = ROM_ADDR(gl_stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
-				char buffer[512] = {0};
-				u8 c;
-				unsigned int d = 0;
+				memcpy(data, &gl_stream[addr], sizeof(*data));
+				addr += sizeof(*data);
+				item->py_text_string = NULL;
+				{
+					int base_addr = (addr / 0x4000) * 0x4000;
+					int text_pointer = GET_ADDR(base_addr + (text_pointers + ((data->tid - 1) << 1)) % 0x4000);
+					int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
+					int rom_text_addr = ROM_ADDR(gl_stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
+					char buffer[512] = {0};
+					u8 c;
+					unsigned int d = 0;
 
-				if (gl_stream[rom_text_pointer] == 0x17) {
-					while ((c = gl_stream[rom_text_addr])) {
-						char *append = get_pkmn_char(c, "¿?");
+					if (gl_stream[rom_text_pointer] == 0x17) {
+						while ((c = gl_stream[rom_text_addr])) {
+							char *append = get_pkmn_char(c, "¿?");
 
-						memcpy(buffer + d, append, strlen(append));
-						d += strlen(append);
-						if (d >= sizeof(buffer))
-							break;
-						rom_text_addr++;
+							memcpy(buffer + d, append, strlen(append));
+							d += strlen(append);
+							if (d >= sizeof(buffer))
+								break;
+							rom_text_addr++;
+						}
+						item->py_text_string = Py_BuildValue("s", buffer);
 					}
-					PyDict_SetItemString(sign_dict, "text", Py_BuildValue("s", buffer));
 				}
+				ADD_ITEM_IN_LIST(map_things.signs);
 			}
-
-			DICT_ADD_BYTE(sign_dict, "text_id");
-			PyList_Append(sign_list, sign_dict);
 		}
-		PyDict_SetItemString(dict, "signs", sign_list);
 
 		/* Entities (normal people, trainers, items) */
-		entity_list = PyList_New(0);
 		nb = gl_stream[addr++];
-		for (i = 0; i < nb; i++) {
-			u8 tid;
-			PyObject *entities_dict = PyDict_New();
+		{
+			entity_item_type *last = NULL;
 
-			DICT_ADD_BYTE(entities_dict, "pic_id");
-			PyDict_SetItemString(entities_dict, "y", Py_BuildValue("i", gl_stream[addr++] - 4));	// -4 for some reason. Don't ask me why.
-			PyDict_SetItemString(entities_dict, "x", Py_BuildValue("i", gl_stream[addr++] - 4));
-			DICT_ADD_BYTE(entities_dict, "mvt_1");
-			DICT_ADD_BYTE(entities_dict, "mvt_2");
-			tid = gl_stream[addr];
-			DICT_ADD_BYTE(entities_dict, "text_id");
+			for (i = 0; i < nb; i++) {
+				entity_item_type *item = malloc(sizeof(*item));
+				struct entity_raw *data = &item->data;
 
-			if (tid & (1 << 6)) {
-				DICT_ADD_BYTE(entities_dict, "trainer_type");
-				DICT_ADD_BYTE(entities_dict, "pkmn_set");
-			} else if (tid & (1 << 7)) {
-				DICT_ADD_BYTE(entities_dict, "item_id");
+				memcpy(data, &gl_stream[addr], sizeof(*data));
+				addr += sizeof(*data) - 2;
+				data->y -= 4;
+				data->x -= 4;
+
+				if (data->tid & (1 << 6)) {
+					item->type = "trainer";
+					addr += 2;
+				} else if (data->tid & (1 << 7)) {
+					item->type = "item";
+					addr += 1;
+				} else {
+					item->type = "people";
+				}
+				ADD_ITEM_IN_LIST(map_things.entities);
 			}
-
-			PyList_Append(entity_list, entities_dict);
 		}
-		PyDict_SetItemString(dict, "entities", entity_list);
 	}
 
-	current_map->pixbuf = get_map_pic_raw(rom_addr, map_w, map_h, blockdata_addr, tiles_addr, dict);
+	set_map_things_in_python_dict(dict, &map_things);
+	current_map->pixbuf = get_map_pic_raw(rom_addr, map_w, map_h, blockdata_addr, tiles_addr, &map_things);
+	free_map_things(&map_things);
 	apply_filter(current_map->pixbuf, id, map_w * 2);
 
 	{

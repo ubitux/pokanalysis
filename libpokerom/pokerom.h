@@ -41,6 +41,8 @@ typedef uint16_t u16;
 #  define self self __attribute__((__unused__))
 # endif
 
+# define PACKED __attribute__((__packed__))
+
 extern u8 *gl_stream;
 extern struct stat gl_rom_stat;
 
