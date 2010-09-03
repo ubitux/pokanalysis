@@ -102,9 +102,6 @@ void rle_sprite(u8 *dst, u8 *src)
 	}
 }
 
-#define BOX_X 2
-#define BOX_Y 2
-
 typedef struct {
 	char *color_key;
 	int entity_addr;
