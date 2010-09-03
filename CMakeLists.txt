@@ -12,6 +12,7 @@ set(sources
 	libpokerom/pokerom.c
 	libpokerom/special_entities.c
 	libpokerom/sprites.c
+	libpokerom/strings.c
 )
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR})

@@ -110,22 +110,28 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	return dict;
 }
 
-static void get_pkmn_item_name(char *iname, u8 item_id)
+static void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
 {
-	int i = 0, rom_addr = ROM_ADDR(0x1, GET_ADDR(0x375d + (4 - 1) * 2));
-	char *s;
+	int rom_addr = ROM_ADDR(0x1, GET_ADDR(0x375d + (4 - 1) * 2));
 
 	while (--item_id) {
 		while (gl_stream[rom_addr] != 0x50)
 			rom_addr++;
 		rom_addr++;
 	}
+	load_string(iname, &gl_stream[rom_addr], max_len, 0);
+}
 
-	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 30) {
-		strcpy(&iname[i], s);
-		i += strlen(s);
+static void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len)
+{
+	int rom_addr = ROM_ADDR(0x2C, GET_ADDR(0x375d + (2 - 1) * 2));
+
+	while (--move_id) {
+		while (gl_stream[rom_addr] != 0x50)
+			rom_addr++;
+		rom_addr++;
 	}
-	iname[i] = 0;
+	load_string(mname, &gl_stream[rom_addr], max_len, 0);
 }
 
 #define PKMN_EVENTS_ADDR(i)	ROM_ADDR(0x0E, GET_ADDR(ROM_ADDR(0x0E, 0x705c + (i - 1) * 2)))
@@ -149,7 +155,7 @@ static PyObject *get_pkmn_evolutions(u8 rom_pkmn_id)
 			char iname[30];
 
 			PyDict_SetItemString(evol, "type", Py_BuildValue("s", "stone"));
-			get_pkmn_item_name(iname, *ptr++);
+			get_pkmn_item_name(iname, *ptr++, sizeof(iname));
 			PyDict_SetItemString(evol, "stone", Py_BuildValue("s", iname));
 			PyDict_SetItemString(evol, "level", Py_BuildValue("i", *ptr++));
 			PyDict_SetItemString(evol, "pkmn-id", Py_BuildValue("i", *ptr++));
@@ -168,15 +174,10 @@ static PyObject *get_pkmn_evolutions(u8 rom_pkmn_id)
 
 static PyObject *get_pkmn_type(u8 type_id)
 {
-	int i = 0, rom_addr = ROM_ADDR(0x09, GET_ADDR(ROM_ADDR(0x09, 0x7DAE + type_id * 2)));
-	char *s;
+	int rom_addr = ROM_ADDR(0x09, GET_ADDR(ROM_ADDR(0x09, 0x7DAE + type_id * 2)));
 	char tname[20];
 
-	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 10) {
-		strcpy(&tname[i], s);
-		i += strlen(s);
-	}
-	tname[i] = 0;
+	load_string(tname, &gl_stream[rom_addr], sizeof(tname), 0);
 	return Py_BuildValue("s", tname);
 }
 
@@ -189,34 +190,15 @@ static PyObject *get_pkmn_types(u8 *type_ids)
 	return list;
 }
 
-static void get_pkmn_move_name(char *mname, u8 move_id)
-{
-	int i = 0, rom_addr = ROM_ADDR(0x2C, GET_ADDR(0x375d + (2 - 1) * 2));
-	char *s;
-
-	while (--move_id) {
-		while (gl_stream[rom_addr] != 0x50)
-			rom_addr++;
-		rom_addr++;
-	}
-
-	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 30) {
-		strcpy(&mname[i], s);
-		i += strlen(s);
-	}
-	mname[i] = 0;
-}
-
 static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
 {
 	PyObject *list = PyList_New(0);
 	int n = 0;
+	char mname[20];
 
 	/* Native attacks */
 	for (ptr += 0x0f; ptr[n] && n < 4; n++) {
-		char mname[30];
-
-		get_pkmn_move_name(mname, ptr[n]);
+		get_pkmn_move_name(mname, ptr[n], sizeof(mname));
 		PyList_Append(list, Py_BuildValue("is", 0, mname));
 	}
 
@@ -226,9 +208,7 @@ static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
 		ptr++;
 	ptr++;
 	while (*ptr) {
-		char mname[30];
-
-		get_pkmn_move_name(mname, ptr[1]);
+		get_pkmn_move_name(mname, ptr[1], sizeof(mname));
 		PyList_Append(list, Py_BuildValue("is", ptr[0], mname));
 		ptr += 2;
 	}
@@ -304,15 +284,10 @@ PyObject *get_pixbuf(u8 pkmn_id)
 
 static PyObject *get_pkmn_name(int rom_id)
 {
-	int i = 0, rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (rom_id - 1));
-	char *s;
-	char name[10];
+	int rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (rom_id - 1));
+	char name[20];
 
-	while (*(s = get_pkmn_char(gl_stream[rom_addr++], "")) && i < 10) {
-		strcpy(&name[i], s);
-		i += strlen(s);
-	}
-	name[i] = 0;
+	load_string(name, &gl_stream[rom_addr], sizeof(name), 10);
 	return Py_BuildValue("s", name);
 }
 
