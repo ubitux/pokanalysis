@@ -517,13 +517,11 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	u8 bank_id;
 
 	if (is_loaded(addr)) {
-		//printf("0x%06x -> previously loaded\n", addr);
 		return NULL;
 	}
 
 	add_loaded_map(addr);
 
-	//printf("0x%06x\n", addr);
 	if (addr > gl_rom_stat.st_size) {
 		return NULL;
 	}
