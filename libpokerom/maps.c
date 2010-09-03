@@ -20,35 +20,27 @@
 
 #include "pokerom.h"
 
-static struct {
-	char *key;
-	char *colors[4];
-} color_set[] = {
-	{"default",  {"\xE8\xE8\xE8", "\x58\x58\x58", "\xA0\xA0\xA0", "\x10\x10\x10"}},
-	{"warps",    {"\xE8\xC0\xC0", "\xC0\x58\x58", "\xC0\xA0\xA0", "\xC0\x10\x10"}},
-	{"signs",    {"\xC0\xC0\xE8", "\x58\x58\xC0", "\xA0\xA0\xC0", "\x10\x10\xC0"}},
-	{"entities", {"\xE8\xC0\xE8", "\xC0\x58\xC0", "\xC0\xA0\xC0", "\xC0\x10\xC0"}},
+enum {
+	DEFAULT_COLORS_OFFSET,
+	WARPS_COLORS_OFFSET,
+	SIGNS_COLORS_OFFSET,
+	ENTITIES_COLORS_OFFSET,
 };
 
-#define ENTITY_OFFSET 3
-
-static char **get_color_set(char *color_key)
-{
-	size_t n;
-
-	for (n = 0; n < sizeof(color_set) / sizeof(*color_set); n++)
-		if (strcmp(color_key, color_set[n].key) == 0)
-			return color_set[n].colors;
-	return color_set[0].colors;
-}
+static char *color_set[][4] = {
+	{"\xE8\xE8\xE8", "\x58\x58\x58", "\xA0\xA0\xA0", "\x10\x10\x10"},
+	{"\xE8\xC0\xC0", "\xC0\x58\x58", "\xC0\xA0\xA0", "\xC0\x10\x10"},
+	{"\xC0\xC0\xE8", "\x58\x58\xC0", "\xA0\xA0\xC0", "\x10\x10\xC0"},
+	{"\xE8\xC0\xE8", "\xC0\x58\xC0", "\xC0\xA0\xC0", "\xC0\x10\xC0"},
+};
 
 #define TILE_X 8
 #define TILE_Y 8
 
-static void load_tile_from_ptr(u8 *pixbuf, u8 *src, char *color_key)
+static void load_tile_from_ptr(u8 *pixbuf, u8 *src, int color_key)
 {
 	int x, y, pixbuf_offset = 0;
-	char **colors = get_color_set(color_key);
+	char **colors = color_set[color_key];
 
 	for (y = 0; y < TILE_Y; y++) {
 		u8 bit1 = *src++;
@@ -56,14 +48,14 @@ static void load_tile_from_ptr(u8 *pixbuf, u8 *src, char *color_key)
 		u8 mask = 1 << 7;
 
 		for (x = 0; x < TILE_X; x++, mask >>= 1) {
-			memcpy(&pixbuf[pixbuf_offset], colors[(!!(bit1 & mask) << 1) | !!(bit2 & mask)], 3);
+			memcpy(&pixbuf[pixbuf_offset], colors[(!!(bit1 & mask) << 1) | !!(bit2 & mask)], 4);
 			pixbuf_offset += 3;
 		}
 	}
 }
 
 /* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
-static void load_tile(u8 *pixbuf, int addr, char *color_key)
+static void load_tile(u8 *pixbuf, int addr, int color_key)
 {
 	if (addr > gl_rom_stat.st_size) {
 		memset(pixbuf, 0, TILE_X * TILE_Y * 3);
@@ -90,7 +82,7 @@ void rle_sprite(u8 *dst, u8 *src)
 			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
 			int y, tile_offset = 0;
 
-			load_tile_from_ptr(tile_pixbuf, src, "default");
+			load_tile_from_ptr(tile_pixbuf, src, DEFAULT_COLORS_OFFSET);
 			src += 0x10;
 			for (y = 0; y < TILE_Y; y++) {
 				memcpy(&dst[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
@@ -103,7 +95,7 @@ void rle_sprite(u8 *dst, u8 *src)
 }
 
 typedef struct {
-	char *color_key;
+	int color_key;
 	int entity_addr;
 	int flip;
 } box_info_type;
@@ -136,12 +128,12 @@ struct map_things {
 
 static box_info_type get_box_info(struct map_things *mt, int x, int y)
 {
-	box_info_type bi = {.color_key = "default", .entity_addr = 0, .flip = 0};
+	box_info_type bi = {.color_key = DEFAULT_COLORS_OFFSET, .entity_addr = 0, .flip = 0};
 
 	warp_item_type *warp;
 	for (warp = mt->warps; warp; warp = warp->next) {
 		if (warp->data.x == x && warp->data.y == y) {
-			bi.color_key = "warps";
+			bi.color_key = WARPS_COLORS_OFFSET;
 			return bi;
 		}
 	}
@@ -149,7 +141,7 @@ static box_info_type get_box_info(struct map_things *mt, int x, int y)
 	sign_item_type *sign;
 	for (sign = mt->signs; sign; sign = sign->next) {
 		if (sign->data.x == x && sign->data.y == y) {
-			bi.color_key = "signs";
+			bi.color_key = SIGNS_COLORS_OFFSET;
 			return bi;
 		}
 	}
@@ -170,7 +162,7 @@ static box_info_type get_box_info(struct map_things *mt, int x, int y)
 				decal_id = 2 * 64;
 				bi.flip = 1;
 			}
-			bi.color_key = "entities";
+			bi.color_key = ENTITIES_COLORS_OFFSET;
 			bi.entity_addr = ROM_ADDR(bank_id, GET_ADDR(entity_info_addr) + decal_id);
 			return bi;
 		}
@@ -191,7 +183,7 @@ static void merge_tiles(u8 *dst, u8 *src, char *alpha)
 
 	for (i = 0; i < PIXBUF_TILE_SIZE; i += 3) {
 		if (memcmp(&src[i], alpha, 3) != 0) {
-			memcpy(&dst[i], &src[i], 3);
+			memcpy(&dst[i], &src[i], 4);
 		}
 	}
 }
@@ -204,7 +196,7 @@ static void flip_tile(u8 *tile)
 	memcpy(old_tile, tile, sizeof(old_tile));
 	for (y = 0; y < TILE_Y; y++) {
 		for (x = 0; x < TILE_X; x++) {
-			memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 3);
+			memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 4);
 		}
 	}
 }
@@ -227,8 +219,8 @@ static void load_block_from_tiles_addr(u8 *pixbuf, int *tiles_addr, void *mt, in
 				load_tile(entity_pixbuf, bi.entity_addr + n * 16, bi.color_key);
 				if (bi.flip)
 					flip_tile(entity_pixbuf);
-				load_tile(tile_pixbuf, tiles_addr[j * BLOCK_X + i], "default");
-				merge_tiles(tile_pixbuf, entity_pixbuf, color_set[ENTITY_OFFSET].colors[0]);
+				load_tile(tile_pixbuf, tiles_addr[j * BLOCK_X + i], DEFAULT_COLORS_OFFSET);
+				merge_tiles(tile_pixbuf, entity_pixbuf, color_set[ENTITIES_COLORS_OFFSET][0]);
 			} else {
 				load_tile(tile_pixbuf, tiles_addr[j * BLOCK_X + i], bi.color_key);
 			}
