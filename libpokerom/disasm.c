@@ -763,10 +763,42 @@ static char *get_type_str(int type) {
 	return NULL;
 }
 
+struct hexbuffer {
+	char *buffer;
+	int size;
+	int i;
+};
+
+#define BUFFERING 102400
+#define TRY_APPEND do {\
+	va_start(va, fmt);\
+	ret = vsnprintf(&hex->buffer[hex->i], hex->size - hex->i, fmt, va);\
+	if (ret < 0)\
+		goto end;\
+} while(0)
+
+static void hexbuffer_append(struct hexbuffer *hex, char *fmt, ...)
+{
+	va_list va;
+	int ret;
+
+	TRY_APPEND;
+	while (hex->i + ret >= hex->size) {
+		hex->buffer = realloc(hex->buffer, hex->size + BUFFERING);
+		hex->size += BUFFERING;
+		TRY_APPEND;
+	}
+	hex->i += ret;
+end:
+	va_end(va);
+}
+
 static PyObject *get_buffer()
 {
 	struct line *line = lines;
-	PyObject *buffer = PyString_FromString("");
+	PyObject *buffer;
+	struct hexbuffer hex = {.buffer = malloc(BUFFERING), .size = BUFFERING, .i = 0};
+	*hex.buffer = 0;
 
 	while (line) {
 		struct line *old_line;
@@ -775,19 +807,13 @@ static PyObject *get_buffer()
 
 		while (lbl) {
 			if (lbl->to == line->addr) {
-				char addr[5];
 				struct label *next = lbl->next;
 
-				snprintf(addr, sizeof(addr), "%04X", lbl->from);
 				if (first) {
 					first = 0;
-					PyString_ConcatAndDel(&buffer, PyString_FromFormat(
-								"\n; Jump here from: %s (%s)",
-								addr, get_type_str(lbl->type)));
+					hexbuffer_append(&hex, "\n; Jump here from: %04X (%s)", lbl->from, get_type_str(lbl->type));
 				} else {
-					PyString_ConcatAndDel(&buffer, PyString_FromFormat(
-								", %s (%s)",
-								addr, get_type_str(lbl->type)));
+					hexbuffer_append(&hex, ", %04X (%s)", lbl->from, get_type_str(lbl->type));
 				}
 				free(lbl);
 				if (!old_lbl)
@@ -801,12 +827,14 @@ static PyObject *get_buffer()
 			lbl = lbl->next;
 		}
 		if (!first)
-			PyString_ConcatAndDel(&buffer, PyString_FromString("\n"));
-		PyString_ConcatAndDel(&buffer, PyString_FromFormat("%s\n", line->buff));
+			hexbuffer_append(&hex, "\n");
+		hexbuffer_append(&hex, "%s\n", line->buff);
 		old_line = line;
 		line = line->next;
 		free(old_line);
 	}
+	buffer = Py_BuildValue("s", hex.buffer);
+	free(hex.buffer);
 	return buffer;
 }
 
