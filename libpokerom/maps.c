@@ -805,8 +805,9 @@ static map_type get_final_map(submap_type *map)
 	final_map.pixbuf = calloc(1, PIXBUF_BLOCK_SIZE * final_map.w * final_map.h);
 	final_map.objects = PyDict_New();
 
-	for (; map; map = map->next) {
+	while (map) {
 		int x, y, line, final_pixbuf_pos, pixbuf_pos = 0, pad;
+		submap_type *last_map;
 
 		x = map->coords.x;
 		y = map->coords.y;
@@ -830,8 +831,10 @@ static map_type get_final_map(submap_type *map)
 			pixbuf_pos += pad;
 		}
 
-		free(map->pixbuf);
-		free(map);
+		last_map = map;
+		map = map->next;
+		free(last_map->pixbuf);
+		free(last_map);
 	}
 
 	return final_map;
