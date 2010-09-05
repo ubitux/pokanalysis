@@ -20,13 +20,7 @@
 
 #include "pokerom.h"
 
-enum {
-	DEFAULT_COLORS_OFFSET,
-	WARPS_COLORS_OFFSET,
-	SIGNS_COLORS_OFFSET,
-	ENTITIES_COLORS_OFFSET,
-};
-
+enum {DEFAULT_COLORS_OFFSET, WARPS_COLORS_OFFSET, SIGNS_COLORS_OFFSET, ENTITIES_COLORS_OFFSET};
 static char *color_set[][4] = {
 	[DEFAULT_COLORS_OFFSET]  = {"\xE8\xE8\xE8", "\x58\x58\x58", "\xA0\xA0\xA0", "\x10\x10\x10"},
 	[WARPS_COLORS_OFFSET]    = {"\xE8\xC0\xC0", "\xC0\x58\x58", "\xC0\xA0\xA0", "\xC0\x10\x10"},
