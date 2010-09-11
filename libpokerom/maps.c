@@ -177,7 +177,7 @@ static void merge_tiles(u8 *dst, u8 *src, char *alpha)
 
 	for (i = 0; i < PIXBUF_TILE_SIZE; i += 3) {
 		if (memcmp(&src[i], alpha, 3) != 0) {
-			memcpy(&dst[i], &src[i], 4);
+			memcpy(&dst[i], &src[i], 3);
 		}
 	}
 }
