@@ -1,3 +1,10 @@
+Version 0.4.0	11 Sep 2010
+
+	* Much better performances at startup
+	* Moves and Evolutions support in Pokédex
+	* GUI prettifying (just a little, you won't see it)
+	* A few bugs fixed
+
 Version 0.3.0	28 Aug 2010
 
 	* Add first Pokédex draft
