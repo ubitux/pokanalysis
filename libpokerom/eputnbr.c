@@ -79,38 +79,38 @@ void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision)	/* Red: ROM0:3
 	u8 n;
 
 	switch (input_flag & 0x0f) {
-		default:
-			V1 = src[0];
-			V2 = src[1];
-			V3 = src[2];
-			break;
-		case 2:
-			V2 = src[0];
-			V3 = src[1];
-			break;
-		case 1:
-			V3 = src[0];
-			break;
+	default:
+		V1 = src[0];
+		V2 = src[1];
+		V3 = src[2];
+		break;
+	case 2:
+		V2 = src[0];
+		V3 = src[1];
+		break;
+	case 1:
+		V3 = src[0];
+		break;
 	}
 
 	switch (precision) {
-		default:
-			set_char(dest, input_flag, consts[0]);
-			CHECK_PUTNBR_DEST_INC();
-		case 6:
-			set_char(dest, input_flag, consts[1]);
-			CHECK_PUTNBR_DEST_INC();
-		case 5:
-			set_char(dest, input_flag, consts[2]);
-			CHECK_PUTNBR_DEST_INC();
-		case 4:
-			set_char(dest, input_flag, consts[3]);
-			CHECK_PUTNBR_DEST_INC();
-		case 3:
-			set_char(dest, input_flag, consts[4]);
-			CHECK_PUTNBR_DEST_INC();
-		case 2:
-			break;
+	default:
+		set_char(dest, input_flag, consts[0]);
+		CHECK_PUTNBR_DEST_INC();
+	case 6:
+		set_char(dest, input_flag, consts[1]);
+		CHECK_PUTNBR_DEST_INC();
+	case 5:
+		set_char(dest, input_flag, consts[2]);
+		CHECK_PUTNBR_DEST_INC();
+	case 4:
+		set_char(dest, input_flag, consts[3]);
+		CHECK_PUTNBR_DEST_INC();
+	case 3:
+		set_char(dest, input_flag, consts[4]);
+		CHECK_PUTNBR_DEST_INC();
+	case 2:
+		break;
 	}
 
 	c = 0;

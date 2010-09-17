@@ -281,8 +281,8 @@ PyObject *get_pixbuf(u8 pkmn_id)
 	u8 pixbuf_back[(7 * 7) * (8 * 8) * 3];
 
 	switch (pkmn_id) {
-		case 193: case 196: case 199: case 202: case 210: case 213: case 216: case 219: case 253:
-			return Py_BuildValue("z", NULL);
+	case 193: case 196: case 199: case 202: case 210: case 213: case 216: case 219: case 253:
+		return Py_BuildValue("z", NULL);
 	}
 	load_pokemon_sprite(pixbuf, pkmn_id, 0);
 	load_pokemon_sprite(pixbuf_back, pkmn_id, 1);

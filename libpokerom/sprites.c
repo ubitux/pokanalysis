@@ -55,16 +55,16 @@ static u16 sprite_set_p1_p2(u16 hl) // 2897
 static void sprite_update_p1(u8 a) // 2649
 {
 	switch (p_flag) {
-		case 1:
-			a = (a << 2) & 0xff;
-			break;
-		case 2:
-			a = swap_u8(a);
-			break;
-		case 3:
-			a = (((a & 1) << 7) | (a >> 1)) & 0xff;
-			a = (((a & 1) << 7) | (a >> 1)) & 0xff;
-			break;
+	case 1:
+		a = (a << 2) & 0xff;
+		break;
+	case 2:
+		a = swap_u8(a);
+		break;
+	case 3:
+		a = (((a & 1) << 7) | (a >> 1)) & 0xff;
+		a = (((a & 1) << 7) | (a >> 1)) & 0xff;
+		break;
 	}
 	write_buffer(p1, read_buffer(p1) | a);
 }
@@ -212,9 +212,9 @@ enum {Z_RET, Z_END, Z_CONTINUE};
 
 #define HANDLE_RET(r) do {\
 	switch (r) {\
-		case Z_RET: break;		/* normal function call */ \
-		case Z_END: return;		/* stack pwned, return is a return in calling function */ \
-		case Z_CONTINUE: goto start;	/* stack pwned, but continue loop in calling function */ \
+	case Z_RET: break;		/* normal function call */ \
+	case Z_END: return;		/* stack pwned, return is a return in calling function */ \
+	case Z_CONTINUE: goto start;	/* stack pwned, but continue loop in calling function */ \
 	}\
 } while (0)
 

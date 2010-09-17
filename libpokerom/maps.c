@@ -725,23 +725,23 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		connection_addr += sizeof(con);
 
 		switch (cons[i].c) {
-			// FIXME: I'm sure there is something wrong here...
-			case 'N':
-				nx = x_init - (char)(con.x_align);
-				ny = y_init - (u8)(con.y_align) - 1;
-				break;
-			case 'S':
-				nx = x_init - (char)(con.x_align);
-				ny = y_init - (char)(con.y_align) + map_h;
-				break;
-			case 'W':
-				nx = x_init - (char)(con.x_align) - 1;
-				ny = y_init - (char)(con.y_align);
-				break;
-			case 'E':
-				nx = x_init - (char)(con.x_align) + map_w;
-				ny = y_init - (char)(con.y_align);
-				break;
+		// FIXME: I'm sure there is something wrong here...
+		case 'N':
+			nx = x_init - (char)(con.x_align);
+			ny = y_init - (u8)(con.y_align) - 1;
+			break;
+		case 'S':
+			nx = x_init - (char)(con.x_align);
+			ny = y_init - (char)(con.y_align) + map_h;
+			break;
+		case 'W':
+			nx = x_init - (char)(con.x_align) - 1;
+			ny = y_init - (char)(con.y_align);
+			break;
+		case 'E':
+			nx = x_init - (char)(con.x_align) + map_w;
+			ny = y_init - (char)(con.y_align);
+			break;
 		}
 
 		to_add = get_submap(con.index, get_map_addr(con.index), nx, ny);

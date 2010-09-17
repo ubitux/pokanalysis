@@ -703,48 +703,48 @@ static struct line *next_ins(struct line *prev_line)
 	}
 
 	switch (type) {
-		case P_WORD:
-		{
-			u16 p = GET_ADDR(pc);
-			sprintf(&linebuff[13], "%02X %02X", gl_stream[pc], gl_stream[pc + 1]);
-			linebuff[18] = ' ';
-			sprintf(&linebuff[27], label, p);
-			if (ins_set == default_ins_set) {
-				if (index(CALL_INS, ins))
-					add_label(REL_ADDR(pc - 1), p, JMP_CALL);
-				else if (index(JP_INS, ins))
-					add_label(REL_ADDR(pc - 1), p, JMP_JP);
-			}
-			pc += 2;
-			break;
+	case P_WORD:
+	{
+		u16 p = GET_ADDR(pc);
+		sprintf(&linebuff[13], "%02X %02X", gl_stream[pc], gl_stream[pc + 1]);
+		linebuff[18] = ' ';
+		sprintf(&linebuff[27], label, p);
+		if (ins_set == default_ins_set) {
+			if (index(CALL_INS, ins))
+				add_label(REL_ADDR(pc - 1), p, JMP_CALL);
+			else if (index(JP_INS, ins))
+				add_label(REL_ADDR(pc - 1), p, JMP_JP);
 		}
+		pc += 2;
+		break;
+	}
 
-		case P_UCHAR8:
-		{
-			u8 p = gl_stream[pc++];
-			sprintf(&linebuff[13], "%02X", p);
-			linebuff[15] = ' ';
-			sprintf(&linebuff[27], label, p);
-			break;
-		}
+	case P_UCHAR8:
+	{
+		u8 p = gl_stream[pc++];
+		sprintf(&linebuff[13], "%02X", p);
+		linebuff[15] = ' ';
+		sprintf(&linebuff[27], label, p);
+		break;
+	}
 
-		case P_CHAR8:
-		{
-			int8_t p = gl_stream[pc];
-			int rom_addr = pc + p + 1;
-			u16 addr = REL_ADDR(rom_addr);
-			sprintf(&linebuff[13], "%02X", (u8)p);
-			linebuff[15] = ' ';
-			sprintf(&linebuff[27], label, addr);
-			if (ins_set == default_ins_set && index(JR_INS, ins))
-				add_label(REL_ADDR(pc - 1), addr, JMP_JR);
-			pc++;
-			break;
-		}
+	case P_CHAR8:
+	{
+		int8_t p = gl_stream[pc];
+		int rom_addr = pc + p + 1;
+		u16 addr = REL_ADDR(rom_addr);
+		sprintf(&linebuff[13], "%02X", (u8)p);
+		linebuff[15] = ' ';
+		sprintf(&linebuff[27], label, addr);
+		if (ins_set == default_ins_set && index(JR_INS, ins))
+			add_label(REL_ADDR(pc - 1), addr, JMP_JR);
+		pc++;
+		break;
+	}
 
-		case P_NONE:
-			sprintf(&linebuff[27], label);
-			break;
+	case P_NONE:
+		sprintf(&linebuff[27], label);
+		break;
 	}
 
 end:
@@ -753,12 +753,12 @@ end:
 
 static char *get_type_str(int type) {
 	switch (type) {
-		case JMP_JR:
-			return "jr";
-		case JMP_JP:
-			return "jp";
-		case JMP_CALL:
-			return "call";
+	case JMP_JR:
+		return "jr";
+	case JMP_JP:
+		return "jp";
+	case JMP_CALL:
+		return "call";
 	}
 	return NULL;
 }
