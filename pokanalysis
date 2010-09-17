@@ -151,7 +151,7 @@ class Core:
             if wild_pkmn and wild_pkmn.get(place):
                 for (level, i) in wild_pkmn[place]:
                     pkmn = self.pokedex_rom_id[i]
-                    model.append((pkmn['fmt_name'], level, pkmn['id'], pkmn['pic']))
+                    model.append((pkmn['fmt_name'], level, pkmn['id'], pkmn['pic'][0]))
 
         model = self.gui.get_object('liststore_specials')
         model.clear()
