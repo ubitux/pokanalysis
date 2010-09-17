@@ -223,7 +223,7 @@ static int get_pkmn_header_address(u8 rom_pkmn_id)
 	return ROM_ADDR(0x0E, 0x43de + (get_pkmn_id_from_stupid_one(rom_pkmn_id) - 1) * 0x1C);
 }
 
-static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
+static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id, int back)
 {
 	int pkmn_header_addr;
 	u8 b[3 * 0x188];
@@ -233,7 +233,11 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 
 	pkmn_header_addr = get_pkmn_header_address(stupid_pkmn_id);
 
-	switch (stupid_pkmn_id) {
+	if (back) {
+		sprite_addr = GET_ADDR(pkmn_header_addr + 0x0D);
+		sprite_dim = 0x44;
+	} else {
+		switch (stupid_pkmn_id) {
 		case 0xb6:
 			sprite_addr = 0x79E8;
 			sprite_dim = 0x66;
@@ -252,6 +256,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 		default:
 			sprite_addr = GET_ADDR(pkmn_header_addr + 0x0B);
 			sprite_dim = gl_stream[pkmn_header_addr + 0x0A];
+		}
 	}
 
 	ff8b = low_nibble(sprite_dim);
@@ -273,13 +278,15 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id)
 PyObject *get_pixbuf(u8 pkmn_id)
 {
 	u8 pixbuf[(7 * 7) * (8 * 8) * 3];
+	u8 pixbuf_back[(7 * 7) * (8 * 8) * 3];
 
 	switch (pkmn_id) {
 		case 193: case 196: case 199: case 202: case 210: case 213: case 216: case 219: case 253:
 			return Py_BuildValue("z", NULL);
 	}
-	load_pokemon_sprite(pixbuf, pkmn_id);
-	return Py_BuildValue("s#", pixbuf, sizeof(pixbuf));
+	load_pokemon_sprite(pixbuf, pkmn_id, 0);
+	load_pokemon_sprite(pixbuf_back, pkmn_id, 1);
+	return Py_BuildValue("s#s#", pixbuf, sizeof(pixbuf), pixbuf_back, sizeof(pixbuf));
 }
 
 static PyObject *get_pkmn_name(int rom_id)

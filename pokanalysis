@@ -225,8 +225,10 @@ class Core:
     def on_treeview_pokedex_cursor_changed(self, treeview):
         (path, column_focus) = treeview.get_cursor()
         pkmn = self.pokedex[path[0]]
-        pic = pkmn['pic'].scale_simple(160, 160, gtk.gdk.INTERP_NEAREST)
+        pic = pkmn['pic'][0].scale_simple(160, 160, gtk.gdk.INTERP_NEAREST)
+        pic_back = pkmn['pic'][1].scale_simple(160, 160, gtk.gdk.INTERP_NEAREST)
         self.gui.get_object('image_pkmn').set_from_pixbuf(pic)
+        self.gui.get_object('image_pkmn_back').set_from_pixbuf(pic_back)
         keys = pkmn['header_values'].keys()
         keys.sort()
 
@@ -269,7 +271,7 @@ class Core:
                 txt += ' %d' % evol['level']
             elif txt == 'stone':
                 txt = evol['stone']
-            evol_lstore.append((pkmn_id, pkmn['pic'], pkmn['fmt_name'], txt.title()))
+            evol_lstore.append((pkmn_id, pkmn['pic'][0], pkmn['fmt_name'], txt.title()))
 
     def on_treeview_wild_pkmn_row_activated(self, treeview, path, column):
         self.gui.get_object('notebook_main').set_current_page(0)
@@ -305,11 +307,14 @@ class Core:
         w, h = 7 * 8, 7 * 8
         for i, pkmn in enumerate(self.pokedex, 1):
             pic = pkmn['pic']
-            pkmn['pic'] = gtk.gdk.pixbuf_new_from_data(pic, gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3) if pic else None
+            pkmn['pic'] = (
+                    gtk.gdk.pixbuf_new_from_data(pic[0], gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3),
+                    gtk.gdk.pixbuf_new_from_data(pic[1], gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3)
+            )
             pkmn['fmt_name'] = '<b>%s</b>' % pkmn['name'].title()
             pkmn['fmt_id'] = '%03d' % i
             pkmn['fmt_rom_id'] = '0x%02X' % pkmn['rom_id']
-            pokedex_widget.append((pkmn['fmt_id'], pkmn['fmt_name'], pkmn['pic']))
+            pokedex_widget.append((pkmn['fmt_id'], pkmn['fmt_name'], pkmn['pic'][0]))
             self.pokedex_rom_id[pkmn['rom_id']] = pkmn
         self.gui.get_object('treeview_pokedex').set_cursor((0,))
 
