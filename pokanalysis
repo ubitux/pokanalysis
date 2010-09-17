@@ -145,12 +145,13 @@ class Core:
         self.gui.get_object('image_map').set_from_pixbuf(p1)
         self.gui.get_object('image_mini_map').set_from_pixbuf(p2)
 
-        model = self.gui.get_object('liststore_wild_pkmn')
-        model.clear()
-        if wild_pkmn:
-            for (level, i) in wild_pkmn:
-                pkmn = self.pokedex_rom_id[i]
-                model.append((pkmn['fmt_name'], level, pkmn['id'], pkmn['pic']))
+        for place in ('grass', 'water'):
+            model = self.gui.get_object('liststore_%s_wild_pkmn' % place)
+            model.clear()
+            if wild_pkmn and wild_pkmn.get(place):
+                for (level, i) in wild_pkmn[place]:
+                    pkmn = self.pokedex_rom_id[i]
+                    model.append((pkmn['fmt_name'], level, pkmn['id'], pkmn['pic']))
 
         model = self.gui.get_object('liststore_specials')
         model.clear()

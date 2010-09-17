@@ -388,16 +388,40 @@ typedef struct {
 	PyObject *objects;
 } map_type;
 
-static PyObject *get_wild_pokemons(int id)
+static PyObject *get_wild_pokemons_at_addr(u8 *data)
 {
+	int i;
 	PyObject *list = PyList_New(0);
-	int addr = ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + id * 2))) + 1;
 
-	while (gl_stream[addr]) {
-		PyList_Append(list, Py_BuildValue("ii", gl_stream[addr], gl_stream[addr + 1]));
-		addr += 2;
+	for (i = 0; i < 10; i++) {
+		if (!data[0])
+			break;
+		PyList_Append(list, Py_BuildValue("ii", data[0], data[1]));
+		data += 2;
 	}
 	return list;
+}
+
+static PyObject *get_wild_pokemons(int map_id)
+{
+	PyObject *dict = PyDict_New();
+	u8 *data = &gl_stream[ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + map_id * 2)))];
+	u8 rate;
+
+	rate = *data++;
+	if (rate) {
+		PyDict_SetItemString(dict, "grass-rate", Py_BuildValue("i", rate));
+		PyDict_SetItemString(dict, "grass", get_wild_pokemons_at_addr(data));
+		data += 20;
+	}
+
+	rate = *data++;
+	if (rate) {
+		PyDict_SetItemString(dict, "water-rate", Py_BuildValue("i", rate));
+		PyDict_SetItemString(dict, "water", get_wild_pokemons_at_addr(data));
+	}
+
+	return dict;
 }
 
 static void set_map_things_in_python_dict(PyObject *dict, struct map_things *things)
