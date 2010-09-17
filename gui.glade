@@ -815,9 +815,9 @@
                   </packing>
                 </child>
                 <child type="tab">
-                  <object class="GtkLabel" id="label_wild_pokemons">
+                  <object class="GtkLabel" id="label_wild_pokemon">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">Wild pok&#xE9;mons</property>
+                    <property name="label" translatable="yes">Wild Pok&#xE9;mon</property>
                   </object>
                   <packing>
                     <property name="position">1</property>

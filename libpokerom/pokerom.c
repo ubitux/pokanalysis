@@ -43,7 +43,7 @@ PyMODINIT_FUNC initpokerom(void)
 		{"load_rom", load_rom, METH_VARARGS, "Load ROM"},
 
 		{"get_maps", (PyCFunction)get_maps, METH_NOARGS, "Game maps"},
-		{"get_pokedex", (PyCFunction)get_pokedex, METH_NOARGS, "Get all pokémons"},
+		{"get_pokedex", (PyCFunction)get_pokedex, METH_NOARGS, "Get all Pokémon"},
 		{"disasm", disasm, METH_VARARGS, "Disassemble given bank"},
 
 		/* Utils */

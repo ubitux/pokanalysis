@@ -390,7 +390,7 @@ typedef struct {
 	PyObject *objects;
 } map_type;
 
-static PyObject *get_wild_pokemons_at_addr(u8 *data)
+static PyObject *get_wild_pokemon_at_addr(u8 *data)
 {
 	int i;
 	PyObject *list = PyList_New(0);
@@ -404,7 +404,7 @@ static PyObject *get_wild_pokemons_at_addr(u8 *data)
 	return list;
 }
 
-static PyObject *get_wild_pokemons(int map_id)
+static PyObject *get_wild_pokemon(int map_id)
 {
 	PyObject *dict = PyDict_New();
 	u8 *data = &gl_stream[ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + map_id * 2)))];
@@ -413,14 +413,14 @@ static PyObject *get_wild_pokemons(int map_id)
 	rate = *data++;
 	if (rate) {
 		PyDict_SetItemString(dict, "grass-rate", Py_BuildValue("i", rate));
-		PyDict_SetItemString(dict, "grass", get_wild_pokemons_at_addr(data));
+		PyDict_SetItemString(dict, "grass", get_wild_pokemon_at_addr(data));
 		data += 20;
 	}
 
 	rate = *data++;
 	if (rate) {
 		PyDict_SetItemString(dict, "water-rate", Py_BuildValue("i", rate));
-		PyDict_SetItemString(dict, "water", get_wild_pokemons_at_addr(data));
+		PyDict_SetItemString(dict, "water", get_wild_pokemon_at_addr(data));
 	}
 
 	return dict;
@@ -550,7 +550,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	PyDict_SetItemString(dict, "id", Py_BuildValue("i", id));
 	PyDict_SetItemString(dict, "bank-id", Py_BuildValue("i", bank_id));
 	PyDict_SetItemString(dict, "addr", Py_BuildValue("i", REL_ADDR(addr)));
-	PyDict_SetItemString(dict, "wild-pkmn", get_wild_pokemons(id));
+	PyDict_SetItemString(dict, "wild-pkmn", get_wild_pokemon(id));
 	PyDict_SetItemString(dict, "special-items", get_special_items(id));
 
 	/* Map Header */
