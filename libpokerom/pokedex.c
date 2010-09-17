@@ -113,25 +113,27 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 static void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
 {
 	int rom_addr = ROM_ADDR(0x1, GET_ADDR(0x375d + (4 - 1) * 2));
+	u8 *data = &gl_stream[rom_addr];
 
 	while (--item_id) {
-		while (gl_stream[rom_addr] != 0x50)
-			rom_addr++;
-		rom_addr++;
+		while (*data != 0x50)
+			data++;
+		data++;
 	}
-	load_string(iname, &gl_stream[rom_addr], max_len, 0);
+	load_string(iname, data, max_len, 0);
 }
 
 static void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len)
 {
 	int rom_addr = ROM_ADDR(0x2C, GET_ADDR(0x375d + (2 - 1) * 2));
+	u8 *data = &gl_stream[rom_addr];
 
 	while (--move_id) {
-		while (gl_stream[rom_addr] != 0x50)
-			rom_addr++;
-		rom_addr++;
+		while (*data != 0x50)
+			data++;
+		data++;
 	}
-	load_string(mname, &gl_stream[rom_addr], max_len, 0);
+	load_string(mname, data, max_len, 0);
 }
 
 #define PKMN_EVENTS_ADDR(i)	ROM_ADDR(0x0E, GET_ADDR(ROM_ADDR(0x0E, 0x705c + (i - 1) * 2)))

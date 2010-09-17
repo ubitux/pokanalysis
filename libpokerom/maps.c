@@ -244,6 +244,7 @@ typedef struct {
 /* 4x4 tiles (1 tile = 8x8px) */
 static blocks_type *get_blocks(int n, int addr, int tiles_addr)
 {
+	u8 *data;
 	blocks_type *blocks;
 	int i, j;
 
@@ -252,9 +253,10 @@ static blocks_type *get_blocks(int n, int addr, int tiles_addr)
 	}
 	if ((blocks = calloc(n, sizeof(*blocks))) == NULL)
 		return NULL;
+	data = &gl_stream[addr];
 	for (i = 0; i < n; i++) {
 		for (j = 0; j < 16; j++) {
-			blocks[i].b[j] = (gl_stream[addr++] << 4) + tiles_addr;
+			blocks[i].b[j] = (*data++ << 4) + tiles_addr;
 		}
 	}
 	return blocks;
