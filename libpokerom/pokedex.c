@@ -92,15 +92,14 @@ struct pkmn_header_raw {
 	u8 unknown;			// 0x1B
 } PACKED;
 
-static PyObject *get_pkmn_growth_rate(u8 growth_rate)
+static PyObject *get_pkmn_growth_rate(struct pkmn_header_raw *h)
 {
 	static char *growth_str[] = {[0] = "Medium Fast", [3] = "Medium Slow", [4] = "Fast", [5] = "Slow"};
-	return Py_BuildValue("s", growth_str[growth_rate]);
+	return Py_BuildValue("s", growth_str[h->growth_rate]);
 }
 
-static PyObject *get_pkmn_stats(void *addr)
+static PyObject *get_pkmn_stats(struct pkmn_header_raw *h)
 {
-	struct pkmn_header_raw *h = addr;
 	PyObject *dict = PyDict_New();
 
 	PyDict_SetItemString(dict, "HP", Py_BuildValue("i", h->hp));
@@ -113,9 +112,10 @@ static PyObject *get_pkmn_stats(void *addr)
 	return dict;
 }
 
-static PyObject *get_pkmn_HM_TM(u8 *flags)
+static PyObject *get_pkmn_HM_TM(struct pkmn_header_raw *h)
 {
 	PyObject *list = PyList_New(0);
+	u8 *flags = h->TMHM_flags;
 	u8 mask = 1 << 7;
 	int id;
 
@@ -209,23 +209,24 @@ static PyObject *get_pkmn_type(u8 type_id)
 	return Py_BuildValue("s", tname);
 }
 
-static PyObject *get_pkmn_types(u8 *type_ids)
+static PyObject *get_pkmn_types(struct pkmn_header_raw *h)
 {
 	PyObject *list = PyList_New(0);
 
-	PyList_Append(list, get_pkmn_type(type_ids[0]));
-	PyList_Append(list, (type_ids[1] == type_ids[0]) ? Py_BuildValue("z", NULL) : get_pkmn_type(type_ids[1]));
+	PyList_Append(list, get_pkmn_type(h->type1));
+	PyList_Append(list, (h->type1 == h->type2) ? Py_BuildValue("z", NULL) : get_pkmn_type(h->type2));
 	return list;
 }
 
-static PyObject *get_pkmn_attacks(u8 *ptr, u8 rom_pkmn_id)
+static PyObject *get_pkmn_attacks(struct pkmn_header_raw *h, u8 rom_pkmn_id)
 {
 	PyObject *list = PyList_New(0);
 	int n = 0;
 	char mname[20];
+	u8 *ptr;
 
 	/* Native attacks */
-	for (ptr += 0x0f; ptr[n] && n < 4; n++) {
+	for (ptr = h->initial_atk; ptr[n] && n < 4; n++) {
 		get_pkmn_move_name(mname, ptr[n], sizeof(mname));
 		PyList_Append(list, Py_BuildValue("is", 0, mname));
 	}
@@ -253,16 +254,14 @@ static int get_pkmn_header_address(u8 rom_pkmn_id)
 
 static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id, int back)
 {
-	int pkmn_header_addr;
 	u8 b[3 * 0x188];
 	u8 sprite_dim;
 	u8 ff8b, ff8c, ff8d;
 	u16 sprite_addr;
-
-	pkmn_header_addr = get_pkmn_header_address(stupid_pkmn_id);
+	struct pkmn_header_raw *h = (void *)&gl_stream[get_pkmn_header_address(stupid_pkmn_id)];
 
 	if (back) {
-		sprite_addr = GET_ADDR(pkmn_header_addr + 0x0D);
+		sprite_addr = h->sprite_back_addr;
 		sprite_dim = 0x44;
 	} else {
 		switch (stupid_pkmn_id) {
@@ -282,8 +281,8 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id, int back)
 			break;
 
 		default:
-			sprite_addr = GET_ADDR(pkmn_header_addr + 0x0B);
-			sprite_dim = gl_stream[pkmn_header_addr + 0x0A];
+			sprite_addr = h->sprite_front_addr;
+			sprite_dim = h->sprite_front_dim;
 		}
 	}
 
@@ -399,18 +398,19 @@ PyObject *get_pokedex(PyObject *self)
 		PyObject *pkmn = PyDict_New();
 		u8 rom_id = get_rom_id_from_pkmn_id(real_pkmn_id) + 1;
 		int header_addr = get_pkmn_header_address(rom_id);
+		struct pkmn_header_raw *pkmn_header = (void *)&gl_stream[header_addr];
 
 		PyDict_SetItemString(pkmn, "pic", get_pixbuf(rom_id));
 		PyDict_SetItemString(pkmn, "name", get_pkmn_name(rom_id));
 
 		set_pkmn_texts(pkmn, rom_id);
 
-		PyDict_SetItemString(pkmn, "stats", get_pkmn_stats(&gl_stream[header_addr]));
-		PyDict_SetItemString(pkmn, "attacks", get_pkmn_attacks(&gl_stream[header_addr], rom_id));
+		PyDict_SetItemString(pkmn, "stats", get_pkmn_stats(pkmn_header));
+		PyDict_SetItemString(pkmn, "attacks", get_pkmn_attacks(pkmn_header, rom_id));
 		PyDict_SetItemString(pkmn, "evolutions", get_pkmn_evolutions(rom_id));
-		PyDict_SetItemString(pkmn, "types", get_pkmn_types(&gl_stream[header_addr + 0x06]));
-		PyDict_SetItemString(pkmn, "HM_TM", get_pkmn_HM_TM(&gl_stream[header_addr + 0x14]));
-		PyDict_SetItemString(pkmn, "growth_rate", get_pkmn_growth_rate(gl_stream[header_addr + 0x13]));
+		PyDict_SetItemString(pkmn, "types", get_pkmn_types(pkmn_header));
+		PyDict_SetItemString(pkmn, "HM_TM", get_pkmn_HM_TM(pkmn_header));
+		PyDict_SetItemString(pkmn, "growth_rate", get_pkmn_growth_rate(pkmn_header));
 		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
 		PyDict_SetItemString(pkmn, "id", Py_BuildValue("i", real_pkmn_id));
 		PyDict_SetItemString(pkmn, "rom_id", Py_BuildValue("i", rom_id));
