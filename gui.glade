@@ -353,6 +353,17 @@
                                             <property name="position">4</property>
                                           </packing>
                                         </child>
+                                        <child>
+                                          <object class="GtkLabel" id="label_stat_EXP">
+                                            <property name="visible">True</property>
+                                            <property name="xalign">1</property>
+                                            <property name="label" translatable="yes">Base Exp. yield</property>
+                                          </object>
+                                          <packing>
+                                            <property name="padding">10</property>
+                                            <property name="position">5</property>
+                                          </packing>
+                                        </child>
                                       </object>
                                       <packing>
                                         <property name="position">0</property>
@@ -402,6 +413,15 @@
                                             <property name="position">4</property>
                                           </packing>
                                         </child>
+                                        <child>
+                                          <object class="GtkProgressBar" id="progressbar_stat_EXP">
+                                            <property name="visible">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="padding">10</property>
+                                            <property name="position">5</property>
+                                          </packing>
+                                        </child>
                                       </object>
                                       <packing>
                                         <property name="position">1</property>
@@ -414,41 +434,18 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_attacks">
+                                  <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_info">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="hscrollbar_policy">automatic</property>
                                     <property name="vscrollbar_policy">automatic</property>
                                     <property name="shadow_type">etched-in</property>
                                     <child>
-                                      <object class="GtkTreeView" id="treeview_pkmn_attacks">
+                                      <object class="GtkTextView" id="textview_pkmn_info">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
-                                        <property name="model">liststore_pkmn_attacks</property>
-                                        <property name="headers_clickable">False</property>
-                                        <property name="search_column">0</property>
-                                        <child>
-                                          <object class="GtkTreeViewColumn" id="treeviewcolumn_level">
-                                            <property name="title">Level</property>
-                                            <child>
-                                              <object class="GtkCellRendererText" id="cellrenderertext_level"/>
-                                              <attributes>
-                                                <attribute name="markup">0</attribute>
-                                              </attributes>
-                                            </child>
-                                          </object>
-                                        </child>
-                                        <child>
-                                          <object class="GtkTreeViewColumn" id="treeviewcolumn_attack">
-                                            <property name="title">Attack</property>
-                                            <child>
-                                              <object class="GtkCellRendererText" id="cellrenderertext_attack"/>
-                                              <attributes>
-                                                <attribute name="markup">1</attribute>
-                                              </attributes>
-                                            </child>
-                                          </object>
-                                        </child>
+                                        <property name="editable">False</property>
+                                        <property name="cursor_visible">False</property>
                                       </object>
                                     </child>
                                   </object>
@@ -463,18 +460,41 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_info">
+                              <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_attacks">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="hscrollbar_policy">automatic</property>
                                 <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
-                                  <object class="GtkTextView" id="textview_pkmn_info">
+                                  <object class="GtkTreeView" id="treeview_pkmn_attacks">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="editable">False</property>
-                                    <property name="cursor_visible">False</property>
+                                    <property name="model">liststore_pkmn_attacks</property>
+                                    <property name="headers_clickable">False</property>
+                                    <property name="search_column">0</property>
+                                    <child>
+                                      <object class="GtkTreeViewColumn" id="treeviewcolumn_level">
+                                        <property name="title">Level</property>
+                                        <child>
+                                          <object class="GtkCellRendererText" id="cellrenderertext_level"/>
+                                          <attributes>
+                                            <attribute name="markup">0</attribute>
+                                          </attributes>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkTreeViewColumn" id="treeviewcolumn_attack">
+                                        <property name="title">Attack</property>
+                                        <child>
+                                          <object class="GtkCellRendererText" id="cellrenderertext_attack"/>
+                                          <attributes>
+                                            <attribute name="markup">1</attribute>
+                                          </attributes>
+                                        </child>
+                                      </object>
+                                    </child>
                                   </object>
                                 </child>
                               </object>

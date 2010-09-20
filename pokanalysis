@@ -222,6 +222,7 @@ class Core:
                 mark = text_buffer.create_mark('end', match[0], False)
                 self.gui.get_object('textview_asm').scroll_to_mark(mark, 0.05, True, 0.0, 0.1)
 
+
     def on_treeview_pokedex_cursor_changed(self, treeview):
         (path, column_focus) = treeview.get_cursor()
         pkmn = self.pokedex[path[0]]
@@ -250,11 +251,15 @@ class Core:
         self.gui.get_object('label_pkmn').set_markup('#%s <b>%s</b>' % (pkmn['fmt_id'], pkmn['name']))
 
         stats = ('HP', 'ATK', 'DEF', 'SPD', 'SPE')
-        for i, stat in enumerate(stats, 1):
-            value = pkmn['header_values'][keys[i]]
+
+        def set_pgbar_stat(stat, value):
             pgbar = self.gui.get_object('progressbar_stat_' + stat)
             pgbar.set_fraction(value / 255.)
             pgbar.set_text('%d' % value)
+
+        for i, stat in enumerate(stats, 1):
+            set_pgbar_stat(stat, pkmn['header_values'][keys[i]])
+        set_pgbar_stat('EXP', pkmn['header_values']['0x09_base_exp_yield'])
 
         atk_lstore = self.gui.get_object('liststore_pkmn_attacks')
         atk_lstore.clear()
