@@ -266,6 +266,11 @@ class Core:
         for (level, atk) in pkmn['attacks']:
             atk_lstore.append(('<i>Native</i>' if not level else '%d' % level, '<b>%s</b>' % atk.title()))
 
+        HMTM_lstore = self.gui.get_object('liststore_pkmn_HM_TM')
+        HMTM_lstore.clear()
+        for HMTM in pkmn['HM_TM']:
+            HMTM_lstore.append((HMTM,))
+
         evol_lstore = self.gui.get_object('liststore_evolutions')
         evol_lstore.clear()
         for evol in pkmn['evolutions']:

@@ -42,14 +42,6 @@
       <column type="GdkPixbuf"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="liststore_pkmn_attacks">
-    <columns>
-      <!-- column-name level -->
-      <column type="gchararray"/>
-      <!-- column-name attack -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="liststore_evolutions">
     <columns>
       <!-- column-name pkmn_id -->
@@ -84,6 +76,20 @@
       <column type="gint"/>
       <!-- column-name pixbuf -->
       <column type="GdkPixbuf"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_pkmn_attacks">
+    <columns>
+      <!-- column-name level -->
+      <column type="gchararray"/>
+      <!-- column-name attack -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_pkmn_HM_TM">
+    <columns>
+      <!-- column-name id -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window">
@@ -500,6 +506,36 @@
                               </object>
                               <packing>
                                 <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_TM_HM">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hscrollbar_policy">automatic</property>
+                                <property name="vscrollbar_policy">automatic</property>
+                                <property name="shadow_type">etched-in</property>
+                                <child>
+                                  <object class="GtkTreeView" id="treeview_pkmn_TM_HM">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="model">liststore_pkmn_HM_TM</property>
+                                    <child>
+                                      <object class="GtkTreeViewColumn" id="treeviewcolumn_TM_HM_id">
+                                        <property name="title">TM/HM</property>
+                                        <child>
+                                          <object class="GtkCellRendererText" id="cellrenderertext_TM_HM_id"/>
+                                          <attributes>
+                                            <attribute name="text">0</attribute>
+                                          </attributes>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="position">2</property>
                               </packing>
                             </child>
                           </object>

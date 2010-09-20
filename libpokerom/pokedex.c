@@ -99,15 +99,38 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	PyDict_SetItemString(dict, "0x11_initial_attack_3", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x12_initial_attack_4", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x13_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x14_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x15_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x16_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x17_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x18_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x19_unknown", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x1a_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x14_HM_TM_flags_part0", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x15_HM_TM_flags_part1", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x16_HM_TM_flags_part2", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x17_HM_TM_flags_part3", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x18_HM_TM_flags_part4", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x19_HM_TM_flags_part5", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x1a_HM_TM_flags_part6", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x1b_unknown", Py_BuildValue("i", *pkmn_header++));
 	return dict;
+}
+
+static PyObject *get_pkmn_HM_TM(u8 *flags)
+{
+	PyObject *list = PyList_New(0);
+	u8 mask = 1 << 7;
+	int id;
+
+	for (id = 1; id < 7 * 8; id++) {
+		if (*flags & mask) {
+			if (id <= 50)
+				PyList_Append(list, PyString_FromFormat("%s %d", "HM", id));
+			else
+				PyList_Append(list, PyString_FromFormat("%s %d", "TM", id - 50));
+		}
+		if (mask == 1) {
+			mask = 1 << 7;
+			flags++;
+			continue;
+		}
+		mask >>= 1;
+	}
+	return list;
 }
 
 static void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
@@ -382,6 +405,7 @@ PyObject *get_pokedex(PyObject *self)
 		PyDict_SetItemString(pkmn, "attacks", get_pkmn_attacks(&gl_stream[header_addr], rom_id));
 		PyDict_SetItemString(pkmn, "evolutions", get_pkmn_evolutions(rom_id));
 		PyDict_SetItemString(pkmn, "types", get_pkmn_types(&gl_stream[header_addr + 0x06]));
+		PyDict_SetItemString(pkmn, "HM_TM", get_pkmn_HM_TM(&gl_stream[header_addr + 0x14]));
 		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
 		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&gl_stream[header_addr]));
 		PyDict_SetItemString(pkmn, "id", Py_BuildValue("i", real_pkmn_id));
