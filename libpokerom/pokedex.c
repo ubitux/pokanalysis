@@ -252,13 +252,12 @@ static int get_pkmn_header_address(u8 rom_pkmn_id)
 	return ROM_ADDR(0x0E, 0x43de + (get_pkmn_id_from_stupid_one(rom_pkmn_id) - 1) * 0x1C);
 }
 
-static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id, int back)
+static void load_pokemon_sprite(struct pkmn_header_raw *h, u8 *pixbuf, u8 stupid_pkmn_id, int back)
 {
 	u8 b[3 * 0x188];
 	u8 sprite_dim;
 	u8 ff8b, ff8c, ff8d;
 	u16 sprite_addr;
-	struct pkmn_header_raw *h = (void *)&gl_stream[get_pkmn_header_address(stupid_pkmn_id)];
 
 	if (back) {
 		sprite_addr = h->sprite_back_addr;
@@ -302,7 +301,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id, int back)
 	rle_sprite(pixbuf, b + 0x188);
 }
 
-static PyObject *get_pixbuf(u8 pkmn_id)
+static PyObject *get_pixbuf(struct pkmn_header_raw *h, u8 pkmn_id)
 {
 	u8 pixbuf[(7 * 7) * (8 * 8) * 3];
 	u8 pixbuf_back[(7 * 7) * (8 * 8) * 3];
@@ -311,8 +310,8 @@ static PyObject *get_pixbuf(u8 pkmn_id)
 	case 193: case 196: case 199: case 202: case 210: case 213: case 216: case 219: case 253:
 		return Py_BuildValue("z", NULL);
 	}
-	load_pokemon_sprite(pixbuf, pkmn_id, 0);
-	load_pokemon_sprite(pixbuf_back, pkmn_id, 1);
+	load_pokemon_sprite(h, pixbuf, pkmn_id, 0);
+	load_pokemon_sprite(h, pixbuf_back, pkmn_id, 1);
 	return Py_BuildValue("s#s#", pixbuf, sizeof(pixbuf), pixbuf_back, sizeof(pixbuf));
 }
 
@@ -400,7 +399,7 @@ PyObject *get_pokedex(PyObject *self)
 		int header_addr = get_pkmn_header_address(rom_id);
 		struct pkmn_header_raw *pkmn_header = (void *)&gl_stream[header_addr];
 
-		PyDict_SetItemString(pkmn, "pic", get_pixbuf(rom_id));
+		PyDict_SetItemString(pkmn, "pic", get_pixbuf(pkmn_header, rom_id));
 		PyDict_SetItemString(pkmn, "name", get_pkmn_name(rom_id));
 
 		set_pkmn_texts(pkmn, rom_id);
