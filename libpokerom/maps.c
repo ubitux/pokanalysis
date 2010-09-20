@@ -704,12 +704,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	free_map_things(&map_things);
 	apply_filter(current_map->pixbuf, id, map_w * 2);
 
-	{
-		PyObject *map_pic;
-
-		map_pic = Py_BuildValue("s#", current_map->pixbuf, PIXBUF_BLOCK_SIZE * map_w * map_h);
-		PyDict_SetItemString(dict, "map_pic", map_pic);
-	}
+	PyDict_SetItemString(dict, "map_pic", Py_BuildValue("s#", current_map->pixbuf, PIXBUF_BLOCK_SIZE * map_w * map_h));
 
 	map_w *= 2;
 	map_h *= 2;
