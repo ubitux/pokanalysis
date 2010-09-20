@@ -89,7 +89,7 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	PyDict_SetItemString(dict, "0x05_base_SPE", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x06_type1", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x07_type2", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x08_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x08_capture_rate", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x09_base_exp_yield", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x0a_sprite_front_dim", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x0b_sprite_front_addr", Py_BuildValue("i", *(pkmn_header + 1) << 8 | *pkmn_header)); pkmn_header += 2;
