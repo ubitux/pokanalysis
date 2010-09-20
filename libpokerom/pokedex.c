@@ -77,43 +77,40 @@ static u8 get_rom_id_from_pkmn_id(u8 pkmn_id) /* Red: RO10:4FFB */
 	return pos;
 }
 
-static PyObject *get_pkmn_header(u8 *pkmn_header)
-{
-	PyObject *dict = PyDict_New();
-
-	PyDict_SetItemString(dict, "0x00_pokemon_id", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x01_base_HP", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x02_base_ATK", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x03_base_DEF", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x04_base_SPD", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x05_base_SPE", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x06_type1", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x07_type2", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x08_capture_rate", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x09_base_exp_yield", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x0a_sprite_front_dim", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x0b_sprite_front_addr", Py_BuildValue("i", *(pkmn_header + 1) << 8 | *pkmn_header)); pkmn_header += 2;
-	PyDict_SetItemString(dict, "0x0d_sprite_back_addr", Py_BuildValue("i", *(pkmn_header + 1) << 8 | *pkmn_header)); pkmn_header += 2;
-	PyDict_SetItemString(dict, "0x0f_initial_attack_1", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x10_initial_attack_2", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x11_initial_attack_3", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x12_initial_attack_4", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x13_growth_rate", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x14_HM_TM_flags_part0", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x15_HM_TM_flags_part1", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x16_HM_TM_flags_part2", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x17_HM_TM_flags_part3", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x18_HM_TM_flags_part4", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x19_HM_TM_flags_part5", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x1a_HM_TM_flags_part6", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x1b_unknown", Py_BuildValue("i", *pkmn_header++));
-	return dict;
-}
+struct pkmn_header_raw {
+	u8 id;				// 0x00
+	u8 hp, atk, def, spd, spe;	// 0x01-0x05
+	u8 type1, type2;		// 0x06-0x07
+	u8 capture_rate;		// 0x08
+	u8 base_exp_yield;		// 0x09
+	u8 sprite_front_dim;		// 0x0A
+	u16 sprite_front_addr;		// 0x0B
+	u16 sprite_back_addr;		// 0x0C
+	u8 initial_atk[4];		// 0x0F-0x12
+	u8 growth_rate;			// 0x12
+	u8 TMHM_flags[7];		// 0x14-0x1A
+	u8 unknown;			// 0x1B
+} PACKED;
 
 static PyObject *get_pkmn_growth_rate(u8 growth_rate)
 {
 	static char *growth_str[] = {[0] = "Medium Fast", [3] = "Medium Slow", [4] = "Fast", [5] = "Slow"};
 	return Py_BuildValue("s", growth_str[growth_rate]);
+}
+
+static PyObject *get_pkmn_stats(void *addr)
+{
+	struct pkmn_header_raw *h = addr;
+	PyObject *dict = PyDict_New();
+
+	PyDict_SetItemString(dict, "HP", Py_BuildValue("i", h->hp));
+	PyDict_SetItemString(dict, "ATK", Py_BuildValue("i", h->atk));
+	PyDict_SetItemString(dict, "DEF", Py_BuildValue("i", h->def));
+	PyDict_SetItemString(dict, "SPD", Py_BuildValue("i", h->spd));
+	PyDict_SetItemString(dict, "SPE", Py_BuildValue("i", h->spe));
+	PyDict_SetItemString(dict, "CAP", Py_BuildValue("i", h->capture_rate));
+	PyDict_SetItemString(dict, "EXP", Py_BuildValue("i", h->base_exp_yield));
+	return dict;
 }
 
 static PyObject *get_pkmn_HM_TM(u8 *flags)
@@ -408,13 +405,13 @@ PyObject *get_pokedex(PyObject *self)
 
 		set_pkmn_texts(pkmn, rom_id);
 
+		PyDict_SetItemString(pkmn, "stats", get_pkmn_stats(&gl_stream[header_addr]));
 		PyDict_SetItemString(pkmn, "attacks", get_pkmn_attacks(&gl_stream[header_addr], rom_id));
 		PyDict_SetItemString(pkmn, "evolutions", get_pkmn_evolutions(rom_id));
 		PyDict_SetItemString(pkmn, "types", get_pkmn_types(&gl_stream[header_addr + 0x06]));
 		PyDict_SetItemString(pkmn, "HM_TM", get_pkmn_HM_TM(&gl_stream[header_addr + 0x14]));
 		PyDict_SetItemString(pkmn, "growth_rate", get_pkmn_growth_rate(gl_stream[header_addr + 0x13]));
 		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
-		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&gl_stream[header_addr]));
 		PyDict_SetItemString(pkmn, "id", Py_BuildValue("i", real_pkmn_id));
 		PyDict_SetItemString(pkmn, "rom_id", Py_BuildValue("i", rom_id));
 

@@ -227,38 +227,22 @@ class Core:
         pic_back = pkmn['pic'][1].scale_simple(160, 160, gtk.gdk.INTERP_NEAREST)
         self.gui.get_object('image_pkmn').set_from_pixbuf(pic)
         self.gui.get_object('image_pkmn_back').set_from_pixbuf(pic_back)
-        keys = pkmn['header_values'].keys()
-        keys.sort()
 
         types_str = 'Type%s: <b>%s</b>' % ('s' if pkmn['types'][1] else '', '/'.join(t.title() for t in pkmn['types'] if t))
         self.gui.get_object('label_pkmn_types').set_markup(types_str)
         self.gui.get_object('label_pkmn_growth_rate').set_markup('Growth rate: <b>%s</b>' % pkmn['growth_rate'])
 
-        header = ''
-        for key in keys:
-            v = pkmn['header_values'][key]
-            if v > 0xff:
-                header += '%s: 0x%04X\n' % (key, v)
-            else:
-                header += '%s: 0x%02X\n' % (key, v)
-
         self.gui.get_object('textview_pkmn_info_small').get_buffer().set_text('%s\nHeight: %s\nWeight: %s\n\n%s' %
                 (pkmn['class'], pkmn['height'], pkmn['weight'], pkmn['desc']))
         self.gui.get_object('textview_pkmn_info').get_buffer().set_text(
-                'ROM ID: 0x%02X\nROM header addr: 0x%06x\n\n[HEADER]\n%s' % (pkmn['rom_id'], pkmn['rom_header_addr'], header))
+                'ROM ID: 0x%02X\nROM header addr: 0x%06x\n' % (pkmn['rom_id'], pkmn['rom_header_addr']))
         self.gui.get_object('label_pkmn').set_markup('#%s <b>%s</b>' % (pkmn['fmt_id'], pkmn['name']))
 
-        stats = ('HP', 'ATK', 'DEF', 'SPD', 'SPE')
-
-        def set_pgbar_stat(stat, value):
+        for i, stat in enumerate(('HP', 'ATK', 'DEF', 'SPD', 'SPE', 'EXP', 'CAP'), 1):
+            value = pkmn['stats'][stat]
             pgbar = self.gui.get_object('progressbar_stat_' + stat)
             pgbar.set_fraction(value / 255.)
             pgbar.set_text('%d' % value)
-
-        for i, stat in enumerate(stats, 1):
-            set_pgbar_stat(stat, pkmn['header_values'][keys[i]])
-        set_pgbar_stat('EXP', pkmn['header_values']['0x09_base_exp_yield'])
-        set_pgbar_stat('CAP', pkmn['header_values']['0x08_capture_rate'])
 
         atk_lstore = self.gui.get_object('liststore_pkmn_attacks')
         atk_lstore.clear()
