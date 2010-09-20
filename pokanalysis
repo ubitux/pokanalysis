@@ -235,6 +235,7 @@ class Core:
 
         types_str = 'Type%s: <b>%s</b>' % ('s' if pkmn['types'][1] else '', '/'.join(t.title() for t in pkmn['types'] if t))
         self.gui.get_object('label_pkmn_types').set_markup(types_str)
+        self.gui.get_object('label_pkmn_growth_rate').set_markup('Growth rate: <b>%s</b>' % pkmn['growth_rate'])
 
         header = ''
         for key in keys:

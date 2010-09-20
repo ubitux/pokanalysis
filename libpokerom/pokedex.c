@@ -98,7 +98,7 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	PyDict_SetItemString(dict, "0x10_initial_attack_2", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x11_initial_attack_3", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x12_initial_attack_4", Py_BuildValue("i", *pkmn_header++));
-	PyDict_SetItemString(dict, "0x13_unknown", Py_BuildValue("i", *pkmn_header++));
+	PyDict_SetItemString(dict, "0x13_growth_rate", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x14_HM_TM_flags_part0", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x15_HM_TM_flags_part1", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x16_HM_TM_flags_part2", Py_BuildValue("i", *pkmn_header++));
@@ -108,6 +108,12 @@ static PyObject *get_pkmn_header(u8 *pkmn_header)
 	PyDict_SetItemString(dict, "0x1a_HM_TM_flags_part6", Py_BuildValue("i", *pkmn_header++));
 	PyDict_SetItemString(dict, "0x1b_unknown", Py_BuildValue("i", *pkmn_header++));
 	return dict;
+}
+
+static PyObject *get_pkmn_growth_rate(u8 growth_rate)
+{
+	static char *growth_str[] = {[0] = "Medium Fast", [3] = "Medium Slow", [4] = "Fast", [5] = "Slow"};
+	return Py_BuildValue("s", growth_str[growth_rate]);
 }
 
 static PyObject *get_pkmn_HM_TM(u8 *flags)
@@ -406,6 +412,7 @@ PyObject *get_pokedex(PyObject *self)
 		PyDict_SetItemString(pkmn, "evolutions", get_pkmn_evolutions(rom_id));
 		PyDict_SetItemString(pkmn, "types", get_pkmn_types(&gl_stream[header_addr + 0x06]));
 		PyDict_SetItemString(pkmn, "HM_TM", get_pkmn_HM_TM(&gl_stream[header_addr + 0x14]));
+		PyDict_SetItemString(pkmn, "growth_rate", get_pkmn_growth_rate(gl_stream[header_addr + 0x13]));
 		PyDict_SetItemString(pkmn, "rom_header_addr", Py_BuildValue("i", header_addr));
 		PyDict_SetItemString(pkmn, "header_values", get_pkmn_header(&gl_stream[header_addr]));
 		PyDict_SetItemString(pkmn, "id", Py_BuildValue("i", real_pkmn_id));
