@@ -222,7 +222,6 @@ class Core:
                 mark = text_buffer.create_mark('end', match[0], False)
                 self.gui.get_object('textview_asm').scroll_to_mark(mark, 0.05, True, 0.0, 0.1)
 
-
     def on_treeview_pokedex_cursor_changed(self, treeview):
         (path, column_focus) = treeview.get_cursor()
         pkmn = self.pokedex[path[0]]
