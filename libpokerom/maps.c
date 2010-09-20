@@ -31,7 +31,7 @@ static char *color_set[][4] = {
 #define TILE_X 8
 #define TILE_Y 8
 
-static void load_tile_from_ptr(u8 *pixbuf, u8 *src, int color_key)
+static void load_tile_from_ptr(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_key)
 {
 	int x, y;
 	char **colors = color_set[color_key];
@@ -196,7 +196,7 @@ static void flip_tile(u8 *tile)
 }
 
 /* 1 block = 4x4 tiles */
-static void load_block_from_tiles_addr(u8 *pixbuf, int *tiles_addr, void *mt, int bx, int by)
+static void load_block_from_tiles_addr(u8 * __restrict__ pixbuf, int *__restrict__ tiles_addr, void *mt, int bx, int by)
 {
 	int i, j, pixbuf_offset = 0;
 
