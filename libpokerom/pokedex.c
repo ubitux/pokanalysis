@@ -333,22 +333,22 @@ static void trad_num(u8 *b)
 
 static void set_pkmn_texts(PyObject *dict, int rom_id)
 {
-	int i, rom_addr;
+	int i;
 	char *s;
 	char b[128];
+	u8 *data = &gl_stream[ROM_ADDR(0x10, GET_ADDR(ROM_ADDR(0x10, 0x447E + 2 * (rom_id - 1))))];
 
 	i = 0;
-	rom_addr = ROM_ADDR(0x10, GET_ADDR(ROM_ADDR(0x10, 0x447E + 2 * (rom_id - 1))));
-	while (gl_stream[rom_addr] != 0x50) {
-		s = get_pkmn_char(gl_stream[rom_addr++], "¿?");
+	while (*data != 0x50) {
+		s = get_pkmn_char(*data++, "¿?");
 		strcpy(&b[i], s);
 		i += strlen(s);
 	}
 	PyDict_SetItemString(dict, "class", Py_BuildValue("s", b));
-	rom_addr++; // skip 0x50
+	data++; // skip 0x50
 
-	sprintf(b, "%d'%02d\"", gl_stream[rom_addr], gl_stream[rom_addr + 1]);
-	rom_addr += 2;
+	sprintf(b, "%d'%02d\"", data[0], data[1]);
+	data += 2;
 	PyDict_SetItemString(dict, "height", Py_BuildValue("s", b));
 
 	{
@@ -357,8 +357,8 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 		char *b_trim;
 
 		strcpy(b, "   ???lb");
-		input[1] = gl_stream[rom_addr++];
-		input[0] = gl_stream[rom_addr++];
+		input[1] = *data++;
+		input[0] = *data++;
 
 		pkmn_put_nbr((u8*)b, input, 0x02, 0x05);
 		trad_num((u8*)b);
@@ -374,13 +374,13 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 		for (b_trim = b; *b_trim == ' '; b_trim++);
 
 		PyDict_SetItemString(dict, "weight", Py_BuildValue("s", b_trim));
-		rom_addr++;
+		data++;
 	}
 
 	i = 0;
-	rom_addr = ROM_ADDR(gl_stream[rom_addr + 2], GET_ADDR(rom_addr)) + 1;
-	while (gl_stream[rom_addr] != 0x50) {
-		s = get_pkmn_char(gl_stream[rom_addr++], "¿?");
+	data = &gl_stream[ROM_ADDR(data[2], data[1] << 8 | data[0])] + 1;
+	while (*data != 0x50) {
+		s = get_pkmn_char(*data++, "¿?");
 		strcpy(&b[i], s);
 		i += strlen(s);
 	}
