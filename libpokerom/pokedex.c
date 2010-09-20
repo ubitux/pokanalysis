@@ -378,7 +378,7 @@ static void set_pkmn_texts(PyObject *dict, int rom_id)
 	}
 
 	i = 0;
-	data = &gl_stream[ROM_ADDR(data[2], data[1] << 8 | data[0])] + 1;
+	data = &gl_stream[ROM_ADDR(data[2], *(u16*)data)] + 1;
 	while (*data != 0x50) {
 		s = get_pkmn_char(*data++, "¿?");
 		strcpy(&b[i], s);

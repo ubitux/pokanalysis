@@ -334,7 +334,7 @@ lbl_2595:
 		c++;
 
 	p = 0x269f + 2 * c;
-	p = (gl_stream[p + 1] << 8) | gl_stream[p];
+	p = *(u16*)&gl_stream[p];
 
 	c++;
 	de = 0x0000;
