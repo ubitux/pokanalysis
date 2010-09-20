@@ -238,7 +238,7 @@ class Core:
                 'ROM ID: 0x%02X\nROM header addr: 0x%06x\n' % (pkmn['rom_id'], pkmn['rom_header_addr']))
         self.gui.get_object('label_pkmn').set_markup('#%s <b>%s</b>' % (pkmn['fmt_id'], pkmn['name']))
 
-        for i, stat in enumerate(('HP', 'ATK', 'DEF', 'SPD', 'SPE', 'EXP', 'CAP'), 1):
+        for stat in ('HP', 'ATK', 'DEF', 'SPD', 'SPE', 'EXP', 'CAP'):
             value = pkmn['stats'][stat]
             pgbar = self.gui.get_object('progressbar_stat_' + stat)
             pgbar.set_fraction(value / 255.)
