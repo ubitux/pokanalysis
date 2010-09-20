@@ -33,7 +33,7 @@ static char *color_set[][4] = {
 
 static void load_tile_from_ptr(u8 *pixbuf, u8 *src, int color_key)
 {
-	int x, y, pixbuf_offset = 0;
+	int x, y;
 	char **colors = color_set[color_key];
 
 	for (y = 0; y < TILE_Y; y++) {
@@ -42,8 +42,8 @@ static void load_tile_from_ptr(u8 *pixbuf, u8 *src, int color_key)
 		u8 mask = 1 << 7;
 
 		for (x = 0; x < TILE_X; x++, mask >>= 1) {
-			memcpy(&pixbuf[pixbuf_offset], colors[(!!(byte1 & mask) << 1) | !!(byte2 & mask)], 4);
-			pixbuf_offset += 3;
+			memcpy(pixbuf, colors[(!!(byte1 & mask) << 1) | !!(byte2 & mask)], 4);
+			pixbuf += 3;
 		}
 	}
 }
