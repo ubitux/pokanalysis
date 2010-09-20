@@ -302,7 +302,7 @@ static void load_pokemon_sprite(u8 *pixbuf, u8 stupid_pkmn_id, int back)
 	rle_sprite(pixbuf, b + 0x188);
 }
 
-PyObject *get_pixbuf(u8 pkmn_id)
+static PyObject *get_pixbuf(u8 pkmn_id)
 {
 	u8 pixbuf[(7 * 7) * (8 * 8) * 3];
 	u8 pixbuf_back[(7 * 7) * (8 * 8) * 3];
@@ -325,7 +325,7 @@ static PyObject *get_pkmn_name(int rom_id)
 	return Py_BuildValue("s", name);
 }
 
-void trad_num(u8 *b)
+static void trad_num(u8 *b)
 {
 	for (; *b; b++)
 		if (*b != ' ')
