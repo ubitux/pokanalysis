@@ -182,9 +182,7 @@ class Core:
         (x, y) = coords = (int(event.x / 16), int(event.y / 16))
         info = [('X', x), ('Y', y)]
         if coords in self.current_map:
-            info_data = self.current_map[coords].items()
-            info_data.sort()
-            info += info_data
+            info += sorted(self.current_map[coords].items())
         if 'to_map' in dict(info).keys():
             widget.window.set_cursor(self.focus_cursor)
         else:
