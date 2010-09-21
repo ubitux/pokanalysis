@@ -138,7 +138,7 @@ static PyObject *get_pkmn_HM_TM(struct pkmn_header_raw *h)
 {
 	PyObject *list = PyList_New(0);
 	u8 *flags = h->TMHM_flags;
-	u8 mask = 1 << 7;
+	u8 mask = 1;
 	int id;
 
 	for (id = 1; id < 7 * 8; id++) {
@@ -154,12 +154,12 @@ static PyObject *get_pkmn_HM_TM(struct pkmn_header_raw *h)
 			get_pkmn_move_name(name, gl_stream[ROM_ADDR(0x04, 0x7773 + id - 1)], sizeof(name));
 			PyList_Append(list, Py_BuildValue("ss", tmhm, name));
 		}
-		if (mask == 1) {
-			mask = 1 << 7;
+		if (mask == 1 << 7) {
+			mask = 1;
 			flags++;
 			continue;
 		}
-		mask >>= 1;
+		mask <<= 1;
 	}
 	return list;
 }
