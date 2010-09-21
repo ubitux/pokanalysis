@@ -178,7 +178,11 @@ class Core:
             if map_id is not None:
                 self.select_map(self.get_map_str(map_id), True)
 
+    def on_eventbox_image_map_leave_notify_event(self, *p):
+        self.gui.get_object('frame_map').hide()
+
     def on_eventbox_image_map_motion_notify_event(self, widget, event):
+        self.gui.get_object('frame_map').show()
         (x, y) = coords = (int(event.x / 16), int(event.y / 16))
         info = [('X', x), ('Y', y)]
         if coords in self.current_map:
@@ -285,6 +289,7 @@ class Core:
         self.gui.connect_signals({
             'on_combobox_asm_bank_changed': self.on_combobox_asm_bank_changed,
             'on_eventbox_image_map_button_press_event': self.on_eventbox_image_map_button_press_event,
+            'on_eventbox_image_map_leave_notify_event': self.on_eventbox_image_map_leave_notify_event,
             'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
             'on_iconview_evolutions_item_activated': self.on_iconview_evolutions_item_activated,
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
