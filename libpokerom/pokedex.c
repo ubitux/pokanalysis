@@ -112,30 +112,26 @@ static PyObject *get_pkmn_stats(struct pkmn_header_raw *h)
 	return dict;
 }
 
-static void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
+static void load_packed_text_string(u8 *data, char *dst, u8 id, size_t max_len)
 {
-	int rom_addr = ROM_ADDR(0x1, GET_ADDR(0x375d + (4 - 1) * 2));
-	u8 *data = &gl_stream[rom_addr];
-
-	while (--item_id) {
+	while (--id) {
 		while (*data != 0x50)
 			data++;
 		data++;
 	}
-	load_string(iname, data, max_len, 0);
+	load_string(dst, data, max_len, 0);
+}
+
+#define PACKED_TEXT_BASE_ADDR(b, i)	&gl_stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
+
+static void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
+{
+	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x01, 4), iname, item_id, max_len);
 }
 
 static void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len)
 {
-	int rom_addr = ROM_ADDR(0x2C, GET_ADDR(0x375d + (2 - 1) * 2));
-	u8 *data = &gl_stream[rom_addr];
-
-	while (--move_id) {
-		while (*data != 0x50)
-			data++;
-		data++;
-	}
-	load_string(mname, data, max_len, 0);
+	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x2c, 2), mname, move_id, max_len);
 }
 
 static PyObject *get_pkmn_HM_TM(struct pkmn_header_raw *h)
