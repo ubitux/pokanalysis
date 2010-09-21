@@ -122,9 +122,9 @@ static PyObject *get_pkmn_HM_TM(struct pkmn_header_raw *h)
 	for (id = 1; id < 7 * 8; id++) {
 		if (*flags & mask) {
 			if (id <= 50)
-				PyList_Append(list, PyString_FromFormat("%s %d", "HM", id));
+				PyList_Append(list, PyString_FromFormat("%s %d", "TM", id));
 			else
-				PyList_Append(list, PyString_FromFormat("%s %d", "TM", id - 50));
+				PyList_Append(list, PyString_FromFormat("%s %d", "HM", id - 50));
 		}
 		if (mask == 1) {
 			mask = 1 << 7;
