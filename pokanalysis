@@ -251,8 +251,8 @@ class Core:
 
         HMTM_lstore = self.gui.get_object('liststore_pkmn_HM_TM')
         HMTM_lstore.clear()
-        for HMTM in pkmn['HM_TM']:
-            HMTM_lstore.append((HMTM,))
+        for HMTM, move in pkmn['HM_TM']:
+            HMTM_lstore.append(('<b>%s</b>' % HMTM, '<i>%s</i>' % move.title()))
 
         evol_lstore = self.gui.get_object('liststore_evolutions')
         evol_lstore.clear()

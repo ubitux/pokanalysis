@@ -112,30 +112,6 @@ static PyObject *get_pkmn_stats(struct pkmn_header_raw *h)
 	return dict;
 }
 
-static PyObject *get_pkmn_HM_TM(struct pkmn_header_raw *h)
-{
-	PyObject *list = PyList_New(0);
-	u8 *flags = h->TMHM_flags;
-	u8 mask = 1 << 7;
-	int id;
-
-	for (id = 1; id < 7 * 8; id++) {
-		if (*flags & mask) {
-			if (id <= 50)
-				PyList_Append(list, PyString_FromFormat("%s %d", "TM", id));
-			else
-				PyList_Append(list, PyString_FromFormat("%s %d", "HM", id - 50));
-		}
-		if (mask == 1) {
-			mask = 1 << 7;
-			flags++;
-			continue;
-		}
-		mask >>= 1;
-	}
-	return list;
-}
-
 static void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
 {
 	int rom_addr = ROM_ADDR(0x1, GET_ADDR(0x375d + (4 - 1) * 2));
@@ -160,6 +136,36 @@ static void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len)
 		data++;
 	}
 	load_string(mname, data, max_len, 0);
+}
+
+static PyObject *get_pkmn_HM_TM(struct pkmn_header_raw *h)
+{
+	PyObject *list = PyList_New(0);
+	u8 *flags = h->TMHM_flags;
+	u8 mask = 1 << 7;
+	int id;
+
+	for (id = 1; id < 7 * 8; id++) {
+		if (*flags & mask) {
+			char name[30];
+			char tmhm[5];
+
+			if (id <= 50) {
+				snprintf(tmhm, 5, "TM%02d", id);
+			} else {
+				snprintf(tmhm, 5, "HM%02d", id - 50);
+			}
+			get_pkmn_move_name(name, gl_stream[ROM_ADDR(0x04, 0x7773 + id - 1)], sizeof(name));
+			PyList_Append(list, Py_BuildValue("ss", tmhm, name));
+		}
+		if (mask == 1) {
+			mask = 1 << 7;
+			flags++;
+			continue;
+		}
+		mask >>= 1;
+	}
+	return list;
 }
 
 #define PKMN_EVENTS_ADDR(i)	ROM_ADDR(0x0E, GET_ADDR(ROM_ADDR(0x0E, 0x705c + (i - 1) * 2)))

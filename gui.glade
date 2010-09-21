@@ -90,6 +90,8 @@
     <columns>
       <!-- column-name id -->
       <column type="gchararray"/>
+      <!-- column-name move-name -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window">
@@ -592,7 +594,13 @@
                                         <child>
                                           <object class="GtkCellRendererText" id="cellrenderertext_TM_HM_id"/>
                                           <attributes>
-                                            <attribute name="text">0</attribute>
+                                            <attribute name="markup">0</attribute>
+                                          </attributes>
+                                        </child>
+                                        <child>
+                                          <object class="GtkCellRendererText" id="cellrenderertext_TM_HM_movename"/>
+                                          <attributes>
+                                            <attribute name="markup">1</attribute>
                                           </attributes>
                                         </child>
                                       </object>
