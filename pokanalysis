@@ -141,7 +141,6 @@ class Core:
         (data, p1, p2) = self.map_store[map_id]
         self.current_map = data['objects']
         wild_pkmn = data.get('wild-pkmn')
-        special_items = data.get('special-items')
         self.gui.get_object('image_map').set_from_pixbuf(p1)
         self.gui.get_object('image_mini_map').set_from_pixbuf(p2)
 
@@ -155,9 +154,8 @@ class Core:
 
         model = self.gui.get_object('liststore_specials')
         model.clear()
-        if special_items:
-            for (y, x, item_id, itype, faddr) in special_items:
-                model.append(('<b>%s</b>' % str(item_id).title(), x, y, '0x%02X' % itype, '0x%04X' % faddr))
+        for (y, x, item_id, itype, faddr) in data.get('special-items', []):
+            model.append(('<b>%s</b>' % str(item_id).title(), x, y, '0x%02X' % itype, '0x%04X' % faddr))
 
     def select_pkmn(self, pkmn_id):
         tview = self.gui.get_object('treeview_pokedex')
