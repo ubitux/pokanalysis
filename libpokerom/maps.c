@@ -480,7 +480,11 @@ static void set_map_things_in_python_dict(PyObject *dict, struct map_things *thi
 			PyDict_SetItemString(py_entity, "trainer_type", Py_BuildValue("i", data->extra_1));
 			PyDict_SetItemString(py_entity, "pkmn_set", Py_BuildValue("i", data->extra_2));
 		} else if (strcmp(entity->type, "item") == 0) {
+			char iname[30];
+
+			get_pkmn_item_name(iname, data->extra_1, sizeof(iname));
 			PyDict_SetItemString(py_entity, "item_id", Py_BuildValue("i", data->extra_1));
+			PyDict_SetItemString(py_entity, "item_name", Py_BuildValue("s", iname));
 		}
 		PyList_Append(list, py_entity);
 		entity = entity->next;

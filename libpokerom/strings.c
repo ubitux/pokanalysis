@@ -119,7 +119,13 @@ static void load_packed_text_string(u8 *data, char *dst, u8 id, size_t max_len)
 
 void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
 {
-	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x01, 4), iname, item_id, max_len);
+	if (item_id > 200) {
+		snprintf(iname, 5, "TM%02d", item_id - 200);
+	} else if (item_id > 250) {
+		snprintf(iname, 5, "HM%02d", item_id - 250);
+	} else {
+		load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x01, 4), iname, item_id, max_len);
+	}
 }
 
 void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len)
