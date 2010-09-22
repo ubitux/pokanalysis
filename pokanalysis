@@ -157,7 +157,7 @@ class Core:
         model.clear()
         if special_items:
             for (y, x, item_id, itype, faddr) in special_items:
-                model.append(('<b>%s</b>' % item_id, x, y, '0x%02X' % itype, '0x%04X' % faddr))
+                model.append(('<b>%s</b>' % str(item_id).title(), x, y, '0x%02X' % itype, '0x%04X' % faddr))
 
     def select_pkmn(self, pkmn_id):
         tview = self.gui.get_object('treeview_pokedex')
