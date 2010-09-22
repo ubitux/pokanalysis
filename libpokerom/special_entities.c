@@ -24,24 +24,15 @@
 
 PyObject *get_special_items(int map_id)
 {
-	int map_id_addr;
+	u8 *data;
 	int index = 0;
 	PyObject *list = PyList_New(0);
 
-	for (map_id_addr = MAP_IDS_ADDR; gl_stream[map_id_addr] != 0xff; map_id_addr++, index += 2) {
-		if (gl_stream[map_id_addr] != map_id)
+	for (data = &gl_stream[MAP_IDS_ADDR]; *data != 0xff; data++, index += 2) {
+		if (*data != map_id)
 			continue;
-
-		int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + index);
-		int item_addr = ROM_ADDR(0x11, GET_ADDR(item_ptr_addr));
-
-		// [MAP #%03d] Y=%03d X=%03d item-id=%03d type=0x%02x unknown-address=0x%04x,
-		PyList_Append(list, Py_BuildValue("iiiii",
-					gl_stream[item_addr],
-					gl_stream[item_addr + 1],
-					gl_stream[item_addr + 2],
-					gl_stream[item_addr + 3],
-					GET_ADDR(gl_stream[item_addr + 4])));
+		u8 *item_data = &gl_stream[ROM_ADDR(0x11, GET_ADDR(ROM_ADDR(0x11, 0x6a96 + index)))];
+		PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], *(u16*)&item_data[4]));
 	}
 	return list;
 }
