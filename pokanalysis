@@ -193,7 +193,7 @@ class Core:
         for k, v in info:
             if k in ('x', 'y'):
                 k = 'map %c' % k
-            markup_info.append('<b>%s</b>: %s' % (k.title(), v))
+            markup_info.append('<b>%s</b>: %s' % (k.replace('_', ' ').title(), v))
         self.gui.get_object('label_mapinfo').set_markup('\n'.join(markup_info))
 
     def on_iconview_evolutions_item_activated(self, iconview, path):
