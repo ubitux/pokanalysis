@@ -104,3 +104,25 @@ PyObject *str_getascii(PyObject *self, PyObject *args)
 	b[j] = 0;
 	return Py_BuildValue("s", b);
 }
+
+static void load_packed_text_string(u8 *data, char *dst, u8 id, size_t max_len)
+{
+	while (--id) {
+		while (*data != 0x50)
+			data++;
+		data++;
+	}
+	load_string(dst, data, max_len, 0);
+}
+
+#define PACKED_TEXT_BASE_ADDR(b, i)	&gl_stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
+
+void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
+{
+	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x01, 4), iname, item_id, max_len);
+}
+
+void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len)
+{
+	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x2c, 2), mname, move_id, max_len);
+}
