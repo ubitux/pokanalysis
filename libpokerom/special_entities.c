@@ -32,7 +32,14 @@ PyObject *get_special_items(int map_id)
 		if (*data != map_id)
 			continue;
 		u8 *item_data = &gl_stream[ROM_ADDR(0x11, GET_ADDR(ROM_ADDR(0x11, 0x6a96 + index)))];
-		PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], *(u16*)&item_data[4]));
+		if (item_data[3] == 0x1d) {
+			char iname[30];
+
+			get_pkmn_item_name(iname, item_data[2], sizeof(iname));
+			PyList_Append(list, Py_BuildValue("iisii", item_data[0], item_data[1], iname, item_data[3], *(u16*)&item_data[4]));
+		} else {
+			PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], *(u16*)&item_data[4]));
+		}
 	}
 	return list;
 }
