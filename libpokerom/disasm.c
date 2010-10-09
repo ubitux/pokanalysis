@@ -743,7 +743,7 @@ static struct line *next_ins(struct line *prev_line)
 	}
 
 	case P_NONE:
-		sprintf(&linebuff[27], label);
+		sprintf(&linebuff[27], "%s", label);
 		break;
 	}
 
