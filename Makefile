@@ -13,3 +13,5 @@ clean:
 distclean: clean
 	rm -rf build
 	rm -f tags
+
+re: distclean default
