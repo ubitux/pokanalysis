@@ -28,7 +28,7 @@ typedef struct {
 
 enum {P_NONE, P_UCHAR8, P_CHAR8, P_WORD};
 
-ins_type default_ins_set[] = {
+static ins_type default_ins_set[] = {
 	{0x00, "nop", P_NONE},
 	{0x01, "ld bc,%04x", P_WORD},
 	{0x02, "ld (bc),a", P_NONE},
@@ -306,7 +306,7 @@ ins_type default_ins_set[] = {
 	{0, NULL, P_NONE}
 };
 
-ins_type extended_ins_set[] = {
+static ins_type extended_ins_set[] = {
 	{0x00, "rlc b", P_NONE},
 	{0x01, "rlc c", P_NONE},
 	{0x02, "rlc d", P_NONE},
