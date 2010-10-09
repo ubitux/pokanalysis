@@ -606,7 +606,7 @@ static struct label *labels;
 
 static void add_label(u16 from, u16 to, int type)
 {
-	struct label *lbl = calloc(sizeof(*lbl), 1);
+	struct label *lbl = malloc(sizeof(*lbl));
 
 	lbl->from = from;
 	lbl->to = to;
