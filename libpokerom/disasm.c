@@ -623,10 +623,10 @@ static void add_label(u16 from, u16 to, int type)
 static void format_line(struct line *line, char *fmt, ...)
 {
 	va_list va;
-	va_start(va, fmt);
 	int bank = pc / 0x4000;
 	int ins_addr = pc;
 
+	va_start(va, fmt);
 	if (bank)
 		ins_addr = pc % 0x4000 + 0x4000;
 	line->addr = ins_addr;
