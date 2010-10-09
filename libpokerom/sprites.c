@@ -31,12 +31,12 @@ static u8 read_buffer(u16 addr)
 	return (addr < 0x188 * 2) ? buffer[addr] : 0;
 }
 
-static u8 sprite_get_next_byte() // 268B
+static u8 sprite_get_next_byte(void) // 268B
 {
 	return gl_stream[current_addr++];
 }
 
-static u8 sprite_get_next_bit() // 2670
+static u8 sprite_get_next_bit(void) // 2670
 {
 	if (--current_bit == 0) {
 		current_byte = sprite_get_next_byte();
@@ -69,7 +69,7 @@ static void sprite_update_p1(u8 a) // 2649
 	write_buffer(p1, read_buffer(p1) | a);
 }
 
-static void sprite_reset_p1_p2() // 2841
+static void sprite_reset_p1_p2(void) // 2841
 {
 	if (buffer_flag & 1) {
 		p2 = a310;
@@ -163,7 +163,7 @@ static void sprite_load_data(u16 p) // 26D4
 	}
 }
 
-static void sprite_uncompress_data() // 27C7
+static void sprite_uncompress_data(void) // 27C7
 {
 	u16 hl, de;
 
@@ -218,7 +218,7 @@ enum {Z_RET, Z_END, Z_CONTINUE};
 	}\
 } while (0)
 
-static int f25d8()
+static int f25d8(void)
 {
 	if ((tile_y + 1) != sprite_height) {
 		tile_y++;

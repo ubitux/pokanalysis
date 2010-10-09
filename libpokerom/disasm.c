@@ -793,7 +793,7 @@ end:
 	va_end(va);
 }
 
-static PyObject *get_buffer()
+static PyObject *get_buffer(void)
 {
 	struct line *line = lines;
 	PyObject *buffer;
