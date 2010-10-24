@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(libpokerom)
 
-include(FindPythonLibs)
+find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIR})
 
 set(sources
