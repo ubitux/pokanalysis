@@ -594,10 +594,16 @@ struct label {
 	struct label *next;
 };
 
+enum {
+	NO_FLAGS = 0,
+	FORCE_RETURN_CARRIAGE = 1 << 0
+};
+
 struct line {
 	int addr;
 	char buff[128];
 	struct line *next;
+	unsigned char flags;
 };
 
 static int pc = 0x0000;
@@ -682,7 +688,9 @@ static struct line *next_ins(struct line *prev_line)
 	format_line(line, HEX_DEFAULT, ins);
 	pc++;
 
-	if (ins == 0xCB) {
+	if (ins == 0xC9) // ret
+		line->flags |= FORCE_RETURN_CARRIAGE;
+	else if (ins == 0xCB) { // extended set
 		ins_set = extended_ins_set;
 		ins = gl_stream[pc++];
 		sprintf(&linebuff[13], "%02X", ins);
@@ -822,7 +830,7 @@ static PyObject *get_buffer(void)
 		}
 		if (!first)
 			hexbuffer_append(&hex, "\n");
-		hexbuffer_append(&hex, "%s\n", line->buff);
+		hexbuffer_append(&hex, "%s%s", line->buff, line->flags & FORCE_RETURN_CARRIAGE ? "\n\n" :"\n");
 		old_line = line;
 		line = line->next;
 		free(old_line);
