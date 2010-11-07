@@ -801,6 +801,7 @@ static PyObject *get_buffer(void)
 	PyObject *buffer;
 	struct hexbuffer hex = {.buffer = malloc(BUFFERING), .size = BUFFERING, .i = 0};
 	*hex.buffer = 0;
+	int ihazret = 0;
 
 	while (line) {
 		struct line *old_line;
@@ -813,10 +814,12 @@ static PyObject *get_buffer(void)
 
 				if (first) {
 					first = 0;
-					hexbuffer_append(&hex, "\n; Jump here from: %04X (%s)", lbl->from, get_type_str(lbl->type));
+					hexbuffer_append(&hex, "%s; Jump here from: %04X (%s)",
+							ihazret ? "": "\n", lbl->from, get_type_str(lbl->type));
 				} else {
 					hexbuffer_append(&hex, ", %04X (%s)", lbl->from, get_type_str(lbl->type));
 				}
+				ihazret = 0;
 				free(lbl);
 				if (!old_lbl)
 					labels = next;
@@ -830,7 +833,8 @@ static PyObject *get_buffer(void)
 		}
 		if (!first)
 			hexbuffer_append(&hex, "\n");
-		hexbuffer_append(&hex, "%s%s", line->buff, line->flags & FORCE_RETURN_CARRIAGE ? "\n\n" :"\n");
+		ihazret = line->flags & FORCE_RETURN_CARRIAGE;
+		hexbuffer_append(&hex, "%s%s", line->buff, ihazret ? "\n\n" :"\n");
 		old_line = line;
 		line = line->next;
 		free(old_line);
