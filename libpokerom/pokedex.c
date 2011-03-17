@@ -20,31 +20,6 @@
 
 #include "pokerom.h"
 
-static void merge_buffers(u8 *buffer)
-{
-	u8 *dest = buffer + 0x0497;
-	u8 *src1 = buffer + 0x030F;
-	u8 *src2 = buffer + 0x0187;
-	int n;
-
-	for (n = 0; n < 0xC4; n++) {
-		*dest-- = *src1--;
-		*dest-- = *src2--;
-		*dest-- = *src1--;
-		*dest-- = *src2--;
-	}
-}
-
-static void fill_data(u8 *dst, u8 *src, u8 ff8b, u8 ff8c, u8 ff8d)
-{
-	int a, c;
-
-	dst += ff8d;
-	for (a = 0; a < ff8b; a++, dst += 0x38)
-		for (c = 0; c < ff8c; c++)
-			dst[c] = *src++;
-}
-
 static int get_bank_from_rom_pkmn_id(u8 pkmn_id) /* Red: RO01:1637 */
 {
 	if (pkmn_id == 0x15)	// Mew
@@ -234,9 +209,8 @@ static int get_pkmn_header_address(u8 *stream, u8 rom_pkmn_id)
 
 static void load_pokemon_sprite(u8 *stream, struct pkmn_header_raw *h, u8 *pixbuf, u8 rom_pkmn_id, int back)
 {
-	u8 b[3 * 0x188];
+	int addr;
 	u8 sprite_dim;
-	u8 ff8b, ff8c, ff8d;
 	u16 sprite_addr;
 
 	if (back) {
@@ -264,21 +238,8 @@ static void load_pokemon_sprite(u8 *stream, struct pkmn_header_raw *h, u8 *pixbu
 			sprite_dim = h->sprite_front_dim;
 		}
 	}
-
-	ff8b = low_nibble(sprite_dim);
-	ff8d = 7 * ((8 - ff8b) >> 1);
-	ff8c = 8 * high_nibble(sprite_dim);
-	ff8d = 8 * (ff8d + 7 - high_nibble(sprite_dim));
-
-	uncompress_sprite(stream, b + 0x188, ROM_ADDR(get_bank_from_rom_pkmn_id(rom_pkmn_id), sprite_addr));
-	//printf("pkmn_id=%02X sprite_addr=%04X dim=%02X ff8b=%02X ff8c=%02X ff8d=%02X\n", real_pkmn_id, sprite_addr, sprite_dim, ff8b, ff8c, ff8d);
-
-	memset(b, 0, 0x188);
-	fill_data(b, b + 0x188, ff8b, ff8c, ff8d);
-	memset(b + 0x188, 0, 0x188);
-	fill_data(b + 0x188, b + 0x310, ff8b, ff8c, ff8d);
-	merge_buffers(b);
-	rle_sprite(pixbuf, b + 0x188);
+	addr = ROM_ADDR(get_bank_from_rom_pkmn_id(rom_pkmn_id), sprite_addr);
+	load_sprite(stream, pixbuf, sprite_dim, addr);
 }
 
 static PyObject *get_pixbuf(u8 *stream, struct pkmn_header_raw *h, u8 pkmn_id)

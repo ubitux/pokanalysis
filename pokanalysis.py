@@ -275,6 +275,15 @@ class Core:
                 txt = evol['stone']
             evol_lstore.append((pkmn_id, pkmn['pic'][0], pkmn['fmt_name'], txt.title()))
 
+    def on_treeview_trainers_cursor_changed(self, treeview):
+        (path, column_focus) = treeview.get_cursor()
+        trainer = self.trainers[path[0]]
+        trainerteam_lstore = self.gui.get_object('liststore_trainer_team')
+        trainerteam_lstore.clear()
+        for pkmn_id, lvl in trainer.get('team', []):
+            pkmn  = self.pokedex_rom_id[pkmn_id]
+            trainerteam_lstore.append((pkmn['name'], pkmn['pic'][0], 'lvl %d' % lvl))
+
     def on_treeview_wild_pkmn_row_activated(self, treeview, path, column):
         self.gui.get_object('notebook_main').set_current_page(0)
         model = treeview.get_model()
@@ -300,6 +309,7 @@ class Core:
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
             'on_treeview_gameinfo_row_activated': self.on_treeview_gameinfo_row_activated,
             'on_treeview_pokedex_cursor_changed': self.on_treeview_pokedex_cursor_changed,
+            'on_treeview_trainers_cursor_changed': self.on_treeview_trainers_cursor_changed,
             'on_treeview_wild_pkmn_row_activated': self.on_treeview_wild_pkmn_row_activated,
             'on_window_destroy': lambda w: gtk.main_quit(),
         })
@@ -320,6 +330,20 @@ class Core:
             pokedex_widget.append((pkmn['fmt_id'], pkmn['fmt_name'], pkmn['pic'][0]))
             self.pokedex_rom_id[pkmn['rom_id']] = pkmn
         self.gui.get_object('treeview_pokedex').set_cursor((0,))
+
+        self.trainers = self.rom.get_trainers()
+        trainers_widget = self.gui.get_object('liststore_trainers')
+        for i, trainer in enumerate(self.trainers):
+            if 'pkmn_id' in trainer:
+                pkmn_id = trainer['pkmn_id']
+                name    = self.pokedex_rom_id[pkmn_id]['name']
+                pic     = self.pokedex_rom_id[pkmn_id]['pic'][0]
+                extra   = 'level %d' % trainer['level']
+            else:
+                name  = trainer['name']
+                pic   = gtk.gdk.pixbuf_new_from_data(trainer['pic'], gtk.gdk.COLORSPACE_RGB, False, 8, w, h, w * 3)
+                extra = '%d pkmn' % len(trainer['team'])
+            trainers_widget.append(('<b>%s</b>' % name.title(), pic, extra))
 
         monospaced_font = pango.FontDescription('monospace')
         self.gui.get_object('textview_asm').modify_font(monospaced_font)

@@ -297,7 +297,7 @@ static int f25d8(u8 *stream)
 	return Z_END;
 }
 
-void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
+static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 {
 	u8 byte, b, b1, b2, c;
 	u16 p, de;
@@ -375,4 +375,47 @@ lbl_2595:
 		de--;
 	} while (de);
 	goto lbl_2580;
+}
+
+static void merge_buffers(u8 *buffer)
+{
+	u8 *dest = buffer + 0x0497;
+	u8 *src1 = buffer + 0x030F;
+	u8 *src2 = buffer + 0x0187;
+	int n;
+
+	for (n = 0; n < 0xC4; n++) {
+		*dest-- = *src1--;
+		*dest-- = *src2--;
+		*dest-- = *src1--;
+		*dest-- = *src2--;
+	}
+}
+
+static void fill_data(u8 *dst, u8 *src, u8 ff8b, u8 ff8c, u8 ff8d)
+{
+	int a, c;
+
+	dst += ff8d;
+	for (a = 0; a < ff8b; a++, dst += 0x38)
+		for (c = 0; c < ff8c; c++)
+			dst[c] = *src++;
+}
+
+void load_sprite(u8 *stream, u8 *pixbuf, u8 sprite_dim, int addr)
+{
+	u8 b[3 * 0x188];
+	u8 ff8b, ff8c, ff8d;
+
+	ff8b = low_nibble(sprite_dim);
+	ff8d = 7 * ((8 - ff8b) >> 1);
+	ff8c = 8 * high_nibble(sprite_dim);
+	ff8d = 8 * (ff8d + 7 - high_nibble(sprite_dim));
+
+	uncompress_sprite(stream, b + 0x188, addr);
+
+	memset(b,       0, 0x188); fill_data(b,       b+0x188, ff8b, ff8c, ff8d);
+	memset(b+0x188, 0, 0x188); fill_data(b+0x188, b+0x310, ff8b, ff8c, ff8d);
+	merge_buffers(b);
+	rle_sprite(pixbuf, b + 0x188);
 }

@@ -1,45 +1,10 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <requires lib="gtk+" version="2.16"/>
-  <!-- interface-naming-policy toplevel-contextual -->
-  <object class="GtkTreeStore" id="treestore_gameinfo">
-    <columns>
-      <!-- column-name pic -->
-      <column type="GdkPixbuf"/>
-      <!-- column-name key -->
-      <column type="gchararray"/>
-      <!-- column-name value -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="liststore_specials">
-    <columns>
-      <!-- column-name item -->
-      <column type="gchararray"/>
-      <!-- column-name X -->
-      <column type="gint"/>
-      <!-- column-name Y -->
-      <column type="gint"/>
-      <!-- column-name type -->
-      <column type="gchararray"/>
-      <!-- column-name f_address -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="liststore_asm_banks">
     <columns>
       <!-- column-name bank -->
       <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="liststore_pokedex">
-    <columns>
-      <!-- column-name id -->
-      <column type="gchararray"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name pixbuf -->
-      <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkListStore" id="liststore_evolutions">
@@ -66,6 +31,66 @@
       <column type="GdkPixbuf"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="liststore_pkmn_HM_TM">
+    <columns>
+      <!-- column-name id -->
+      <column type="gchararray"/>
+      <!-- column-name move-name -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_pkmn_attacks">
+    <columns>
+      <!-- column-name level -->
+      <column type="gchararray"/>
+      <!-- column-name attack -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_pokedex">
+    <columns>
+      <!-- column-name id -->
+      <column type="gchararray"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name pixbuf -->
+      <column type="GdkPixbuf"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_specials">
+    <columns>
+      <!-- column-name item -->
+      <column type="gchararray"/>
+      <!-- column-name X -->
+      <column type="gint"/>
+      <!-- column-name Y -->
+      <column type="gint"/>
+      <!-- column-name type -->
+      <column type="gchararray"/>
+      <!-- column-name f_address -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_trainer_team">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name pic -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name level -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore_trainers">
+    <columns>
+      <!-- column-name trainer -->
+      <column type="gchararray"/>
+      <!-- column-name pic -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name extra -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkListStore" id="liststore_water_wild_pkmn">
     <columns>
       <!-- column-name name -->
@@ -78,29 +103,24 @@
       <column type="GdkPixbuf"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="liststore_pkmn_attacks">
+  <object class="GtkTreeStore" id="treestore_gameinfo">
     <columns>
-      <!-- column-name level -->
+      <!-- column-name pic -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name key -->
       <column type="gchararray"/>
-      <!-- column-name attack -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="liststore_pkmn_HM_TM">
-    <columns>
-      <!-- column-name id -->
-      <column type="gchararray"/>
-      <!-- column-name move-name -->
+      <!-- column-name value -->
       <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window">
     <property name="width_request">640</property>
     <property name="height_request">480</property>
+    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Pokanalysis</property>
     <property name="icon">favicon.png</property>
-    <signal name="destroy" handler="on_window_destroy"/>
+    <signal name="destroy" handler="on_window_destroy" swapped="no"/>
     <child>
       <object class="GtkNotebook" id="notebook_main">
         <property name="visible">True</property>
@@ -108,12 +128,12 @@
         <child>
           <object class="GtkHBox" id="hbox_pokedex">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <child>
               <object class="GtkScrolledWindow" id="scrolledwindow_pokedex">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hscrollbar_policy">never</property>
-                <property name="vscrollbar_policy">automatic</property>
                 <property name="shadow_type">etched-in</property>
                 <child>
                   <object class="GtkTreeView" id="treeview_pokedex">
@@ -122,7 +142,10 @@
                     <property name="model">liststore_pokedex</property>
                     <property name="headers_clickable">False</property>
                     <property name="search_column">0</property>
-                    <signal name="cursor_changed" handler="on_treeview_pokedex_cursor_changed"/>
+                    <signal name="cursor-changed" handler="on_treeview_pokedex_cursor_changed" swapped="no"/>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview-selection1"/>
+                    </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn_id">
                         <property name="title">#</property>
@@ -136,7 +159,7 @@
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn_pkmn">
-                        <property name="title">Pok&#xE9;mon</property>
+                        <property name="title">Pokémon</property>
                         <child>
                           <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf"/>
                           <attributes>
@@ -156,35 +179,41 @@
               </object>
               <packing>
                 <property name="expand">False</property>
+                <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkFrame" id="frame_pkmn">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="label_xalign">0</property>
                 <property name="shadow_type">none</property>
                 <child>
                   <object class="GtkAlignment" id="alignment_frame_pkmn">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="left_padding">12</property>
                     <child>
                       <object class="GtkVBox" id="vbox_pkmn_main">
                         <property name="visible">True</property>
-                        <property name="orientation">vertical</property>
+                        <property name="can_focus">False</property>
                         <property name="spacing">5</property>
                         <child>
                           <object class="GtkHBox" id="hbox_image_and_info_small">
                             <property name="visible">True</property>
+                            <property name="can_focus">False</property>
                             <property name="spacing">5</property>
                             <child>
                               <object class="GtkFrame" id="frame_image_pkmn">
                                 <property name="visible">True</property>
+                                <property name="can_focus">False</property>
                                 <property name="label_xalign">0</property>
                                 <property name="shadow_type">in</property>
                                 <child>
                                   <object class="GtkImage" id="image_pkmn">
                                     <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="stock">gtk-missing-image</property>
                                   </object>
                                 </child>
@@ -194,17 +223,20 @@
                               </object>
                               <packing>
                                 <property name="expand">False</property>
+                                <property name="fill">True</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkFrame" id="frame_image_pkmn_back">
                                 <property name="visible">True</property>
+                                <property name="can_focus">False</property>
                                 <property name="label_xalign">0</property>
                                 <property name="shadow_type">in</property>
                                 <child>
                                   <object class="GtkImage" id="image_pkmn_back">
                                     <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="stock">gtk-missing-image</property>
                                   </object>
                                 </child>
@@ -214,6 +246,7 @@
                               </object>
                               <packing>
                                 <property name="expand">False</property>
+                                <property name="fill">True</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
@@ -222,7 +255,6 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="hscrollbar_policy">never</property>
-                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTextView" id="textview_pkmn_info_small">
@@ -237,6 +269,7 @@
                               </object>
                               <packing>
                                 <property name="expand">False</property>
+                                <property name="fill">True</property>
                                 <property name="position">2</property>
                               </packing>
                             </child>
@@ -244,15 +277,13 @@
                               <object class="GtkScrolledWindow" id="scrolledwindow_evolutions">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="hscrollbar_policy">automatic</property>
-                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkIconView" id="iconview_evolutions">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="model">liststore_evolutions</property>
-                                    <signal name="item_activated" handler="on_iconview_evolutions_item_activated"/>
+                                    <signal name="item-activated" handler="on_iconview_evolutions_item_activated" swapped="no"/>
                                     <child>
                                       <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf_evol_pic"/>
                                       <attributes>
@@ -275,234 +306,297 @@
                                 </child>
                               </object>
                               <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
                                 <property name="position">3</property>
                               </packing>
                             </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
+                            <property name="fill">True</property>
                             <property name="position">0</property>
                           </packing>
                         </child>
                         <child>
                           <object class="GtkHBox" id="hbox_pkmn_info">
                             <property name="visible">True</property>
+                            <property name="can_focus">False</property>
                             <property name="spacing">5</property>
                             <child>
                               <object class="GtkVBox" id="vbox_pkmn_info">
                                 <property name="visible">True</property>
-                                <property name="orientation">vertical</property>
+                                <property name="can_focus">False</property>
                                 <property name="spacing">10</property>
                                 <child>
                                   <object class="GtkVBox" id="vbox_pkmn_type_growth_lbl">
                                     <property name="visible">True</property>
-                                    <property name="orientation">vertical</property>
+                                    <property name="can_focus">False</property>
                                     <property name="spacing">5</property>
                                     <child>
                                       <object class="GtkLabel" id="label_pkmn_types">
                                         <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
                                         <property name="xalign">0</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">True</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
                                     <child>
                                       <object class="GtkLabel" id="label_pkmn_growth_rate">
                                         <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
                                         <property name="xalign">0</property>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
+                                        <property name="fill">True</property>
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">True</property>
                                     <property name="position">0</property>
                                   </packing>
                                 </child>
                                 <child>
                                   <object class="GtkHBox" id="hbox_stats">
                                     <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="spacing">5</property>
                                     <child>
                                       <object class="GtkVBox" id="vbox_stats_labels">
                                         <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
+                                        <property name="can_focus">False</property>
                                         <child>
                                           <object class="GtkLabel" id="label_stat_HP">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                             <property name="xalign">1</property>
                                             <property name="label" translatable="yes">Health Point</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">0</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkLabel" id="label_stat_ATK">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                             <property name="xalign">1</property>
                                             <property name="label" translatable="yes">Attack</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">1</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkLabel" id="label_stat_DEF">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                             <property name="xalign">1</property>
                                             <property name="label" translatable="yes">Defense</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">2</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkLabel" id="label_stat_SPD">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                             <property name="xalign">1</property>
                                             <property name="label" translatable="yes">Speed</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">3</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkLabel" id="label_stat_SPE">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                             <property name="xalign">1</property>
                                             <property name="label" translatable="yes">Special</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">4</property>
                                           </packing>
                                         </child>
                                       </object>
                                       <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
                                     <child>
                                       <object class="GtkVBox" id="vbox_stats_progressbars">
                                         <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
+                                        <property name="can_focus">False</property>
                                         <child>
                                           <object class="GtkProgressBar" id="progressbar_stat_HP">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">0</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkProgressBar" id="progressbar_stat_ATK">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">1</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkProgressBar" id="progressbar_stat_DEF">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">2</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkProgressBar" id="progressbar_stat_SPD">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">3</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkProgressBar" id="progressbar_stat_SPE">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">4</property>
                                           </packing>
                                         </child>
                                       </object>
                                       <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">True</property>
                                     <property name="position">1</property>
                                   </packing>
                                 </child>
                                 <child>
                                   <object class="GtkHBox" id="hbox_cpl_stats">
                                     <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="spacing">5</property>
                                     <child>
                                       <object class="GtkVBox" id="vbox_cpl_stats_labels">
                                         <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
+                                        <property name="can_focus">False</property>
                                         <child>
                                           <object class="GtkLabel" id="label_stat_EXP">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                             <property name="xalign">1</property>
                                             <property name="label" translatable="yes">Base Exp. yield</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">0</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkLabel" id="label_stat_CAP">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                             <property name="xalign">1</property>
                                             <property name="label" translatable="yes">Capture rate</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">1</property>
                                           </packing>
                                         </child>
                                       </object>
                                       <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
                                     <child>
                                       <object class="GtkVBox" id="vbox_cpl_stats_progressbars">
                                         <property name="visible">True</property>
-                                        <property name="orientation">vertical</property>
+                                        <property name="can_focus">False</property>
                                         <child>
                                           <object class="GtkProgressBar" id="progressbar_stat_EXP">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">0</property>
                                           </packing>
                                         </child>
                                         <child>
                                           <object class="GtkProgressBar" id="progressbar_stat_CAP">
                                             <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
                                           </object>
                                           <packing>
+                                            <property name="expand">True</property>
+                                            <property name="fill">True</property>
                                             <property name="position">1</property>
                                           </packing>
                                         </child>
                                       </object>
                                       <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">True</property>
                                     <property name="position">2</property>
                                   </packing>
                                 </child>
@@ -510,8 +604,6 @@
                                   <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_info">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="hscrollbar_policy">automatic</property>
-                                    <property name="vscrollbar_policy">automatic</property>
                                     <property name="shadow_type">etched-in</property>
                                     <child>
                                       <object class="GtkTextView" id="textview_pkmn_info">
@@ -524,12 +616,14 @@
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
+                                    <property name="fill">True</property>
                                     <property name="position">3</property>
                                   </packing>
                                 </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
+                                <property name="fill">True</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
@@ -537,8 +631,6 @@
                               <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_attacks">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="hscrollbar_policy">automatic</property>
-                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTreeView" id="treeview_pkmn_attacks">
@@ -547,6 +639,9 @@
                                     <property name="model">liststore_pkmn_attacks</property>
                                     <property name="headers_clickable">False</property>
                                     <property name="search_column">0</property>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection" id="treeview-selection2"/>
+                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_level">
                                         <property name="title">Level</property>
@@ -573,6 +668,8 @@
                                 </child>
                               </object>
                               <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
@@ -580,14 +677,15 @@
                               <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_TM_HM">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="hscrollbar_policy">automatic</property>
-                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTreeView" id="treeview_pkmn_TM_HM">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="model">liststore_pkmn_HM_TM</property>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection" id="treeview-selection3"/>
+                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_TM_HM_id">
                                         <property name="title">TM/HM</property>
@@ -609,11 +707,15 @@
                                 </child>
                               </object>
                               <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
                                 <property name="position">2</property>
                               </packing>
                             </child>
                           </object>
                           <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
                             <property name="position">1</property>
                           </packing>
                         </child>
@@ -624,13 +726,16 @@
                 <child type="label">
                   <object class="GtkLabel" id="label_pkmn">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <attributes>
-                      <attribute name="scale" value="2.500000"/>
+                      <attribute name="scale" value="2.5"/>
                     </attributes>
                   </object>
                 </child>
               </object>
               <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -639,7 +744,8 @@
         <child type="tab">
           <object class="GtkLabel" id="label_pokedex">
             <property name="visible">True</property>
-            <property name="label" translatable="yes">Pok&#xE9;dex</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Pokédex</property>
           </object>
           <packing>
             <property name="tab_fill">False</property>
@@ -653,26 +759,30 @@
               <object class="GtkVBox" id="vbox_map_info">
                 <property name="width_request">200</property>
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="border_width">5</property>
-                <property name="orientation">vertical</property>
                 <property name="spacing">5</property>
                 <child>
                   <object class="GtkImage" id="image_mini_map">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="stock">gtk-missing-image</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
+                    <property name="fill">True</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkFrame" id="frame_map">
+                    <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <property name="shadow_type">in</property>
                     <child>
                       <object class="GtkLabel" id="label_mapinfo">
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="xalign">0</property>
                         <property name="xpad">5</property>
                         <property name="ypad">5</property>
@@ -681,6 +791,7 @@
                     <child type="label">
                       <object class="GtkLabel" id="label_currentbox">
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;Current box&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
                       </object>
@@ -688,6 +799,7 @@
                   </object>
                   <packing>
                     <property name="expand">False</property>
+                    <property name="fill">True</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -695,8 +807,6 @@
                   <object class="GtkScrolledWindow" id="scrolledwindow_gameinfo">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">automatic</property>
-                    <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
                       <object class="GtkTreeView" id="treeview_gameinfo">
@@ -706,8 +816,11 @@
                         <property name="headers_visible">False</property>
                         <property name="headers_clickable">False</property>
                         <property name="search_column">0</property>
-                        <signal name="cursor_changed" handler="on_treeview_gameinfo_cursor_changed"/>
-                        <signal name="row_activated" handler="on_treeview_gameinfo_row_activated"/>
+                        <signal name="cursor-changed" handler="on_treeview_gameinfo_cursor_changed" swapped="no"/>
+                        <signal name="row-activated" handler="on_treeview_gameinfo_row_activated" swapped="no"/>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection" id="treeview-selection4"/>
+                        </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeviewcolumn_gameinfo">
                             <property name="title">column</property>
@@ -735,6 +848,8 @@
                     </child>
                   </object>
                   <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
                     <property name="position">2</property>
                   </packing>
                 </child>
@@ -752,27 +867,29 @@
                   <object class="GtkScrolledWindow" id="scrolledwindow_map">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">automatic</property>
-                    <property name="vscrollbar_policy">automatic</property>
                     <child>
                       <object class="GtkViewport" id="viewport_map">
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="resize_mode">queue</property>
                         <child>
                           <object class="GtkAlignment" id="alignment_event_image_map">
                             <property name="visible">True</property>
+                            <property name="can_focus">False</property>
                             <property name="xscale">0</property>
                             <property name="yscale">0</property>
                             <child>
                               <object class="GtkEventBox" id="eventbox_image_map">
                                 <property name="visible">True</property>
+                                <property name="can_focus">False</property>
                                 <property name="events">GDK_POINTER_MOTION_MASK | GDK_STRUCTURE_MASK</property>
-                                <signal name="motion_notify_event" handler="on_eventbox_image_map_motion_notify_event"/>
-                                <signal name="button_press_event" handler="on_eventbox_image_map_button_press_event"/>
-                                <signal name="leave_notify_event" handler="on_eventbox_image_map_leave_notify_event"/>
+                                <signal name="button-press-event" handler="on_eventbox_image_map_button_press_event" swapped="no"/>
+                                <signal name="leave-notify-event" handler="on_eventbox_image_map_leave_notify_event" swapped="no"/>
+                                <signal name="motion-notify-event" handler="on_eventbox_image_map_motion_notify_event" swapped="no"/>
                                 <child>
                                   <object class="GtkImage" id="image_map">
                                     <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
                                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_STRUCTURE_MASK</property>
                                     <property name="stock">gtk-missing-image</property>
                                   </object>
@@ -788,6 +905,7 @@
                 <child type="tab">
                   <object class="GtkLabel" id="label_map">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Map</property>
                   </object>
                   <packing>
@@ -797,21 +915,22 @@
                 <child>
                   <object class="GtkHBox" id="hbox_wild_pkmn">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <child>
                       <object class="GtkFrame" id="frame_grass_wild_pkmn">
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="label_xalign">0</property>
                         <property name="shadow_type">none</property>
                         <child>
                           <object class="GtkAlignment" id="alignment_grass_wild_pkmn">
                             <property name="visible">True</property>
+                            <property name="can_focus">False</property>
                             <property name="left_padding">12</property>
                             <child>
                               <object class="GtkScrolledWindow" id="scrolledwindow_grass_wild_pkmn">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="hscrollbar_policy">automatic</property>
-                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTreeView" id="treeview_grass_wild_pkmn">
@@ -820,10 +939,13 @@
                                     <property name="model">liststore_grass_wild_pkmn</property>
                                     <property name="headers_clickable">False</property>
                                     <property name="search_column">0</property>
-                                    <signal name="row_activated" handler="on_treeview_wild_pkmn_row_activated"/>
+                                    <signal name="row-activated" handler="on_treeview_wild_pkmn_row_activated" swapped="no"/>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection" id="treeview-selection5"/>
+                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_grass_wild_pkmn_name">
-                                        <property name="title">Pok&#xE9;mon</property>
+                                        <property name="title">Pokémon</property>
                                         <child>
                                           <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf_grass_wild_pkmn_pixbuf"/>
                                           <attributes>
@@ -858,31 +980,34 @@
                         <child type="label">
                           <object class="GtkLabel" id="label_grass_wild_pkmn">
                             <property name="visible">True</property>
+                            <property name="can_focus">False</property>
                             <property name="ypad">5</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Grass Pok&#xE9;mon&lt;/b&gt;</property>
+                            <property name="label" translatable="yes">&lt;b&gt;Grass Pokémon&lt;/b&gt;</property>
                             <property name="use_markup">True</property>
                           </object>
                         </child>
                       </object>
                       <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
                     <child>
                       <object class="GtkFrame" id="frame_water_wild_pkmn">
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="label_xalign">0</property>
                         <property name="shadow_type">none</property>
                         <child>
                           <object class="GtkAlignment" id="alignment_water_wild_pkmn">
                             <property name="visible">True</property>
+                            <property name="can_focus">False</property>
                             <property name="left_padding">12</property>
                             <child>
                               <object class="GtkScrolledWindow" id="scrolledwindow_water_wild_pkmn">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="hscrollbar_policy">automatic</property>
-                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTreeView" id="treeview_water_wild_pkmn">
@@ -891,10 +1016,13 @@
                                     <property name="model">liststore_water_wild_pkmn</property>
                                     <property name="headers_clickable">False</property>
                                     <property name="search_column">0</property>
-                                    <signal name="row_activated" handler="on_treeview_wild_pkmn_row_activated"/>
+                                    <signal name="row-activated" handler="on_treeview_wild_pkmn_row_activated" swapped="no"/>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection" id="treeview-selection6"/>
+                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_water_wild_pkmn_name">
-                                        <property name="title">Pok&#xE9;mon</property>
+                                        <property name="title">Pokémon</property>
                                         <child>
                                           <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf_water_wild_pkmn_pixbuf"/>
                                           <attributes>
@@ -929,13 +1057,16 @@
                         <child type="label">
                           <object class="GtkLabel" id="label_water_wild_pkmn">
                             <property name="visible">True</property>
+                            <property name="can_focus">False</property>
                             <property name="ypad">5</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Water Pok&#xE9;mon&lt;/b&gt;</property>
+                            <property name="label" translatable="yes">&lt;b&gt;Water Pokémon&lt;/b&gt;</property>
                             <property name="use_markup">True</property>
                           </object>
                         </child>
                       </object>
                       <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
                         <property name="position">1</property>
                       </packing>
                     </child>
@@ -947,7 +1078,8 @@
                 <child type="tab">
                   <object class="GtkLabel" id="label_wild_pokemon">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">Wild Pok&#xE9;mon</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Wild Pokémon</property>
                   </object>
                   <packing>
                     <property name="position">1</property>
@@ -961,6 +1093,9 @@
                     <property name="model">liststore_specials</property>
                     <property name="headers_clickable">False</property>
                     <property name="search_column">0</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview-selection7"/>
+                    </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn_item">
                         <property name="title">Item</property>
@@ -1024,6 +1159,7 @@
                 <child type="tab">
                   <object class="GtkLabel" id="label_specials">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Specials</property>
                   </object>
                   <packing>
@@ -1045,6 +1181,7 @@
         <child type="tab">
           <object class="GtkLabel" id="label_maps">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <property name="label" translatable="yes">Maps</property>
           </object>
           <packing>
@@ -1053,14 +1190,112 @@
           </packing>
         </child>
         <child>
+          <object class="GtkHBox" id="hbox_trainers">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkScrolledWindow" id="scrolledwindow_trainers">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hscrollbar_policy">never</property>
+                <property name="shadow_type">etched-in</property>
+                <child>
+                  <object class="GtkTreeView" id="treeview_trainers">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="model">liststore_trainers</property>
+                    <signal name="cursor-changed" handler="on_treeview_trainers_cursor_changed" swapped="no"/>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview-selection8"/>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn_trainer">
+                        <property name="title" translatable="yes">Trainer</property>
+                        <child>
+                          <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf_trainer"/>
+                          <attributes>
+                            <attribute name="pixbuf">1</attribute>
+                          </attributes>
+                        </child>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext_trainer"/>
+                          <attributes>
+                            <attribute name="markup">0</attribute>
+                          </attributes>
+                        </child>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderertext_trainerextra"/>
+                          <attributes>
+                            <attribute name="text">2</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkIconView" id="iconview_trainer_team">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">liststore_trainer_team</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext_pkmn_name"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+                <child>
+                  <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf_pkmn_pic"/>
+                  <attributes>
+                    <attribute name="pixbuf">1</attribute>
+                  </attributes>
+                </child>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext_pkmn_lvl"/>
+                  <attributes>
+                    <attribute name="text">2</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child type="tab">
+          <object class="GtkLabel" id="label_trainers">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Trainers</property>
+          </object>
+          <packing>
+            <property name="position">2</property>
+            <property name="tab_fill">False</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkVBox" id="vbox_asm">
             <property name="visible">True</property>
-            <property name="orientation">vertical</property>
+            <property name="can_focus">False</property>
             <child>
               <object class="GtkComboBox" id="combobox_asm_banks">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="model">liststore_asm_banks</property>
-                <signal name="changed" handler="on_combobox_asm_bank_changed"/>
+                <signal name="changed" handler="on_combobox_asm_bank_changed" swapped="no"/>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext_bank"/>
                   <attributes>
@@ -1070,6 +1305,7 @@
               </object>
               <packing>
                 <property name="expand">False</property>
+                <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
@@ -1077,8 +1313,6 @@
               <object class="GtkScrolledWindow" id="scrolledwindow_asm">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="hscrollbar_policy">automatic</property>
-                <property name="vscrollbar_policy">automatic</property>
                 <property name="shadow_type">etched-in</property>
                 <child>
                   <object class="GtkTextView" id="textview_asm">
@@ -1091,21 +1325,24 @@
                 </child>
               </object>
               <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
                 <property name="position">1</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="position">2</property>
+            <property name="position">3</property>
           </packing>
         </child>
         <child type="tab">
           <object class="GtkLabel" id="label_asm">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <property name="label" translatable="yes">ASM</property>
           </object>
           <packing>
-            <property name="position">2</property>
+            <property name="position">3</property>
             <property name="tab_fill">False</property>
           </packing>
         </child>

@@ -344,8 +344,9 @@ static PyObject *get_wild_pokemon(u8 *stream, int map_id)
 	return dict;
 }
 
-static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_init, int y_init)
+static struct submap *get_submap(struct rom *rom, struct submap *maps, int id, int x_init, int y_init)
 {
+	u8 *stream = rom->stream;
 	struct submap *current_map = &maps[id], *last, *tmp, *to_add;
 
 	if (current_map->loaded)
@@ -466,6 +467,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 			PyDict_SetItemString(entity_dict, "trainer_type", Py_BuildValue("i", entity->extra_1));
 			PyDict_SetItemString(entity_dict, "pkmn_set",     Py_BuildValue("i", entity->extra_2));
 			addr += 2;
+			add_trainer(rom, id, entity->x-4, entity->y-4, entity->extra_1, entity->extra_2);
 		} else if (entity->tid & 1<<7) {
 			char iname[30];
 
@@ -529,7 +531,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 			break;
 		}
 
-		to_add = get_submap(stream, maps, con->index, nx, ny);
+		to_add = get_submap(rom, maps, con->index, nx, ny);
 		if (to_add) {
 			last = current_map;
 			for (tmp = current_map; tmp; tmp = tmp->next)
@@ -700,7 +702,7 @@ static void track_maps(u8 *stream, struct submap *maps, int map_id)
 		track_maps(stream, maps, warps[i].to_map);
 }
 
-PyObject *get_maps(struct rom *self)
+PyObject *preload_maps(struct rom *self)
 {
 	PyObject *list = PyList_New(0);
 	struct submap maps[0x100];
@@ -710,10 +712,15 @@ PyObject *get_maps(struct rom *self)
 	for (int i = 0; i < (int)(sizeof(maps) / sizeof(*maps)); i++) {
 		if (!maps[i].addr || maps[i].info)
 			continue;
-		maps[i].info = get_py_map(get_submap(self->stream, maps, i, 0, 0));
+		maps[i].info = get_py_map(get_submap(self, maps, i, 0, 0));
 		if (!maps[i].info)
 			continue;
 		PyList_Append(list, maps[i].info);
 	}
 	return list;
+}
+
+PyObject *get_maps(struct rom *self)
+{
+	return self->maps;
 }

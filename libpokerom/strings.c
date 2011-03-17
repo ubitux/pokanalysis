@@ -136,3 +136,8 @@ void get_pkmn_move_name(u8 *stream, char *mname, u8 move_id, size_t max_len)
 {
 	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x2c, 2), mname, move_id, max_len);
 }
+
+void get_trainer_name(u8 *stream, char *tname, u8 trainer_id, size_t max_len)
+{
+	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x0e, 7), tname, trainer_id, max_len);
+}

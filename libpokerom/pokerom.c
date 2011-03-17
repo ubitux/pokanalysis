@@ -32,12 +32,18 @@ static int rom_init(struct rom *self, PyObject *args, PyObject *kwds)
 	self->stream = mmap(0, self->st.st_size, PROT_READ, MAP_PRIVATE, self->fd, 0);
 	if (self->stream == MAP_FAILED)
 		return -1;
+	/* Trainers are loaded while tracking maps data, so a pre-load is
+	   required to allow calling get_trainers() and get_maps() in any
+	   order. */
+	self->trainers = PyList_New(0);
+	self->maps     = preload_maps(self);
 	return 0;
 }
 
 static PyMethodDef rom_methods[] = {
 	{"get_maps",    (PyCFunction)get_maps,    METH_NOARGS,  "Game maps"},
 	{"get_pokedex", (PyCFunction)get_pokedex, METH_NOARGS,  "Get all Pokémon"},
+	{"get_trainers", (PyCFunction)get_trainers, METH_NOARGS, "Get all trainers"},
 	{"disasm",      (PyCFunction)disasm,      METH_VARARGS, "Disassemble given bank"},
 	{NULL, NULL, 0, NULL}
 };
