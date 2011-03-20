@@ -88,43 +88,43 @@ void rle_sprite(u8 *dst, u8 *src)
 	}
 }
 
-typedef struct {
+struct box_info {
 	int color_key;
 	int entity_addr;
 	int flip;
-} box_info_type;
+} box_info;
 
 struct warp_raw { u8 y, x, to_point, to_map; } PACKED;
-typedef struct warp_item {
+struct warp_item {
 	struct warp_raw data;
 	struct warp_item *next;
-} warp_item_type;
+} warp_item;
 
 struct sign_raw { u8 y, x, tid; } PACKED;
-typedef struct sign_item {
+struct sign_item {
 	struct sign_raw data;
 	PyObject *py_text_string;
 	struct sign_item *next;
-} sign_item_type;
+} sign_item;
 
 struct entity_raw { u8 pic_id, y, x, mvt_1, mvt_2, tid, extra_1, extra_2; } PACKED;
-typedef struct entity_item {
+struct entity_item {
 	struct entity_raw data;
 	char *type;
 	struct entity_item *next;
-} entity_item_type;
+} entity_item;
 
 struct map_things {
-	warp_item_type *warps;
-	sign_item_type *signs;
-	entity_item_type *entities;
+	struct warp_item *warps;
+	struct sign_item *signs;
+	struct entity_item *entities;
 };
 
-static box_info_type get_box_info(struct map_things *mt, int x, int y)
+static struct box_info get_box_info(struct map_things *mt, int x, int y)
 {
-	box_info_type bi = {.color_key = DEFAULT_COLORS_OFFSET, .entity_addr = 0, .flip = 0};
+	struct box_info bi = {.color_key = DEFAULT_COLORS_OFFSET, .entity_addr = 0, .flip = 0};
 
-	warp_item_type *warp;
+	struct warp_item *warp;
 	for (warp = mt->warps; warp; warp = warp->next) {
 		if (warp->data.x == x && warp->data.y == y) {
 			bi.color_key = WARPS_COLORS_OFFSET;
@@ -132,7 +132,7 @@ static box_info_type get_box_info(struct map_things *mt, int x, int y)
 		}
 	}
 
-	sign_item_type *sign;
+	struct sign_item *sign;
 	for (sign = mt->signs; sign; sign = sign->next) {
 		if (sign->data.x == x && sign->data.y == y) {
 			bi.color_key = SIGNS_COLORS_OFFSET;
@@ -140,7 +140,7 @@ static box_info_type get_box_info(struct map_things *mt, int x, int y)
 		}
 	}
 
-	entity_item_type *entity;
+	struct entity_item *entity;
 	for (entity = mt->entities; entity; entity = entity->next) {
 		if (entity->data.x == x && entity->data.y == y) {
 			int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (entity->data.pic_id - 1));
@@ -204,7 +204,7 @@ static void load_block_from_tiles_addr(u8 * __restrict__ pixbuf, int *__restrict
 		for (i = 0; i < BLOCK_X; i++) {
 			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
 			int y, tile_offset = 0;
-			box_info_type bi = get_box_info(mt, bx * 2 + i / 2, by * 2 + j / 2);
+			struct box_info bi = get_box_info(mt, bx * 2 + i / 2, by * 2 + j / 2);
 
 			if (bi.entity_addr) {
 				int n = (j % 2) * 2 + (i + bi.flip) % 2;
@@ -237,15 +237,15 @@ static void load_block_from_tiles_addr(u8 * __restrict__ pixbuf, int *__restrict
 #define TILES_PER_COL 4
 
 /* Map blocks */
-typedef struct {
+struct blocks {
 	int b[4 * 4];
-} blocks_type;
+};
 
 /* 4x4 tiles (1 tile = 8x8px) */
-static blocks_type *get_blocks(int n, int addr, int tiles_addr)
+static struct blocks *get_blocks(int n, int addr, int tiles_addr)
 {
 	u8 *data;
-	blocks_type *blocks;
+	struct blocks *blocks;
 	int i, j;
 
 	if (addr > gl_rom_stat.st_size) {
@@ -269,7 +269,7 @@ static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_
 	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
 	int i, j, pixbuf_offset = 0;
 
-	blocks_type *blocks = get_blocks(256, blockdata_addr, tiles_addr);
+	struct blocks *blocks = get_blocks(256, blockdata_addr, tiles_addr);
 	if (!blocks)
 		return NULL;
 
@@ -349,7 +349,7 @@ static void add_loaded_map(int addr)
 	loaded_maps[n++] = addr;
 }
 
-typedef struct connection {
+struct connection {
 	u8 index;
 	u16 connected_map;
 	u16 current_map;
@@ -358,37 +358,37 @@ typedef struct connection {
 	u8 y_align;
 	u8 x_align;
 	u16 window;
-} PACKED connection_type;
+} PACKED;
 
 static int get_map_addr(int i)
 {
 	return ROM_ADDR(gl_stream[ROM_ADDR(3, 0x423D) + i], GET_ADDR(0x01AE + i * 2));
 }
 
-typedef struct {
+struct coords {
 	int x;
 	int y;
-} coords_type;
+};
 
-typedef struct submap_s {
-	coords_type coords;
+struct submap {
+	struct coords coords;
 	u8 *pixbuf;
 	int map_w;
 	int map_h;
-	struct submap_s *next;
+	struct submap *next;
 	PyObject *info;
 	int id;
 	PyObject *objects;
-} submap_type;
+};
 
-typedef struct {
+struct map {
 	int w;
 	int h;
 	u8 *pixbuf;
 	int id;
 	PyObject *info_list;
 	PyObject *objects;
-} map_type;
+};
 
 static PyObject *get_wild_pokemon_at_addr(u8 *data)
 {
@@ -428,9 +428,9 @@ static PyObject *get_wild_pokemon(int map_id)
 
 static void set_map_things_in_python_dict(PyObject *dict, struct map_things *things)
 {
-	entity_item_type *entity = things->entities;
-	sign_item_type *sign = things->signs;
-	warp_item_type *warp = things->warps;
+	struct entity_item *entity = things->entities;
+	struct sign_item *sign     = things->signs;
+	struct warp_item *warp     = things->warps;
 	PyObject *list;
 
 	/* Warps */
@@ -501,9 +501,9 @@ static void set_map_things_in_python_dict(PyObject *dict, struct map_things *thi
 } while(0)
 
 static void free_map_things(struct map_things *things) {
-	entity_item_type *entity = things->entities;
-	sign_item_type *sign = things->signs;
-	warp_item_type *warp = things->warps;
+	struct entity_item *entity = things->entities;
+	struct sign_item *sign     = things->signs;
+	struct warp_item *warp     = things->warps;
 
 	FREE_THINGS_LIST(entity);
 	FREE_THINGS_LIST(sign);
@@ -520,7 +520,7 @@ static void free_map_things(struct map_things *things) {
 	}\
 } while (0)
 
-static submap_type *get_submap(int id, int addr, int x_init, int y_init)
+static struct submap *get_submap(int id, int addr, int x_init, int y_init)
 {
 	PyObject *dict = PyDict_New(), *list;
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
@@ -528,7 +528,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	u8 connect_byte, i;
 	u8 map_h, map_w;
 	int connection_addr;
-	submap_type *current_map, *last, *tmp, *to_add;
+	struct submap *current_map, *last, *tmp, *to_add;
 	int text_pointers;
 	u8 bank_id;
 
@@ -625,10 +625,10 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		/* Warps */
 		nb = gl_stream[addr++];
 		{
-			warp_item_type *last = NULL;
+			struct warp_item *last = NULL;
 
 			for (i = 0; i < nb; i++) {
-				warp_item_type *item = malloc(sizeof(*item));
+				struct warp_item *item = malloc(sizeof(*item));
 				struct warp_raw *data = &item->data;
 
 				memcpy(data, &gl_stream[addr], sizeof(*data));
@@ -640,10 +640,10 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		/* Signs */
 		nb = gl_stream[addr++];
 		{
-			sign_item_type *last = NULL;
+			struct sign_item *last = NULL;
 
 			for (i = 0; i < nb; i++) {
-				sign_item_type *item = malloc(sizeof(*item));
+				struct sign_item *item = malloc(sizeof(*item));
 				struct sign_raw *data = &item->data;
 
 				memcpy(data, &gl_stream[addr], sizeof(*data));
@@ -678,10 +678,10 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 		/* Entities (normal people, trainers, items) */
 		nb = gl_stream[addr++];
 		{
-			entity_item_type *last = NULL;
+			struct entity_item *last = NULL;
 
 			for (i = 0; i < nb; i++) {
-				entity_item_type *item = malloc(sizeof(*item));
+				struct entity_item *item = malloc(sizeof(*item));
 				struct entity_raw *data = &item->data;
 
 				memcpy(data, &gl_stream[addr], sizeof(*data));
@@ -717,7 +717,7 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	current_map->coords.y = y_init;
 
 	for (i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
-		connection_type con;
+		struct connection con;
 		int nx = 0, ny = 0;
 
 		if (!(connect_byte & cons[i].k))
@@ -757,11 +757,11 @@ static submap_type *get_submap(int id, int addr, int x_init, int y_init)
 	return current_map;
 }
 
-static coords_type process_submap(submap_type *map)
+static struct coords process_submap(struct submap *map)
 {
 	int xmin = 0, ymin = 0, xmax = 0, ymax = 0;
-	coords_type s;
-	submap_type *map_start = map;
+	struct coords s;
+	struct submap *map_start = map;
 
 	for (; map; map = map->next) {
 		int x1 = map->coords.x;
@@ -813,10 +813,10 @@ static void insert_objects(PyObject *objects, PyObject *items, int x0, int y0)
 	}
 }
 
-static map_type get_final_map(submap_type *map)
+static struct map get_final_map(struct submap *map)
 {
-	coords_type map_info = process_submap(map);
-	map_type final_map;
+	struct coords map_info = process_submap(map);
+	struct map final_map;
 
 	final_map.w = map_info.x / 2;
 	final_map.h = map_info.y / 2;
@@ -832,7 +832,7 @@ static map_type get_final_map(submap_type *map)
 
 	while (map) {
 		int x, y, line, final_pixbuf_pos, pixbuf_pos = 0, pad;
-		submap_type *last_map;
+		struct submap *last_map;
 
 		x = map->coords.x;
 		y = map->coords.y;
@@ -865,11 +865,11 @@ static map_type get_final_map(submap_type *map)
 	return final_map;
 }
 
-static PyObject *get_py_map(submap_type *map)
+static PyObject *get_py_map(struct submap *map)
 {
 	PyObject *py_map = PyDict_New();
 	PyObject *map_pic;
-	map_type final_map;
+	struct map final_map;
 
 	if (!map)
 		return NULL;

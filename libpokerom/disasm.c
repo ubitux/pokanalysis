@@ -20,14 +20,14 @@
 
 #include "pokerom.h"
 
-typedef struct {
+struct instruction {
 	char *label;
 	int type;
-} ins_type;
+};
 
 enum {P_NONE, P_UCHAR8, P_CHAR8, P_WORD};
 
-static ins_type default_ins_set[] = {
+static struct instruction default_ins_set[] = {
 	[0x00] = {"nop", P_NONE},
 	[0x01] = {"ld bc,%04x", P_WORD},
 	[0x02] = {"ld (bc),a", P_NONE},
@@ -303,7 +303,7 @@ static ins_type default_ins_set[] = {
 	[0xff] = {"rst 38", P_NONE},
 };
 
-static ins_type extended_ins_set[] = {
+static struct instruction extended_ins_set[] = {
 	[0x00] = {"rlc b", P_NONE},
 	[0x01] = {"rlc c", P_NONE},
 	[0x02] = {"rlc d", P_NONE},
@@ -643,7 +643,7 @@ static struct line *next_ins(struct line *prev_line)
 	u8 ins;
 	struct line *line = calloc(sizeof(*line), 1);
 	char *linebuff = line->buff;
-	ins_type *ins_set = default_ins_set;
+	struct instruction *ins_set = default_ins_set;
 
 	if (prev_line)
 		prev_line->next = line;
