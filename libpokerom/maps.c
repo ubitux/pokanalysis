@@ -349,7 +349,7 @@ static void add_loaded_map(int addr)
 	loaded_maps[n++] = addr;
 }
 
-typedef struct {
+typedef struct connection {
 	u8 index;
 	u16 connected_map;
 	u16 current_map;
@@ -891,20 +891,63 @@ static PyObject *get_py_map(submap_type *map)
 	return py_map;
 }
 
+struct map_header {
+	u8 tileset_id;
+	u8 map_h, map_w;
+	u16 map_ptr, text_ptr, script_ptr;
+	u8 connect_byte;
+} PACKED;
+
+struct maps {
+	int addr;
+	int bank;
+	struct map_header *header;
+	u8 *cons;
+	u8 *obj_data;
+	PyObject *info;
+};
+
+static void track_maps(struct maps *maps, int map_id)
+{
+	struct maps *map = &maps[map_id];
+
+	if (map->addr || map_id == 0xed || map_id == 0xff) // 0xed is the elevator special warp destination
+		return;
+
+	map->addr   = get_map_addr(map_id);
+	map->bank   = map->addr / 0x4000;
+	map->header = (void *)&gl_stream[map->addr];
+	map->cons   = (void *)(map->header + 1);
+
+	u8 cb = map->header->connect_byte;
+	int i, n_con = ((cb&8)>>3) + ((cb&4)>>2) + ((cb&2)>>1) + (cb&1);
+	for (i = 0; i < n_con; i++) {
+		struct connection *con = (void *)(map->cons + sizeof(*con) * i);
+		track_maps(maps, con->index);
+	}
+	u16 objaddr = *(u16 *)(map->cons + sizeof(struct connection) * n_con);
+	map->obj_data = &gl_stream[ROM_ADDR(map->bank, objaddr)];
+	int n_warps = *(map->obj_data + 1);
+	struct warp_raw *warps = (void *)(map->obj_data + 2);
+	for (i = 0; i < n_warps; i++)
+		track_maps(maps, warps[i].to_map);
+}
+
 PyObject *get_maps(PyObject *self)
 {
-	int i, addr;
-	PyObject *map, *list = PyList_New(0);
+	int i;
+	PyObject *list = PyList_New(0);
+	struct maps trackme[0x100];
 
-	for (i = 0; i < NB_MAPS; i++) {
-		addr = get_map_addr(i);
-		if (i == 11) // wtf is this crazy area?
+	memset(trackme, 0, sizeof(trackme));
+	track_maps(trackme, 0);
+	for (i = 0; i < (int)(sizeof(trackme) / sizeof(*trackme)); i++) {
+		if (!trackme[i].addr || trackme[i].info)
 			continue;
-		if (is_loaded(addr))
+		trackme[i].info = get_py_map(get_submap(i, trackme[i].addr, 0, 0));
+		if (!trackme[i].info)
 			continue;
-		if (!(map = get_py_map(get_submap(i, addr, 0, 0))))
-			continue;
-		PyList_Append(list, map);
+		PyList_Append(list, trackme[i].info);
 	}
 	return list;
 }
