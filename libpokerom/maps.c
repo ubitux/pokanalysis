@@ -257,10 +257,61 @@ static struct blocks *get_blocks(int n, int addr, int tiles_addr)
 
 #define PIXEL_LINES_PER_BLOCK 32
 
-static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_addr, int tiles_addr, void *mt)
+struct coords {
+	int x;
+	int y;
+};
+
+struct map_header {
+	u8 tileset_id;
+	u8 map_h, map_w;
+	u16 map_ptr, text_ptr, script_ptr;
+	u8 connect_byte;
+} PACKED;
+
+struct submap {
+	int id;
+	int addr;
+	int bank;
+	struct map_header *header;
+	u8 *cons;
+	u8 *obj_data;
+	PyObject *info;
+	int loaded;
+	struct coords coords;
+	u8 *pixbuf;
+	PyObject *objects;
+	struct submap *next;
+};
+
+#define TILESET_HEADERS ROM_ADDR(3, 0x47BE)
+
+static int get_blockdata_addr(u8 tileset_id)
 {
+	int header_offset = TILESET_HEADERS + tileset_id * 12;
+	int bank_id = gl_stream[header_offset];
+
+	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 1));
+}
+
+static int get_tiles_addr(u8 tileset_id)
+{
+	int header_offset = TILESET_HEADERS + tileset_id * 12;
+	int bank_id = gl_stream[header_offset];
+
+	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 2 + 1));
+}
+
+static u8 *get_map_pic_raw(struct submap *map, void *mt)
+{
+	u8 map_h = map->header->map_h;
+	u8 map_w = map->header->map_w;
 	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
 	int i, j, pixbuf_offset = 0;
+
+	int blockdata_addr = get_blockdata_addr(map->header->tileset_id);
+	int tiles_addr     = get_tiles_addr(map->header->tileset_id);
+	int r_map_pointer  = ROM_ADDR(map->bank, map->header->map_ptr);
 
 	struct blocks *blocks = get_blocks(256, blockdata_addr, tiles_addr);
 	if (!blocks)
@@ -286,24 +337,6 @@ static u8 *get_map_pic_raw(int r_map_pointer, u8 map_w, u8 map_h, int blockdata_
 		pixbuf_offset += (PIXEL_LINES_PER_BLOCK - 1) * (map_w * PIXBUF_BLOCK_LINE_SIZE);
 	}
 	return pixbuf;
-}
-
-#define TILESET_HEADERS ROM_ADDR(3, 0x47BE)
-
-static int get_blockdata_addr(u8 tileset_id)
-{
-	int header_offset = TILESET_HEADERS + tileset_id * 12;
-	int bank_id = gl_stream[header_offset];
-
-	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 1));
-}
-
-static int get_tiles_addr(u8 tileset_id)
-{
-	int header_offset = TILESET_HEADERS + tileset_id * 12;
-	int bank_id = gl_stream[header_offset];
-
-	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 2 + 1));
 }
 
 #define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", gl_stream[addr++]))
@@ -332,27 +365,6 @@ struct connection {
 	u8 x_align;
 	u16 window;
 } PACKED;
-
-static int get_map_addr(int i)
-{
-	return ROM_ADDR(gl_stream[ROM_ADDR(3, 0x423D) + i], GET_ADDR(0x01AE + i * 2));
-}
-
-struct coords {
-	int x;
-	int y;
-};
-
-struct submap {
-	struct coords coords;
-	u8 *pixbuf;
-	int map_w;
-	int map_h;
-	struct submap *next;
-	PyObject *info;
-	int id;
-	PyObject *objects;
-};
 
 struct map {
 	int w;
@@ -493,91 +505,45 @@ static void free_map_things(struct map_things *things) {
 	}\
 } while (0)
 
-struct map_header {
-	u8 tileset_id;
-	u8 map_h, map_w;
-	u16 map_ptr, text_ptr, script_ptr;
-	u8 connect_byte;
-} PACKED;
-
-struct maps {
-	int addr;
-	int bank;
-	struct map_header *header;
-	u8 *cons;
-	u8 *obj_data;
-	PyObject *info;
-	int loaded;
-};
-
-static struct submap *get_submap(struct maps *maps, int id, int x_init, int y_init)
+static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_init)
 {
 	PyObject *dict = PyDict_New(), *list;
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
-	int blockdata_addr, tiles_addr, rom_addr;
 	u8 connect_byte, i;
-	u8 map_h, map_w;
 	int connection_addr;
-	struct submap *current_map, *last, *tmp, *to_add;
-	int text_pointers;
-	u8 bank_id;
-	int addr = maps[id].addr;
+	struct submap *current_map = &maps[id], *last, *tmp, *to_add;
+	u8 map_h = current_map->header->map_h, map_w = current_map->header->map_w;
+	int addr = current_map->addr;
 
-	if (maps[id].loaded)
+	if (current_map->loaded)
 		return NULL;
 
-	maps[id].loaded = 1;
+	current_map->loaded = 1;
 
 	if (addr > gl_rom_stat.st_size)
 		return NULL;
 
-	current_map = malloc(sizeof(*current_map));
-
 	current_map->info = dict;
-	current_map->next = NULL;
-	current_map->id = id;
 	current_map->objects = PyDict_New();
 
-	bank_id = addr / 0x4000;
-
 	PyDict_SetItemString(dict, "id", Py_BuildValue("i", id));
-	PyDict_SetItemString(dict, "bank-id", Py_BuildValue("i", bank_id));
+	PyDict_SetItemString(dict, "bank-id", Py_BuildValue("i", current_map->bank));
 	PyDict_SetItemString(dict, "addr", Py_BuildValue("i", REL_ADDR(addr)));
 	PyDict_SetItemString(dict, "wild-pkmn", get_wild_pokemon(id));
 	PyDict_SetItemString(dict, "special-items", get_special_items(id));
 
 	/* Map Header */
-	{
-		int word_addr;
-
-		blockdata_addr = get_blockdata_addr(gl_stream[addr]);
-		tiles_addr = get_tiles_addr(gl_stream[addr]);
-
-		DICT_ADD_BYTE(dict, "tileset");
-		map_h = gl_stream[addr];
-		DICT_ADD_BYTE(dict, "map_h");
-		map_w = gl_stream[addr];
-		DICT_ADD_BYTE(dict, "map_w");
-
-		word_addr = GET_ADDR(addr);
-		rom_addr = ROM_ADDR(bank_id, word_addr);
-		PyDict_SetItemString(dict, "map-pointer", Py_BuildValue("i", word_addr));
-		addr += 2;
-
-		current_map->map_w = map_w;
-		current_map->map_h = map_h;
-
-		text_pointers = GET_ADDR(addr);
-
-		DICT_ADD_ADDR(dict, "map-text-pointer");
-		DICT_ADD_ADDR(dict, "map-script-pointer");
-
-		connect_byte = gl_stream[addr];
-		DICT_ADD_BYTE(dict, "connect_byte");
-	}
+	PyDict_SetItemString(dict, "tileset",            Py_BuildValue("i", current_map->header->tileset_id));
+	PyDict_SetItemString(dict, "map_h",              Py_BuildValue("i", map_h));
+	PyDict_SetItemString(dict, "map_w",              Py_BuildValue("i", map_w));
+	PyDict_SetItemString(dict, "map-pointer",        Py_BuildValue("i", current_map->header->map_ptr));
+	PyDict_SetItemString(dict, "map-text-pointer",   Py_BuildValue("i", current_map->header->text_ptr));
+	PyDict_SetItemString(dict, "map-script-pointer", Py_BuildValue("i", current_map->header->script_ptr));
+	PyDict_SetItemString(dict, "connect_byte",       Py_BuildValue("i", current_map->header->connect_byte));
+	addr += sizeof(struct map_header);
 
 	/* Connections */
-
+	connect_byte = current_map->header->connect_byte;
 	connection_addr = addr;
 
 	list = PyList_New(0);
@@ -607,7 +573,7 @@ static struct submap *get_submap(struct maps *maps, int id, int x_init, int y_in
 		DICT_ADD_ADDR(dict, "object-data");
 
 		/* Seek to the object data address */
-		addr = ROM_ADDR(bank_id, word_addr);
+		addr = ROM_ADDR(current_map->bank, word_addr);
 
 		DICT_ADD_BYTE(dict, "maps_border_tile");
 
@@ -640,7 +606,7 @@ static struct submap *get_submap(struct maps *maps, int id, int x_init, int y_in
 				item->py_text_string = NULL;
 				{
 					int base_addr = (addr / 0x4000) * 0x4000;
-					int text_pointer = GET_ADDR(base_addr + (text_pointers + ((data->tid - 1) << 1)) % 0x4000);
+					int text_pointer = GET_ADDR(base_addr + (current_map->header->text_ptr + ((data->tid - 1) << 1)) % 0x4000);
 					int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
 					int rom_text_addr = ROM_ADDR(gl_stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
 					char buffer[512] = {0};
@@ -692,8 +658,9 @@ static struct submap *get_submap(struct maps *maps, int id, int x_init, int y_in
 		}
 	}
 
+
 	set_map_things_in_python_dict(dict, &map_things);
-	current_map->pixbuf = get_map_pic_raw(rom_addr, map_w, map_h, blockdata_addr, tiles_addr, &map_things);
+	current_map->pixbuf = get_map_pic_raw(current_map, &map_things);
 	free_map_things(&map_things);
 	apply_filter(current_map->pixbuf, id, map_w * 2);
 
@@ -755,8 +722,8 @@ static struct coords process_submap(struct submap *map)
 	for (; map; map = map->next) {
 		int x1 = map->coords.x;
 		int y1 = map->coords.y;
-		int x2 = x1 + map->map_w * 2;
-		int y2 = y1 + map->map_h * 2;
+		int x2 = x1 + map->header->map_w * 2;
+		int y2 = y1 + map->header->map_h * 2;
 
 		if (x1 < xmin)
 			xmin = x1;
@@ -835,11 +802,11 @@ static struct map get_final_map(struct submap *map)
 		PyDict_SetItemString(map->info, "objects", map->objects);
 		PyList_Append(final_map.info_list, map->info);
 
-		pad = PIXBUF_SINGLE_LINE_SIZE(map->map_w);
+		pad = PIXBUF_SINGLE_LINE_SIZE(map->header->map_w);
 
 		final_pixbuf_pos = y * (final_map.w * 2) * PIXBUF_BOX_SIZE + PIXBUF_SINGLE_LINE_SIZE(x) / 2;
 
-		for (line = 0; line < map->map_h * NB_PIXEL_PER_BLOCK_LINE; line++) {
+		for (line = 0; line < map->header->map_h * NB_PIXEL_PER_BLOCK_LINE; line++) {
 			memcpy(&final_map.pixbuf[final_pixbuf_pos], &map->pixbuf[pixbuf_pos], pad);
 			final_pixbuf_pos += PIXBUF_SINGLE_LINE_SIZE(final_map.w);
 			pixbuf_pos += pad;
@@ -848,7 +815,6 @@ static struct map get_final_map(struct submap *map)
 		last_map = map;
 		map = map->next;
 		free(last_map->pixbuf);
-		free(last_map);
 	}
 
 	return final_map;
@@ -880,14 +846,15 @@ static PyObject *get_py_map(struct submap *map)
 	return py_map;
 }
 
-static void track_maps(struct maps *maps, int map_id)
+static void track_maps(struct submap *maps, int map_id)
 {
-	struct maps *map = &maps[map_id];
+	struct submap *map = &maps[map_id];
 
 	if (map->addr || map_id == 0xed || map_id == 0xff) // 0xed is the elevator special warp destination
 		return;
 
-	map->addr   = get_map_addr(map_id);
+	map->id     = map_id;
+	map->addr   = ROM_ADDR(gl_stream[ROM_ADDR(3, 0x423D) + map_id], GET_ADDR(0x01AE + map_id * 2));
 	map->bank   = map->addr / 0x4000;
 	map->header = (void *)&gl_stream[map->addr];
 	map->cons   = (void *)(map->header + 1);
@@ -910,17 +877,17 @@ PyObject *get_maps(PyObject *self)
 {
 	int i;
 	PyObject *list = PyList_New(0);
-	struct maps trackme[0x100];
+	struct submap maps[0x100];
 
-	memset(trackme, 0, sizeof(trackme));
-	track_maps(trackme, 0);
-	for (i = 0; i < (int)(sizeof(trackme) / sizeof(*trackme)); i++) {
-		if (!trackme[i].addr || trackme[i].info)
+	memset(maps, 0, sizeof(maps));
+	track_maps(maps, 0);
+	for (i = 0; i < (int)(sizeof(maps) / sizeof(*maps)); i++) {
+		if (!maps[i].addr || maps[i].info)
 			continue;
-		trackme[i].info = get_py_map(get_submap(trackme, i, 0, 0));
-		if (!trackme[i].info)
+		maps[i].info = get_py_map(get_submap(maps, i, 0, 0));
+		if (!maps[i].info)
 			continue;
-		PyList_Append(list, trackme[i].info);
+		PyList_Append(list, maps[i].info);
 	}
 	return list;
 }
