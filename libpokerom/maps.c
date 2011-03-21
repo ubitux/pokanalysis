@@ -92,27 +92,27 @@ struct box_info {
 	int color_key;
 	int entity_addr;
 	int flip;
-} box_info;
+};
 
 struct warp_raw { u8 y, x, to_point, to_map; } PACKED;
 struct warp_item {
 	struct warp_raw data;
 	struct warp_item *next;
-} warp_item;
+};
 
 struct sign_raw { u8 y, x, tid; } PACKED;
 struct sign_item {
 	struct sign_raw data;
 	PyObject *py_text_string;
 	struct sign_item *next;
-} sign_item;
+};
 
 struct entity_raw { u8 pic_id, y, x, mvt_1, mvt_2, tid, extra_1, extra_2; } PACKED;
 struct entity_item {
 	struct entity_raw data;
 	char *type;
 	struct entity_item *next;
-} entity_item;
+};
 
 struct map_things {
 	struct warp_item *warps;
