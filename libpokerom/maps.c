@@ -322,26 +322,6 @@ static struct {
 	{1 << 0, 'E'}
 };
 
-# define NB_MAPS 248
-
-static int loaded_maps[NB_MAPS] = {0};
-
-static int is_loaded(int addr)
-{
-	int i;
-
-	for (i = 0; loaded_maps[i]; i++)
-		if (loaded_maps[i] == addr)
-			return 1;
-	return 0;
-}
-
-static void add_loaded_map(int addr)
-{
-	static int n = 0;
-	loaded_maps[n++] = addr;
-}
-
 struct connection {
 	u8 index;
 	u16 connected_map;
@@ -513,7 +493,24 @@ static void free_map_things(struct map_things *things) {
 	}\
 } while (0)
 
-static struct submap *get_submap(int id, int addr, int x_init, int y_init)
+struct map_header {
+	u8 tileset_id;
+	u8 map_h, map_w;
+	u16 map_ptr, text_ptr, script_ptr;
+	u8 connect_byte;
+} PACKED;
+
+struct maps {
+	int addr;
+	int bank;
+	struct map_header *header;
+	u8 *cons;
+	u8 *obj_data;
+	PyObject *info;
+	int loaded;
+};
+
+static struct submap *get_submap(struct maps *maps, int id, int x_init, int y_init)
 {
 	PyObject *dict = PyDict_New(), *list;
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
@@ -524,12 +521,12 @@ static struct submap *get_submap(int id, int addr, int x_init, int y_init)
 	struct submap *current_map, *last, *tmp, *to_add;
 	int text_pointers;
 	u8 bank_id;
+	int addr = maps[id].addr;
 
-	if (is_loaded(addr)) {
+	if (maps[id].loaded)
 		return NULL;
-	}
 
-	add_loaded_map(addr);
+	maps[id].loaded = 1;
 
 	if (addr > gl_rom_stat.st_size)
 		return NULL;
@@ -737,7 +734,7 @@ static struct submap *get_submap(int id, int addr, int x_init, int y_init)
 			break;
 		}
 
-		to_add = get_submap(con.index, get_map_addr(con.index), nx, ny);
+		to_add = get_submap(maps, con.index, nx, ny);
 		if (to_add) {
 			last = current_map;
 			for (tmp = current_map; tmp; tmp = tmp->next)
@@ -883,22 +880,6 @@ static PyObject *get_py_map(struct submap *map)
 	return py_map;
 }
 
-struct map_header {
-	u8 tileset_id;
-	u8 map_h, map_w;
-	u16 map_ptr, text_ptr, script_ptr;
-	u8 connect_byte;
-} PACKED;
-
-struct maps {
-	int addr;
-	int bank;
-	struct map_header *header;
-	u8 *cons;
-	u8 *obj_data;
-	PyObject *info;
-};
-
 static void track_maps(struct maps *maps, int map_id)
 {
 	struct maps *map = &maps[map_id];
@@ -936,7 +917,7 @@ PyObject *get_maps(PyObject *self)
 	for (i = 0; i < (int)(sizeof(trackme) / sizeof(*trackme)); i++) {
 		if (!trackme[i].addr || trackme[i].info)
 			continue;
-		trackme[i].info = get_py_map(get_submap(i, trackme[i].addr, 0, 0));
+		trackme[i].info = get_py_map(get_submap(trackme, i, 0, 0));
 		if (!trackme[i].info)
 			continue;
 		PyList_Append(list, trackme[i].info);
