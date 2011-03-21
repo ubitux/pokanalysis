@@ -92,20 +92,20 @@ struct box_info {
 
 struct warp_raw { u8 y, x, to_point, to_map; } PACKED;
 struct warp_item {
-	struct warp_raw data;
+	struct warp_raw *data;
 	struct warp_item *next;
 };
 
 struct sign_raw { u8 y, x, tid; } PACKED;
 struct sign_item {
-	struct sign_raw data;
+	struct sign_raw *data;
 	PyObject *py_text_string;
 	struct sign_item *next;
 };
 
 struct entity_raw { u8 pic_id, y, x, mvt_1, mvt_2, tid, extra_1, extra_2; } PACKED;
 struct entity_item {
-	struct entity_raw data;
+	struct entity_raw *data;
 	char *type;
 	struct entity_item *next;
 };
@@ -122,7 +122,7 @@ static struct box_info get_box_info(struct map_things *mt, int x, int y)
 
 	struct warp_item *warp;
 	for (warp = mt->warps; warp; warp = warp->next) {
-		if (warp->data.x == x && warp->data.y == y) {
+		if (warp->data->x == x && warp->data->y == y) {
 			bi.color_key = WARPS_COLORS_OFFSET;
 			return bi;
 		}
@@ -130,7 +130,7 @@ static struct box_info get_box_info(struct map_things *mt, int x, int y)
 
 	struct sign_item *sign;
 	for (sign = mt->signs; sign; sign = sign->next) {
-		if (sign->data.x == x && sign->data.y == y) {
+		if (sign->data->x == x && sign->data->y == y) {
 			bi.color_key = SIGNS_COLORS_OFFSET;
 			return bi;
 		}
@@ -138,10 +138,10 @@ static struct box_info get_box_info(struct map_things *mt, int x, int y)
 
 	struct entity_item *entity;
 	for (entity = mt->entities; entity; entity = entity->next) {
-		if (entity->data.x == x && entity->data.y == y) {
-			int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (entity->data.pic_id - 1));
+		if (entity->data->x - 4 == x && entity->data->y - 4 == y) {
+			int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (entity->data->pic_id - 1));
 			int bank_id = gl_stream[entity_info_addr + 3];
-			u8 orientation = entity->data.mvt_2 & 0xF;
+			u8 orientation = entity->data->mvt_2 & 0xF;
 			int decal_id = 0;
 
 			if (orientation == 1) {		// North
@@ -415,7 +415,7 @@ static void set_map_things_in_python_dict(PyObject *dict, struct map_things *thi
 	/* Warps */
 	list = PyList_New(0);
 	while (warp) {
-		struct warp_raw *data = &warp->data;
+		struct warp_raw *data = warp->data;
 		PyObject *py_warp = PyDict_New();
 
 		PyDict_SetItemString(py_warp, "y", Py_BuildValue("i", data->y));
@@ -430,7 +430,7 @@ static void set_map_things_in_python_dict(PyObject *dict, struct map_things *thi
 	/* Signs */
 	list = PyList_New(0);
 	while (sign) {
-		struct sign_raw *data = &sign->data;
+		struct sign_raw *data = sign->data;
 		PyObject *py_sign = PyDict_New();
 
 		PyDict_SetItemString(py_sign, "y", Py_BuildValue("i", data->y));
@@ -446,12 +446,12 @@ static void set_map_things_in_python_dict(PyObject *dict, struct map_things *thi
 	/* Entities */
 	list = PyList_New(0);
 	while (entity) {
-		struct entity_raw *data = &entity->data;
+		struct entity_raw *data = entity->data;
 		PyObject *py_entity = PyDict_New();
 
 		PyDict_SetItemString(py_entity, "pic_id", Py_BuildValue("i", data->pic_id));
-		PyDict_SetItemString(py_entity, "y", Py_BuildValue("i", data->y));
-		PyDict_SetItemString(py_entity, "x", Py_BuildValue("i", data->x));
+		PyDict_SetItemString(py_entity, "y", Py_BuildValue("i", data->y - 4));
+		PyDict_SetItemString(py_entity, "x", Py_BuildValue("i", data->x - 4));
 		PyDict_SetItemString(py_entity, "mvt_1", Py_BuildValue("i", data->mvt_1));
 		PyDict_SetItemString(py_entity, "mvt_2", Py_BuildValue("i", data->mvt_2));
 		PyDict_SetItemString(py_entity, "text_id", Py_BuildValue("i", data->tid));
@@ -575,10 +575,9 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 
 			for (i = 0; i < nb; i++) {
 				struct warp_item *item = malloc(sizeof(*item));
-				struct warp_raw *data = &item->data;
 
-				memcpy(data, &gl_stream[addr], sizeof(*data));
-				addr += sizeof(*data);
+				item->data = (void *)&gl_stream[addr];
+				addr += sizeof(*item->data);
 				ADD_ITEM_IN_LIST(map_things.warps);
 			}
 		}
@@ -590,14 +589,13 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 
 			for (i = 0; i < nb; i++) {
 				struct sign_item *item = malloc(sizeof(*item));
-				struct sign_raw *data = &item->data;
 
-				memcpy(data, &gl_stream[addr], sizeof(*data));
-				addr += sizeof(*data);
+				item->data = (void *)&gl_stream[addr];
+				addr += sizeof(*item->data);
 				item->py_text_string = NULL;
 				{
 					int base_addr = (addr / 0x4000) * 0x4000;
-					int text_pointer = GET_ADDR(base_addr + (current_map->header->text_ptr + ((data->tid - 1) << 1)) % 0x4000);
+					int text_pointer = GET_ADDR(base_addr + (current_map->header->text_ptr + ((item->data->tid - 1) << 1)) % 0x4000);
 					int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
 					int rom_text_addr = ROM_ADDR(gl_stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
 					char buffer[512] = {0};
@@ -628,17 +626,14 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 
 			for (i = 0; i < nb; i++) {
 				struct entity_item *item = malloc(sizeof(*item));
-				struct entity_raw *data = &item->data;
 
-				memcpy(data, &gl_stream[addr], sizeof(*data));
-				addr += sizeof(*data) - 2;
-				data->y -= 4;
-				data->x -= 4;
+				item->data = (void *)&gl_stream[addr];
+				addr += sizeof(*item->data) - 2;
 
-				if (data->tid & (1 << 6)) {
+				if (item->data->tid & (1 << 6)) {
 					item->type = "trainer";
 					addr += 2;
-				} else if (data->tid & (1 << 7)) {
+				} else if (item->data->tid & (1 << 7)) {
 					item->type = "item";
 					addr += 1;
 				} else {
