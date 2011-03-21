@@ -175,11 +175,9 @@ static void merge_tiles(u8 *dst, u8 *src, char *alpha)
 {
 	int i;
 
-	for (i = 0; i < PIXBUF_TILE_SIZE; i += 3) {
-		if (memcmp(&src[i], alpha, 3) != 0) {
+	for (i = 0; i < PIXBUF_TILE_SIZE; i += 3)
+		if (memcmp(&src[i], alpha, 3) != 0)
 			memcpy(&dst[i], &src[i], 3);
-		}
-	}
 }
 
 static void flip_tile(u8 *tile)
@@ -188,11 +186,9 @@ static void flip_tile(u8 *tile)
 	int x, y;
 
 	memcpy(old_tile, tile, sizeof(old_tile));
-	for (y = 0; y < TILE_Y; y++) {
-		for (x = 0; x < TILE_X; x++) {
+	for (y = 0; y < TILE_Y; y++)
+		for (x = 0; x < TILE_X; x++)
 			memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 4);
-		}
-	}
 }
 
 /* 1 block = 4x4 tiles */
@@ -248,17 +244,14 @@ static struct blocks *get_blocks(int n, int addr, int tiles_addr)
 	struct blocks *blocks;
 	int i, j;
 
-	if (addr > gl_rom_stat.st_size) {
+	if (addr > gl_rom_stat.st_size)
 		return NULL;
-	}
 	if ((blocks = calloc(n, sizeof(*blocks))) == NULL)
 		return NULL;
 	data = &gl_stream[addr];
-	for (i = 0; i < n; i++) {
-		for (j = 0; j < 16; j++) {
+	for (i = 0; i < n; i++)
+		for (j = 0; j < 16; j++)
 			blocks[i].b[j] = (*data++ << 4) + tiles_addr;
-		}
-	}
 	return blocks;
 }
 
@@ -538,9 +531,8 @@ static struct submap *get_submap(int id, int addr, int x_init, int y_init)
 
 	add_loaded_map(addr);
 
-	if (addr > gl_rom_stat.st_size) {
+	if (addr > gl_rom_stat.st_size)
 		return NULL;
-	}
 
 	current_map = malloc(sizeof(*current_map));
 
