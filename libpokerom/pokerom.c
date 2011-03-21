@@ -21,17 +21,17 @@
 #include "pokerom.h"
 
 u8 *gl_stream;
-struct stat gl_rom_stat;
 
 static PyObject *load_rom(PyObject *self, PyObject *args)
 {
 	char *fname;
 	int fd;
+	struct stat rom_stat;
 
 	PyArg_ParseTuple(args, "s", &fname);
 	if ((fd = open(fname, O_RDONLY)) < 0
-			|| fstat(fd, &gl_rom_stat)
-			|| (gl_stream = mmap(0, gl_rom_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
+			|| fstat(fd, &rom_stat)
+			|| (gl_stream = mmap(0, rom_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
 		return PyErr_SetFromErrnoWithFilename(PyExc_IOError, fname);
 	}
 	return Py_BuildValue("z", NULL);

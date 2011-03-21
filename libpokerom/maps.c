@@ -51,10 +51,6 @@ static void load_tile_from_ptr(u8 *__restrict__ pixbuf, u8 *__restrict__ src, in
 /* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
 static void load_tile(u8 *pixbuf, int addr, int color_key)
 {
-	if (addr > gl_rom_stat.st_size) {
-		memset(pixbuf, 0, TILE_X * TILE_Y * 3);
-		return;
-	}
 	load_tile_from_ptr(pixbuf, &gl_stream[addr], color_key);
 }
 
@@ -244,8 +240,6 @@ static struct blocks *get_blocks(int n, int addr, int tiles_addr)
 	struct blocks *blocks;
 	int i, j;
 
-	if (addr > gl_rom_stat.st_size)
-		return NULL;
 	if ((blocks = calloc(n, sizeof(*blocks))) == NULL)
 		return NULL;
 	data = &gl_stream[addr];
@@ -519,9 +513,6 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 		return NULL;
 
 	current_map->loaded = 1;
-
-	if (addr > gl_rom_stat.st_size)
-		return NULL;
 
 	current_map->info = dict;
 	current_map->objects = PyDict_New();
