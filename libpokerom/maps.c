@@ -257,6 +257,7 @@ struct submap {
 	int addr;
 	int bank;
 	struct map_header *header;
+	int n_cons;
 	u8 *cons;
 	u8 *obj_data;
 	PyObject *info;
@@ -489,10 +490,10 @@ static void free_map_things(struct map_things *things) {
 
 static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_init, int y_init)
 {
-	PyObject *dict = PyDict_New(), *list;
+	PyObject *dict = PyDict_New();
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
-	u8 connect_byte;
 	struct submap *current_map = &maps[id], *last, *tmp, *to_add;
+	u8 connect_byte = current_map->header->connect_byte;
 	u8 map_h = current_map->header->map_h, map_w = current_map->header->map_w;
 	int addr = current_map->addr;
 
@@ -517,30 +518,9 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	PyDict_SetItemString(dict, "map-pointer",        Py_BuildValue("i", current_map->header->map_ptr));
 	PyDict_SetItemString(dict, "map-text-pointer",   Py_BuildValue("i", current_map->header->text_ptr));
 	PyDict_SetItemString(dict, "map-script-pointer", Py_BuildValue("i", current_map->header->script_ptr));
-	PyDict_SetItemString(dict, "connect_byte",       Py_BuildValue("i", current_map->header->connect_byte));
-	addr += sizeof(struct map_header);
+	PyDict_SetItemString(dict, "connect_byte",       Py_BuildValue("i", connect_byte));
 
-	/* Connections */
-	connect_byte = current_map->header->connect_byte;
-
-	list = PyList_New(0);
-	for (int i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
-		if (!(connect_byte & cons[i].k))
-			continue ;
-		PyObject *con_dict = PyDict_New();
-
-		PyDict_SetItemString(con_dict, "key", Py_BuildValue("c", cons[i].c));
-		DICT_ADD_BYTE(con_dict, "index");
-		DICT_ADD_ADDR(con_dict, "connected-map");
-		DICT_ADD_ADDR(con_dict, "current-map");
-		DICT_ADD_BYTE(con_dict, "bigness");
-		DICT_ADD_BYTE(con_dict, "map_width");
-		DICT_ADD_BYTE(con_dict, "y_align");
-		DICT_ADD_BYTE(con_dict, "x_align");
-		DICT_ADD_ADDR(con_dict, "window");
-		PyList_Append(list, con_dict);
-	}
-	PyDict_SetItemString(dict, "connections", list);
+	addr += sizeof(struct map_header) + current_map->n_cons * sizeof(struct connection);
 
 	/* Object Data */
 	int word_addr = GET_ADDR(addr);
@@ -632,12 +612,25 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	current_map->coords.x = x_init;
 	current_map->coords.y = y_init;
 
+	PyObject *list = PyList_New(0);
 	struct connection *con = (void *)current_map->cons;
 	for (int i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
 		int nx = 0, ny = 0;
 
 		if (!(connect_byte & cons[i].k))
 			continue;
+
+		PyObject *con_dict = PyDict_New();
+		PyDict_SetItemString(con_dict, "key",           Py_BuildValue("c", cons[i].c));
+		PyDict_SetItemString(con_dict, "index",         Py_BuildValue("i", con->index));
+		PyDict_SetItemString(con_dict, "connected-map", Py_BuildValue("i", con->connected_map));
+		PyDict_SetItemString(con_dict, "current-map",   Py_BuildValue("i", con->current_map));
+		PyDict_SetItemString(con_dict, "bigness",       Py_BuildValue("i", con->bigness));
+		PyDict_SetItemString(con_dict, "map_width",     Py_BuildValue("i", con->map_width));
+		PyDict_SetItemString(con_dict, "y_align",       Py_BuildValue("i", con->y_align));
+		PyDict_SetItemString(con_dict, "x_align",       Py_BuildValue("i", con->x_align));
+		PyDict_SetItemString(con_dict, "window",        Py_BuildValue("i", con->window));
+		PyList_Append(list, con_dict);
 
 		switch (cons[i].c) {
 		// FIXME: I'm sure there is something wrong here...
@@ -666,8 +659,11 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 				last = tmp;
 			last->next = to_add;
 		}
+
+
 		con += 1;
 	}
+	PyDict_SetItemString(dict, "connections", list);
 
 	return current_map;
 }
@@ -816,12 +812,12 @@ static void track_maps(u8 *stream, struct submap *maps, int map_id)
 	map->cons   = (void *)(map->header + 1);
 
 	u8 cb = map->header->connect_byte;
-	int n_con = ((cb&8)>>3) + ((cb&4)>>2) + ((cb&2)>>1) + (cb&1);
-	for (int i = 0; i < n_con; i++) {
+	map->n_cons = ((cb&8)>>3) + ((cb&4)>>2) + ((cb&2)>>1) + (cb&1);
+	for (int i = 0; i < map->n_cons; i++) {
 		struct connection *con = (void *)(map->cons + sizeof(*con) * i);
 		track_maps(stream, maps, con->index);
 	}
-	u16 objaddr = *(u16 *)(map->cons + sizeof(struct connection) * n_con);
+	u16 objaddr = *(u16 *)(map->cons + sizeof(struct connection) * map->n_cons);
 	map->obj_data = &stream[ROM_ADDR(map->bank, objaddr)];
 	int n_warps = *(map->obj_data + 1);
 	struct warp_raw *warps = (void *)(map->obj_data + 2);
