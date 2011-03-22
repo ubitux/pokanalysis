@@ -636,7 +636,7 @@ static void format_line(struct line *line, char *fmt, ...)
 	va_end(va);
 }
 
-static struct line *next_ins(struct line *prev_line)
+static struct line *next_ins(u8 *stream, struct line *prev_line)
 {
 	char *label;
 	int type;
@@ -650,7 +650,7 @@ static struct line *next_ins(struct line *prev_line)
 
 	/* GameBoy cartridges specific header */
 	if (pc <= 0x014E && pc >= 0x0104) {
-		u8 *db = &gl_stream[pc];
+		u8 *db = &stream[pc];
 
 		/* Nintendo pic + ROM name */
 		if (pc < 0x0144) {
@@ -683,7 +683,7 @@ static struct line *next_ins(struct line *prev_line)
 		goto end;
 	}
 
-	ins = gl_stream[pc];
+	ins = stream[pc];
 
 	format_line(line, HEX_DEFAULT, ins);
 	pc++;
@@ -692,7 +692,7 @@ static struct line *next_ins(struct line *prev_line)
 		line->flags |= FORCE_RETURN_CARRIAGE;
 	else if (ins == 0xCB) { // extended set
 		ins_set = extended_ins_set;
-		ins = gl_stream[pc++];
+		ins = stream[pc++];
 		sprintf(&linebuff[13], "%02X", ins);
 		linebuff[15] = ' ';
 	}
@@ -708,7 +708,7 @@ static struct line *next_ins(struct line *prev_line)
 	case P_WORD:
 	{
 		u16 p = GET_ADDR(pc);
-		sprintf(&linebuff[13], "%02X %02X", gl_stream[pc], gl_stream[pc + 1]);
+		sprintf(&linebuff[13], "%02X %02X", stream[pc], stream[pc + 1]);
 		linebuff[18] = ' ';
 		sprintf(&linebuff[27], label, p);
 		if (ins_set == default_ins_set) {
@@ -723,7 +723,7 @@ static struct line *next_ins(struct line *prev_line)
 
 	case P_UCHAR8:
 	{
-		u8 p = gl_stream[pc++];
+		u8 p = stream[pc++];
 		sprintf(&linebuff[13], "%02X", p);
 		linebuff[15] = ' ';
 		sprintf(&linebuff[27], label, p);
@@ -732,7 +732,7 @@ static struct line *next_ins(struct line *prev_line)
 
 	case P_CHAR8:
 	{
-		int8_t p = gl_stream[pc];
+		int8_t p = stream[pc];
 		int rom_addr = pc + p + 1;
 		u16 addr = REL_ADDR(rom_addr);
 		sprintf(&linebuff[13], "%02X", (u8)p);
@@ -844,15 +844,15 @@ static PyObject *get_buffer(void)
 	return buffer;
 }
 
-PyObject *disasm(PyObject *self, PyObject *args)
+PyObject *disasm(struct rom *self, PyObject *args)
 {
 	int bank_id = 0;
 	struct line *line;
 
 	PyArg_ParseTuple(args, "i", &bank_id);
 	pc = bank_id * 0x4000;
-	lines = line = next_ins(NULL);
+	lines = line = next_ins(self->stream, NULL);
 	while (pc < (bank_id + 1) * 0x4000)
-		line = next_ins(line);
+		line = next_ins(self->stream, line);
 	return get_buffer();
 }

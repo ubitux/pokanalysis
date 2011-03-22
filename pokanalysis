@@ -39,7 +39,7 @@ class Core:
         model = self.gui.get_object('treestore_gameinfo')
         self.map_store = {}
         area_id = 1
-        for pkmn_map in pokerom.get_maps():
+        for pkmn_map in self.rom.get_maps():
             (p1, p2, p3) = self.get_map_pix(pkmn_map)
             if len(pkmn_map['info']) > 1:
                 self.map_store['Area #%d' % area_id] = (pkmn_map, p1, p2)
@@ -165,7 +165,7 @@ class Core:
         bank_id = combobox.get_active()
         tbuffer = self.gui.get_object('textview_asm').get_buffer()
         if bank_id not in self.bank_asm:
-            self.bank_asm[bank_id] = pokerom.disasm(bank_id)
+            self.bank_asm[bank_id] = self.rom.disasm(bank_id)
         tbuffer.set_text(self.bank_asm[bank_id])
 
     def on_eventbox_image_map_button_press_event(self, widget, event):
@@ -278,7 +278,7 @@ class Core:
             print('Usage: %s file' % sys.argv[0])
             return
 
-        pokerom.load_rom(sys.argv[1])
+        self.rom = pokerom.ROM(sys.argv[1])
 
         self.focus_cursor = gtk.gdk.Cursor(gtk.gdk.HAND2)
 
@@ -298,7 +298,7 @@ class Core:
         })
 
         self.pokedex_rom_id = {}
-        self.pokedex = pokerom.get_pokedex()
+        self.pokedex = self.rom.get_pokedex()
         pokedex_widget = self.gui.get_object('liststore_pokedex')
         w, h = 7 * 8, 7 * 8
         for i, pkmn in enumerate(self.pokedex, 1):

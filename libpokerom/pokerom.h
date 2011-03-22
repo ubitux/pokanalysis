@@ -26,7 +26,7 @@
 # include <sys/mman.h>
 # include <fcntl.h>
 
-# define GET_ADDR(offset)	(*(u16*)&gl_stream[offset])
+# define GET_ADDR(offset)	(*(u16*)&stream[offset])
 # define ROM_ADDR(bank, addr)	(((addr) > 0x3fff) ? (bank) * 0x4000 + (addr) - 0x4000 : (addr))
 # define REL_ADDR(addr)		(((addr) > 0x3fff) ? (addr) % 0x4000 + 0x4000 : (addr))
 
@@ -37,28 +37,30 @@ typedef uint16_t u16;
 # define low_nibble(c)		((c) & 0x0f)
 # define swap_u8(c)		(((c) << 4) | ((c) >> 4))
 
-# ifdef __GNUC__
-#  define self self __attribute__((__unused__))
-# endif
-
 # define PACKED __attribute__((__packed__))
 
-extern u8 *gl_stream;
+struct rom {
+	PyObject_HEAD;
+	char *fname;
+	int fd;
+	struct stat st;
+	u8 *stream;
+};
 
-PyObject *disasm(PyObject *, PyObject *);
-PyObject *get_maps(PyObject *);
-PyObject *get_pokedex(PyObject *);
-PyObject *get_special_items(int map_id);
-PyObject *str_getascii(PyObject *, PyObject *);
-PyObject *str_getbin(PyObject *, PyObject *);
+PyObject *disasm(struct rom *, PyObject *);
+PyObject *get_maps(struct rom *);
+PyObject *get_pokedex(struct rom *);
+PyObject *get_special_items(u8 *stream, int map_id);
+PyObject *str_getascii(struct rom *, PyObject *);
+PyObject *str_getbin(struct rom *, PyObject *);
 
 char *get_pkmn_char(u8, char *);
-void apply_filter(u8 *pixbuf, int map_id, int w);
-void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len);
-void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len);
+void apply_filter(u8 *stream, u8 *pixbuf, int map_id, int w);
+void get_pkmn_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len);
+void get_pkmn_move_name(u8 *stream, char *mname, u8 move_id, size_t max_len);
 void load_string(char *dest, u8 *src, size_t max_len, int fixed_str_len);
 void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);
 void rle_sprite(u8 *dst, u8 *src);
-void uncompress_sprite(u8 *dest, int addr);
+void uncompress_sprite(u8 *stream, u8 *dest, int addr);
 
 #endif

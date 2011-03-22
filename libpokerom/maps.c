@@ -49,9 +49,9 @@ static void load_tile_from_ptr(u8 *__restrict__ pixbuf, u8 *__restrict__ src, in
 }
 
 /* 1 tile = 8x8 px (2 bytes -> 8 pixels) */
-static void load_tile(u8 *pixbuf, int addr, int color_key)
+static void load_tile(u8 *stream, u8 *pixbuf, int addr, int color_key)
 {
-	load_tile_from_ptr(pixbuf, &gl_stream[addr], color_key);
+	load_tile_from_ptr(pixbuf, &stream[addr], color_key);
 }
 
 #define PIXBUF_TILE_SIZE	(TILE_Y * TILE_X * 3)
@@ -116,7 +116,7 @@ struct map_things {
 	struct entity_item *entities;
 };
 
-static struct box_info get_box_info(struct map_things *mt, int x, int y)
+static struct box_info get_box_info(u8 *stream, struct map_things *mt, int x, int y)
 {
 	struct box_info bi = {.color_key = DEFAULT_COLORS_OFFSET, .entity_addr = 0, .flip = 0};
 
@@ -140,7 +140,7 @@ static struct box_info get_box_info(struct map_things *mt, int x, int y)
 	for (entity = mt->entities; entity; entity = entity->next) {
 		if (entity->data->x - 4 == x && entity->data->y - 4 == y) {
 			int entity_info_addr = ROM_ADDR(0x05, 0x7b27 + 4 * (entity->data->pic_id - 1));
-			int bank_id = gl_stream[entity_info_addr + 3];
+			int bank_id = stream[entity_info_addr + 3];
 			u8 orientation = entity->data->mvt_2 & 0xF;
 			int decal_id = 0;
 
@@ -188,7 +188,7 @@ static void flip_tile(u8 *tile)
 }
 
 /* 1 block = 4x4 tiles */
-static void load_block_from_tiles_addr(u8 * __restrict__ pixbuf, int *__restrict__ tiles_addr, void *mt, int bx, int by)
+static void load_block_from_tiles_addr(u8 *stream, u8 * __restrict__ pixbuf, int *__restrict__ tiles_addr, void *mt, int bx, int by)
 {
 	int i, j, pixbuf_offset = 0;
 
@@ -196,19 +196,19 @@ static void load_block_from_tiles_addr(u8 * __restrict__ pixbuf, int *__restrict
 		for (i = 0; i < BLOCK_X; i++) {
 			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
 			int y, tile_offset = 0;
-			struct box_info bi = get_box_info(mt, bx * 2 + i / 2, by * 2 + j / 2);
+			struct box_info bi = get_box_info(stream, mt, bx * 2 + i / 2, by * 2 + j / 2);
 
 			if (bi.entity_addr) {
 				int n = (j % 2) * 2 + (i + bi.flip) % 2;
 				u8 entity_pixbuf[PIXBUF_TILE_SIZE];
 
-				load_tile(entity_pixbuf, bi.entity_addr + n * 16, bi.color_key);
+				load_tile(stream, entity_pixbuf, bi.entity_addr + n * 16, bi.color_key);
 				if (bi.flip)
 					flip_tile(entity_pixbuf);
-				load_tile(tile_pixbuf, tiles_addr[j * BLOCK_X + i], DEFAULT_COLORS_OFFSET);
+				load_tile(stream, tile_pixbuf, tiles_addr[j * BLOCK_X + i], DEFAULT_COLORS_OFFSET);
 				merge_tiles(tile_pixbuf, entity_pixbuf, color_set[ENTITIES_COLORS_OFFSET][0]);
 			} else {
-				load_tile(tile_pixbuf, tiles_addr[j * BLOCK_X + i], bi.color_key);
+				load_tile(stream, tile_pixbuf, tiles_addr[j * BLOCK_X + i], bi.color_key);
 			}
 
 			for (y = 0; y < TILE_Y; y++) {
@@ -234,7 +234,7 @@ struct blocks {
 };
 
 /* 4x4 tiles (1 tile = 8x8px) */
-static struct blocks *get_blocks(int n, int addr, int tiles_addr)
+static struct blocks *get_blocks(u8 *stream, int n, int addr, int tiles_addr)
 {
 	u8 *data;
 	struct blocks *blocks;
@@ -242,7 +242,7 @@ static struct blocks *get_blocks(int n, int addr, int tiles_addr)
 
 	if ((blocks = calloc(n, sizeof(*blocks))) == NULL)
 		return NULL;
-	data = &gl_stream[addr];
+	data = &stream[addr];
 	for (i = 0; i < n; i++)
 		for (j = 0; j < 16; j++)
 			blocks[i].b[j] = (*data++ << 4) + tiles_addr;
@@ -280,34 +280,34 @@ struct submap {
 
 #define TILESET_HEADERS ROM_ADDR(3, 0x47BE)
 
-static int get_blockdata_addr(u8 tileset_id)
+static int get_blockdata_addr(u8 *stream, u8 tileset_id)
 {
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
-	int bank_id = gl_stream[header_offset];
+	int bank_id = stream[header_offset];
 
 	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 1));
 }
 
-static int get_tiles_addr(u8 tileset_id)
+static int get_tiles_addr(u8 *stream, u8 tileset_id)
 {
 	int header_offset = TILESET_HEADERS + tileset_id * 12;
-	int bank_id = gl_stream[header_offset];
+	int bank_id = stream[header_offset];
 
 	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 2 + 1));
 }
 
-static u8 *get_map_pic_raw(struct submap *map, void *mt)
+static u8 *get_map_pic_raw(u8 *stream, struct submap *map, void *mt)
 {
 	u8 map_h = map->header->map_h;
 	u8 map_w = map->header->map_w;
 	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
 	int i, j, pixbuf_offset = 0;
 
-	int blockdata_addr = get_blockdata_addr(map->header->tileset_id);
-	int tiles_addr     = get_tiles_addr(map->header->tileset_id);
+	int blockdata_addr = get_blockdata_addr(stream, map->header->tileset_id);
+	int tiles_addr     = get_tiles_addr(stream, map->header->tileset_id);
 	int r_map_pointer  = ROM_ADDR(map->bank, map->header->map_ptr);
 
-	struct blocks *blocks = get_blocks(256, blockdata_addr, tiles_addr);
+	struct blocks *blocks = get_blocks(stream, 256, blockdata_addr, tiles_addr);
 	if (!blocks)
 		return NULL;
 
@@ -315,12 +315,12 @@ static u8 *get_map_pic_raw(struct submap *map, void *mt)
 		for (i = 0; i < map_w; i++) {
 			u8 block_pixbuf[PIXBUF_BLOCK_SIZE];
 			int y, block_offset = 0;
-			int *block = blocks[gl_stream[r_map_pointer + j * map_w + i]].b;
+			int *block = blocks[stream[r_map_pointer + j * map_w + i]].b;
 
 			if (!block)
 				return NULL;
 
-			load_block_from_tiles_addr(block_pixbuf, block, mt, i, j);
+			load_block_from_tiles_addr(stream, block_pixbuf, block, mt, i, j);
 			for (y = 0; y < PIXEL_LINES_PER_BLOCK; y++) {
 				memcpy(&pixbuf[pixbuf_offset], &block_pixbuf[block_offset], PIXBUF_BLOCK_LINE_SIZE);
 				block_offset += PIXBUF_BLOCK_LINE_SIZE;
@@ -333,7 +333,7 @@ static u8 *get_map_pic_raw(struct submap *map, void *mt)
 	return pixbuf;
 }
 
-#define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", gl_stream[addr++]))
+#define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", stream[addr++]))
 #define DICT_ADD_ADDR(dict, key) do {\
 	PyDict_SetItemString(dict, key, Py_BuildValue("i", GET_ADDR(addr)));\
 	addr += 2;\
@@ -383,10 +383,10 @@ static PyObject *get_wild_pokemon_at_addr(u8 *data)
 	return list;
 }
 
-static PyObject *get_wild_pokemon(int map_id)
+static PyObject *get_wild_pokemon(u8 *stream, int map_id)
 {
 	PyObject *dict = PyDict_New();
-	u8 *data = &gl_stream[ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + map_id * 2)))];
+	u8 *data = &stream[ROM_ADDR(0x03, GET_ADDR(ROM_ADDR(0x03, 0x4EEB + map_id * 2)))];
 	u8 rate;
 
 	rate = *data++;
@@ -405,7 +405,7 @@ static PyObject *get_wild_pokemon(int map_id)
 	return dict;
 }
 
-static void set_map_things_in_python_dict(PyObject *dict, struct map_things *things)
+static void set_map_things_in_python_dict(u8 *stream, PyObject *dict, struct map_things *things)
 {
 	struct entity_item *entity = things->entities;
 	struct sign_item *sign     = things->signs;
@@ -461,7 +461,7 @@ static void set_map_things_in_python_dict(PyObject *dict, struct map_things *thi
 		} else if (strcmp(entity->type, "item") == 0) {
 			char iname[30];
 
-			get_pkmn_item_name(iname, data->extra_1, sizeof(iname));
+			get_pkmn_item_name(stream, iname, data->extra_1, sizeof(iname));
 			PyDict_SetItemString(py_entity, "item_id", Py_BuildValue("i", data->extra_1));
 			PyDict_SetItemString(py_entity, "item_name", Py_BuildValue("s", iname));
 		}
@@ -499,7 +499,7 @@ static void free_map_things(struct map_things *things) {
 	}\
 } while (0)
 
-static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_init)
+static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_init, int y_init)
 {
 	PyObject *dict = PyDict_New(), *list;
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
@@ -519,8 +519,8 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 	PyDict_SetItemString(dict, "id", Py_BuildValue("i", id));
 	PyDict_SetItemString(dict, "bank-id", Py_BuildValue("i", current_map->bank));
 	PyDict_SetItemString(dict, "addr", Py_BuildValue("i", REL_ADDR(addr)));
-	PyDict_SetItemString(dict, "wild-pkmn", get_wild_pokemon(id));
-	PyDict_SetItemString(dict, "special-items", get_special_items(id));
+	PyDict_SetItemString(dict, "wild-pkmn", get_wild_pokemon(stream, id));
+	PyDict_SetItemString(dict, "special-items", get_special_items(stream, id));
 
 	/* Map Header */
 	PyDict_SetItemString(dict, "tileset",            Py_BuildValue("i", current_map->header->tileset_id));
@@ -567,41 +567,41 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 		DICT_ADD_BYTE(dict, "maps_border_tile");
 
 		/* Warps */
-		nb = gl_stream[addr++];
+		nb = stream[addr++];
 		{
 			struct warp_item *last = NULL;
 
 			for (i = 0; i < nb; i++) {
 				struct warp_item *item = malloc(sizeof(*item));
 
-				item->data = (void *)&gl_stream[addr];
+				item->data = (void *)&stream[addr];
 				addr += sizeof(*item->data);
 				ADD_ITEM_IN_LIST(map_things.warps);
 			}
 		}
 
 		/* Signs */
-		nb = gl_stream[addr++];
+		nb = stream[addr++];
 		{
 			struct sign_item *last = NULL;
 
 			for (i = 0; i < nb; i++) {
 				struct sign_item *item = malloc(sizeof(*item));
 
-				item->data = (void *)&gl_stream[addr];
+				item->data = (void *)&stream[addr];
 				addr += sizeof(*item->data);
 				item->py_text_string = NULL;
 				{
 					int base_addr = (addr / 0x4000) * 0x4000;
 					int text_pointer = GET_ADDR(base_addr + (current_map->header->text_ptr + ((item->data->tid - 1) << 1)) % 0x4000);
 					int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
-					int rom_text_addr = ROM_ADDR(gl_stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
+					int rom_text_addr = ROM_ADDR(stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
 					char buffer[512] = {0};
 					u8 c;
 					unsigned int d = 0;
 
-					if (gl_stream[rom_text_pointer] == 0x17) {
-						while ((c = gl_stream[rom_text_addr])) {
+					if (stream[rom_text_pointer] == 0x17) {
+						while ((c = stream[rom_text_addr])) {
 							char *append = get_pkmn_char(c, "¿?");
 
 							memcpy(buffer + d, append, strlen(append));
@@ -618,14 +618,14 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 		}
 
 		/* Entities (normal people, trainers, items) */
-		nb = gl_stream[addr++];
+		nb = stream[addr++];
 		{
 			struct entity_item *last = NULL;
 
 			for (i = 0; i < nb; i++) {
 				struct entity_item *item = malloc(sizeof(*item));
 
-				item->data = (void *)&gl_stream[addr];
+				item->data = (void *)&stream[addr];
 				addr += sizeof(*item->data) - 2;
 
 				if (item->data->tid & (1 << 6)) {
@@ -643,10 +643,10 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 	}
 
 
-	set_map_things_in_python_dict(dict, &map_things);
-	current_map->pixbuf = get_map_pic_raw(current_map, &map_things);
+	set_map_things_in_python_dict(stream, dict, &map_things);
+	current_map->pixbuf = get_map_pic_raw(stream, current_map, &map_things);
 	free_map_things(&map_things);
-	apply_filter(current_map->pixbuf, id, map_w * 2);
+	apply_filter(stream, current_map->pixbuf, id, map_w * 2);
 
 	PyDict_SetItemString(dict, "map_pic", Py_BuildValue("s#", current_map->pixbuf, PIXBUF_BLOCK_SIZE * map_w * map_h));
 
@@ -683,7 +683,7 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 			break;
 		}
 
-		to_add = get_submap(maps, con->index, nx, ny);
+		to_add = get_submap(stream, maps, con->index, nx, ny);
 		if (to_add) {
 			last = current_map;
 			for (tmp = current_map; tmp; tmp = tmp->next)
@@ -829,7 +829,7 @@ static PyObject *get_py_map(struct submap *map)
 	return py_map;
 }
 
-static void track_maps(struct submap *maps, int map_id)
+static void track_maps(u8 *stream, struct submap *maps, int map_id)
 {
 	struct submap *map = &maps[map_id];
 
@@ -837,37 +837,37 @@ static void track_maps(struct submap *maps, int map_id)
 		return;
 
 	map->id     = map_id;
-	map->addr   = ROM_ADDR(gl_stream[ROM_ADDR(3, 0x423D) + map_id], GET_ADDR(0x01AE + map_id * 2));
+	map->addr   = ROM_ADDR(stream[ROM_ADDR(3, 0x423D) + map_id], GET_ADDR(0x01AE + map_id * 2));
 	map->bank   = map->addr / 0x4000;
-	map->header = (void *)&gl_stream[map->addr];
+	map->header = (void *)&stream[map->addr];
 	map->cons   = (void *)(map->header + 1);
 
 	u8 cb = map->header->connect_byte;
 	int i, n_con = ((cb&8)>>3) + ((cb&4)>>2) + ((cb&2)>>1) + (cb&1);
 	for (i = 0; i < n_con; i++) {
 		struct connection *con = (void *)(map->cons + sizeof(*con) * i);
-		track_maps(maps, con->index);
+		track_maps(stream, maps, con->index);
 	}
 	u16 objaddr = *(u16 *)(map->cons + sizeof(struct connection) * n_con);
-	map->obj_data = &gl_stream[ROM_ADDR(map->bank, objaddr)];
+	map->obj_data = &stream[ROM_ADDR(map->bank, objaddr)];
 	int n_warps = *(map->obj_data + 1);
 	struct warp_raw *warps = (void *)(map->obj_data + 2);
 	for (i = 0; i < n_warps; i++)
-		track_maps(maps, warps[i].to_map);
+		track_maps(stream, maps, warps[i].to_map);
 }
 
-PyObject *get_maps(PyObject *self)
+PyObject *get_maps(struct rom *self)
 {
 	int i;
 	PyObject *list = PyList_New(0);
 	struct submap maps[0x100];
 
 	memset(maps, 0, sizeof(maps));
-	track_maps(maps, 0);
+	track_maps(self->stream, maps, 0);
 	for (i = 0; i < (int)(sizeof(maps) / sizeof(*maps)); i++) {
 		if (!maps[i].addr || maps[i].info)
 			continue;
-		maps[i].info = get_py_map(get_submap(maps, i, 0, 0));
+		maps[i].info = get_py_map(get_submap(self->stream, maps, i, 0, 0));
 		if (!maps[i].info)
 			continue;
 		PyList_Append(list, maps[i].info);

@@ -31,15 +31,15 @@ static u8 read_buffer(u16 addr)
 	return (addr < 0x188 * 2) ? buffer[addr] : 0;
 }
 
-static u8 sprite_get_next_byte(void) // 268B
+static u8 sprite_get_next_byte(u8 *stream) // 268B
 {
-	return gl_stream[current_addr++];
+	return stream[current_addr++];
 }
 
-static u8 sprite_get_next_bit(void) // 2670
+static u8 sprite_get_next_bit(u8 *stream) // 2670
 {
 	if (--current_bit == 0) {
-		current_byte = sprite_get_next_byte();
+		current_byte = sprite_get_next_byte(stream);
 		current_bit = 8;
 	}
 	current_byte = ((current_byte << 1) | ((current_byte & (1 << 7)) >> 7)) & 0xff;
@@ -80,7 +80,7 @@ static void sprite_reset_p1_p2(void) // 2841
 	}
 }
 
-static u8 sprite_update_input_ptr(u8 nibble, u16 *_hl, u16 *_de) // 276D
+static u8 sprite_update_input_ptr(u8 *stream, u8 nibble, u16 *_hl, u16 *_de) // 276D
 {
 	u16 hl = *_hl, de = *_de;
 	int condition, swap_flag;
@@ -95,7 +95,7 @@ static u8 sprite_update_input_ptr(u8 nibble, u16 *_hl, u16 *_de) // 276D
 	hl = (condition == 0) ? input_p1 : input_p2;
 	hl += (de & 0x00ff);
 
-	a = gl_stream[hl];
+	a = stream[hl];
 	if (swap_flag == 0)
 		a = swap_u8(a);
 
@@ -107,7 +107,7 @@ static u8 sprite_update_input_ptr(u8 nibble, u16 *_hl, u16 *_de) // 276D
 	return a;
 }
 
-static void sprite_load_data(u16 p) // 26D4
+static void sprite_load_data(u8 *stream, u16 p) // 26D4
 {
 	u16 hl, de;
 	u8 z, nibble;
@@ -130,11 +130,11 @@ static void sprite_load_data(u16 p) // 26D4
 		hl = p1;
 		z = read_buffer(hl);
 
-		nibble = sprite_update_input_ptr(high_nibble(z), &hl, &de);
+		nibble = sprite_update_input_ptr(stream, high_nibble(z), &hl, &de);
 		nibble = swap_u8(nibble);
 		de = (nibble << 8) | (de & 0x00ff);
 
-		nibble = sprite_update_input_ptr(low_nibble(z), &hl, &de);
+		nibble = sprite_update_input_ptr(stream, low_nibble(z), &hl, &de);
 		nibble = (de >> 8) | nibble;
 
 		hl = p1;
@@ -163,13 +163,13 @@ static void sprite_load_data(u16 p) // 26D4
 	}
 }
 
-static void sprite_uncompress_data(void) // 27C7
+static void sprite_uncompress_data(u8 *stream) // 27C7
 {
 	u16 hl, de;
 
 	tile_x = tile_y = 0;
 	sprite_reset_p1_p2();
-	sprite_load_data(p1);
+	sprite_load_data(stream, p1);
 	sprite_reset_p1_p2();
 
 	// 27DF
@@ -183,9 +183,9 @@ static void sprite_uncompress_data(void) // 27C7
 			u8 a, c, v;
 
 			v = read_buffer(de);
-			a = gl_stream[0x2867 + high_nibble(v)];
+			a = stream[0x2867 + high_nibble(v)];
 			c = swap_u8(a);
-			a = gl_stream[0x2867 + low_nibble(v)];
+			a = stream[0x2867 + low_nibble(v)];
 			a |= c;
 			write_buffer(de, a);
 		}
@@ -218,7 +218,7 @@ enum {Z_RET, Z_END, Z_CONTINUE};
 	}\
 } while (0)
 
-static int f25d8(void)
+static int f25d8(u8 *stream)
 {
 	if ((tile_y + 1) != sprite_height) {
 		tile_y++;
@@ -258,26 +258,26 @@ static int f25d8(void)
 
 		sprite_reset_p1_p2();
 		input_flag = 0;
-		sprite_load_data(p2);
+		sprite_load_data(stream, p2);
 		sprite_reset_p1_p2();
 		input_flag = input_flag_backup;
-		sprite_uncompress_data(); // jp 27c7
+		sprite_uncompress_data(stream); // jp 27c7
 		return Z_END;
 	}
 
 	// 26C7
 	if (misc_flag) {
-		sprite_uncompress_data(); // jp 27c7
+		sprite_uncompress_data(stream); // jp 27c7
 		return Z_END;
 	}
 
 	// 26CB
-	sprite_load_data(a188);
-	sprite_load_data(a310);
+	sprite_load_data(stream, a188);
+	sprite_load_data(stream, a310);
 	return Z_END;
 }
 
-void uncompress_sprite(u8 *dest, int addr) // 251A
+void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 {
 	u8 byte, b, b1, b2, c;
 	u16 p, de;
@@ -295,52 +295,52 @@ void uncompress_sprite(u8 *dest, int addr) // 251A
 	tile_y = 0;
 	buffer_flag = 0;
 
-	byte = sprite_get_next_byte();
+	byte = sprite_get_next_byte(stream);
 	sprite_height = low_nibble(byte) * 8;
 	sprite_width = high_nibble(byte) * 8;
-	buffer_flag = sprite_get_next_bit();
+	buffer_flag = sprite_get_next_bit(stream);
 
 start:
 	// 2556
 	sprite_set_p1_p2(((buffer_flag & 1) == 0) ? a188 : a310);
 	if (buffer_flag & (1 << 1)) { /* 0b10 or 0b11 */
-		b = sprite_get_next_bit();
+		b = sprite_get_next_bit(stream);
 		if (b) {
-			b = sprite_get_next_bit();
+			b = sprite_get_next_bit(stream);
 			b++;
 		}
 		misc_flag = b;
 	}
 
 	// 257A
-	if (!sprite_get_next_bit())
+	if (!sprite_get_next_bit(stream))
 		goto lbl_2595;
 
 lbl_2580:
-	b1 = sprite_get_next_bit();
-	b2 = sprite_get_next_bit();
+	b1 = sprite_get_next_bit(stream);
+	b2 = sprite_get_next_bit(stream);
 
 	b2 = b2 | (b1 << 1);
 	if (b2) {
 		sprite_update_p1(b2);
-		r = f25d8();
+		r = f25d8(stream);
 		HANDLE_RET(r);
 		goto lbl_2580;
 	}
 
 lbl_2595:
 	c = 0;
-	while ((b = sprite_get_next_bit()) != 0)
+	while ((b = sprite_get_next_bit(stream)) != 0)
 		c++;
 
 	p = 0x269f + 2 * c;
-	p = *(u16*)&gl_stream[p];
+	p = *(u16*)&stream[p];
 
 	c++;
 	de = 0x0000;
 
 	while (1) {
-		de |= sprite_get_next_bit();
+		de |= sprite_get_next_bit(stream);
 		if (--c == 0)
 			break;
 		de <<= 1;
@@ -350,7 +350,7 @@ lbl_2595:
 
 	do {
 		sprite_update_p1(0);
-		r = f25d8();
+		r = f25d8(stream);
 		HANDLE_RET(r);
 		de--;
 	} while (de);

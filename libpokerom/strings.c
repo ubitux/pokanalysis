@@ -70,11 +70,12 @@ void load_string(char *dest, u8 *src, size_t max_len, int fixed_str_len)
 	dest[i] = 0;
 }
 
-PyObject *str_getbin(PyObject *self, PyObject *args)
+PyObject *str_getbin(struct rom *self, PyObject *args)
 {
 	int i, j = 0;
 	char *s, b[128];
 
+	(void)self;
 	for (PyArg_ParseTuple(args, "s", &s); *s && j < (int)sizeof(b) - 1; s++) {
 		for (i = 0; i < (int)(sizeof(alphabet) / sizeof(*alphabet)); i++) {
 			if (alphabet[i] && *alphabet[i] && strncmp(s, alphabet[i], strlen(alphabet[i])) == 0) {
@@ -87,11 +88,12 @@ PyObject *str_getbin(PyObject *self, PyObject *args)
 	return Py_BuildValue("s", b);
 }
 
-PyObject *str_getascii(PyObject *self, PyObject *args)
+PyObject *str_getascii(struct rom *self, PyObject *args)
 {
 	int j = 0;
 	char *s, b[128];
 
+	(void)self;
 	for (PyArg_ParseTuple(args, "s", &s); *s; s++) {
 		char *insert = alphabet[(u8)*s];
 		int len = strlen(insert);
@@ -115,9 +117,9 @@ static void load_packed_text_string(u8 *data, char *dst, u8 id, size_t max_len)
 	load_string(dst, data, max_len, 0);
 }
 
-#define PACKED_TEXT_BASE_ADDR(b, i)	&gl_stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
+#define PACKED_TEXT_BASE_ADDR(b, i)	&stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
 
-void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
+void get_pkmn_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len)
 {
 	if (item_id > 200) {
 		snprintf(iname, 5, "TM%02d", item_id - 200);
@@ -128,7 +130,7 @@ void get_pkmn_item_name(char *iname, u8 item_id, size_t max_len)
 	}
 }
 
-void get_pkmn_move_name(char *mname, u8 move_id, size_t max_len)
+void get_pkmn_move_name(u8 *stream, char *mname, u8 move_id, size_t max_len)
 {
 	load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x2c, 2), mname, move_id, max_len);
 }

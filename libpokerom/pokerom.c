@@ -20,36 +20,49 @@
 
 #include "pokerom.h"
 
-u8 *gl_stream;
-
-static PyObject *load_rom(PyObject *self, PyObject *args)
+static int rom_init(struct rom *self, PyObject *args, PyObject *kwds)
 {
-	char *fname;
-	int fd;
-	struct stat rom_stat;
-
-	PyArg_ParseTuple(args, "s", &fname);
-	if ((fd = open(fname, O_RDONLY)) < 0
-			|| fstat(fd, &rom_stat)
-			|| (gl_stream = mmap(0, rom_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
-		return PyErr_SetFromErrnoWithFilename(PyExc_IOError, fname);
-	}
-	return Py_BuildValue("z", NULL);
+	(void)kwds;
+	PyArg_ParseTuple(args, "s", &self->fname);
+	self->fd = open(self->fname, O_RDONLY);
+	if (self->fd < 0)
+		return -1;
+	if (fstat(self->fd, &self->st))
+		return -1;
+	self->stream = mmap(0, self->st.st_size, PROT_READ, MAP_PRIVATE, self->fd, 0);
+	if (self->stream == MAP_FAILED)
+		return -1;
+	return 0;
 }
+
+static PyMethodDef rom_methods[] = {
+	{"get_maps",    (PyCFunction)get_maps,    METH_NOARGS,  "Game maps"},
+	{"get_pokedex", (PyCFunction)get_pokedex, METH_NOARGS,  "Get all Pokémon"},
+	{"disasm",      (PyCFunction)disasm,      METH_VARARGS, "Disassemble given bank"},
+	{NULL, NULL, 0, NULL}
+};
+
+static PyTypeObject rom_type = {
+	PyObject_HEAD_INIT(NULL)
+	.tp_name      = "pokerom.ROM",
+	.tp_basicsize = sizeof(struct rom),
+	.tp_flags     = Py_TPFLAGS_DEFAULT,
+	.tp_doc       = "ROM cartridge file",
+	.tp_methods   = rom_methods,
+	.tp_init      = (initproc)rom_init,
+	.tp_new       = PyType_GenericNew,
+};
 
 PyMODINIT_FUNC initpokerom(void)
 {
-	static PyMethodDef m[] = {
-		{"load_rom", load_rom, METH_VARARGS, "Load ROM"},
-
-		{"get_maps", (PyCFunction)get_maps, METH_NOARGS, "Game maps"},
-		{"get_pokedex", (PyCFunction)get_pokedex, METH_NOARGS, "Get all Pokémon"},
-		{"disasm", disasm, METH_VARARGS, "Disassemble given bank"},
-
-		/* Utils */
-		{"str_getbin", str_getbin, METH_VARARGS, "Convert binary text to ascii"},
-		{"str_getascii", str_getascii, METH_VARARGS, "Convert ascii text to binary"},
+	static PyMethodDef module_methods[] = {
+		{"str_getbin",   (PyCFunction)str_getbin,   METH_VARARGS, "Convert binary text to ascii"},
+		{"str_getascii", (PyCFunction)str_getascii, METH_VARARGS, "Convert ascii text to binary"},
 		{NULL, NULL, 0, NULL}
 	};
-	Py_InitModule("pokerom", m);
+	PyObject *m = Py_InitModule("pokerom", module_methods);
+
+	if (PyType_Ready(&rom_type) < 0)
+		return;
+	PyModule_AddObject(m, "ROM", (PyObject *)&rom_type);
 }
