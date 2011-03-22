@@ -504,7 +504,6 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 	PyObject *dict = PyDict_New(), *list;
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
 	u8 connect_byte, i;
-	int connection_addr;
 	struct submap *current_map = &maps[id], *last, *tmp, *to_add;
 	u8 map_h = current_map->header->map_h, map_w = current_map->header->map_w;
 	int addr = current_map->addr;
@@ -535,7 +534,6 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 
 	/* Connections */
 	connect_byte = current_map->header->connect_byte;
-	connection_addr = addr;
 
 	list = PyList_New(0);
 	for (i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
@@ -658,42 +656,41 @@ static struct submap *get_submap(struct submap *maps, int id, int x_init, int y_
 	current_map->coords.x = x_init;
 	current_map->coords.y = y_init;
 
+	struct connection *con = (void *)current_map->cons;
 	for (i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
-		struct connection con;
 		int nx = 0, ny = 0;
 
 		if (!(connect_byte & cons[i].k))
 			continue;
-		memcpy(&con, &gl_stream[connection_addr], sizeof(con));
-		connection_addr += sizeof(con);
 
 		switch (cons[i].c) {
 		// FIXME: I'm sure there is something wrong here...
 		case 'N':
-			nx = x_init - (char)(con.x_align);
-			ny = y_init - (u8)(con.y_align) - 1;
+			nx = x_init - (char)(con->x_align);
+			ny = y_init - (u8)(con->y_align) - 1;
 			break;
 		case 'S':
-			nx = x_init - (char)(con.x_align);
-			ny = y_init - (char)(con.y_align) + map_h;
+			nx = x_init - (char)(con->x_align);
+			ny = y_init - (char)(con->y_align) + map_h;
 			break;
 		case 'W':
-			nx = x_init - (char)(con.x_align) - 1;
-			ny = y_init - (char)(con.y_align);
+			nx = x_init - (char)(con->x_align) - 1;
+			ny = y_init - (char)(con->y_align);
 			break;
 		case 'E':
-			nx = x_init - (char)(con.x_align) + map_w;
-			ny = y_init - (char)(con.y_align);
+			nx = x_init - (char)(con->x_align) + map_w;
+			ny = y_init - (char)(con->y_align);
 			break;
 		}
 
-		to_add = get_submap(maps, con.index, nx, ny);
+		to_add = get_submap(maps, con->index, nx, ny);
 		if (to_add) {
 			last = current_map;
 			for (tmp = current_map; tmp; tmp = tmp->next)
 				last = tmp;
 			last->next = to_add;
 		}
+		con += 1;
 	}
 
 	return current_map;
