@@ -39,7 +39,7 @@ static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_k
 	for (y = 0; y < TILE_Y; y++) {
 		u8 byte1 = *src++;
 		u8 byte2 = *src++;
-		u8 mask = 1 << 7;
+		u8 mask  = 1 << 7;
 
 		for (x = 0; x < TILE_X; x++, mask >>= 1) {
 			memcpy(pixbuf, colors[(!!(byte1 & mask) << 1) | !!(byte2 & mask)], 4);
@@ -70,7 +70,7 @@ void rle_sprite(u8 *dst, u8 *src)
 			src += 0x10;
 			for (y = 0; y < TILE_Y; y++) {
 				memcpy(&dst[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
-				tile_offset += PIXBUF_TILE_LINE_SIZE;
+				tile_offset   += PIXBUF_TILE_LINE_SIZE;
 				pixbuf_offset += SPRITE_X * PIXBUF_TILE_LINE_SIZE;
 			}
 		}
@@ -386,14 +386,14 @@ static PyObject *get_wild_pokemon(u8 *stream, int map_id)
 	rate = *data++;
 	if (rate) {
 		PyDict_SetItemString(dict, "grass-rate", Py_BuildValue("i", rate));
-		PyDict_SetItemString(dict, "grass", get_wild_pokemon_at_addr(data));
+		PyDict_SetItemString(dict, "grass",      get_wild_pokemon_at_addr(data));
 		data += 20;
 	}
 
 	rate = *data++;
 	if (rate) {
 		PyDict_SetItemString(dict, "water-rate", Py_BuildValue("i", rate));
-		PyDict_SetItemString(dict, "water", get_wild_pokemon_at_addr(data));
+		PyDict_SetItemString(dict, "water",      get_wild_pokemon_at_addr(data));
 	}
 
 	return dict;
@@ -412,10 +412,10 @@ static void set_map_things_in_python_dict(u8 *stream, PyObject *dict, struct map
 		struct warp_raw *data = warp->data;
 		PyObject *py_warp = PyDict_New();
 
-		PyDict_SetItemString(py_warp, "y", Py_BuildValue("i", data->y));
-		PyDict_SetItemString(py_warp, "x", Py_BuildValue("i", data->x));
+		PyDict_SetItemString(py_warp, "y",        Py_BuildValue("i", data->y));
+		PyDict_SetItemString(py_warp, "x",        Py_BuildValue("i", data->x));
 		PyDict_SetItemString(py_warp, "to_point", Py_BuildValue("i", data->to_point));
-		PyDict_SetItemString(py_warp, "to_map", Py_BuildValue("i", data->to_map));
+		PyDict_SetItemString(py_warp, "to_map",   Py_BuildValue("i", data->to_map));
 		PyList_Append(list, py_warp);
 		warp = warp->next;
 	}
@@ -427,8 +427,8 @@ static void set_map_things_in_python_dict(u8 *stream, PyObject *dict, struct map
 		struct sign_raw *data = sign->data;
 		PyObject *py_sign = PyDict_New();
 
-		PyDict_SetItemString(py_sign, "y", Py_BuildValue("i", data->y));
-		PyDict_SetItemString(py_sign, "x", Py_BuildValue("i", data->x));
+		PyDict_SetItemString(py_sign, "y",       Py_BuildValue("i", data->y));
+		PyDict_SetItemString(py_sign, "x",       Py_BuildValue("i", data->x));
 		PyDict_SetItemString(py_sign, "text_id", Py_BuildValue("i", data->tid));
 		if (sign->py_text_string)
 			PyDict_SetItemString(py_sign, "text", sign->py_text_string);
@@ -443,20 +443,20 @@ static void set_map_things_in_python_dict(u8 *stream, PyObject *dict, struct map
 		struct entity_raw *data = entity->data;
 		PyObject *py_entity = PyDict_New();
 
-		PyDict_SetItemString(py_entity, "pic_id", Py_BuildValue("i", data->pic_id));
-		PyDict_SetItemString(py_entity, "y", Py_BuildValue("i", data->y - 4));
-		PyDict_SetItemString(py_entity, "x", Py_BuildValue("i", data->x - 4));
-		PyDict_SetItemString(py_entity, "mvt_1", Py_BuildValue("i", data->mvt_1));
-		PyDict_SetItemString(py_entity, "mvt_2", Py_BuildValue("i", data->mvt_2));
+		PyDict_SetItemString(py_entity, "pic_id",  Py_BuildValue("i", data->pic_id));
+		PyDict_SetItemString(py_entity, "y",       Py_BuildValue("i", data->y - 4));
+		PyDict_SetItemString(py_entity, "x",       Py_BuildValue("i", data->x - 4));
+		PyDict_SetItemString(py_entity, "mvt_1",   Py_BuildValue("i", data->mvt_1));
+		PyDict_SetItemString(py_entity, "mvt_2",   Py_BuildValue("i", data->mvt_2));
 		PyDict_SetItemString(py_entity, "text_id", Py_BuildValue("i", data->tid));
 		if (strcmp(entity->type, "trainer") == 0) {
 			PyDict_SetItemString(py_entity, "trainer_type", Py_BuildValue("i", data->extra_1));
-			PyDict_SetItemString(py_entity, "pkmn_set", Py_BuildValue("i", data->extra_2));
+			PyDict_SetItemString(py_entity, "pkmn_set",     Py_BuildValue("i", data->extra_2));
 		} else if (strcmp(entity->type, "item") == 0) {
 			char iname[30];
 
 			get_pkmn_item_name(stream, iname, data->extra_1, sizeof(iname));
-			PyDict_SetItemString(py_entity, "item_id", Py_BuildValue("i", data->extra_1));
+			PyDict_SetItemString(py_entity, "item_id",   Py_BuildValue("i", data->extra_1));
 			PyDict_SetItemString(py_entity, "item_name", Py_BuildValue("s", iname));
 		}
 		PyList_Append(list, py_entity);
@@ -510,11 +510,11 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	current_map->info = dict;
 	current_map->objects = PyDict_New();
 
-	PyDict_SetItemString(dict, "id", Py_BuildValue("i", id));
-	PyDict_SetItemString(dict, "bank-id", Py_BuildValue("i", current_map->bank));
-	PyDict_SetItemString(dict, "addr", Py_BuildValue("i", REL_ADDR(addr)));
-	PyDict_SetItemString(dict, "wild-pkmn", get_wild_pokemon(stream, id));
-	PyDict_SetItemString(dict, "special-items", get_special_items(stream, id));
+	PyDict_SetItemString(dict, "id",                 Py_BuildValue("i", id));
+	PyDict_SetItemString(dict, "bank-id",            Py_BuildValue("i", current_map->bank));
+	PyDict_SetItemString(dict, "addr",               Py_BuildValue("i", REL_ADDR(addr)));
+	PyDict_SetItemString(dict, "wild-pkmn",          get_wild_pokemon(stream, id));
+	PyDict_SetItemString(dict, "special-items",      get_special_items(stream, id));
 
 	/* Map Header */
 	PyDict_SetItemString(dict, "tileset",            Py_BuildValue("i", current_map->header->tileset_id));
@@ -786,7 +786,7 @@ static struct map get_final_map(struct submap *map)
 		for (line = 0; line < map->header->map_h * NB_PIXEL_PER_BLOCK_LINE; line++) {
 			memcpy(&final_map.pixbuf[final_pixbuf_pos], &map->pixbuf[pixbuf_pos], pad);
 			final_pixbuf_pos += PIXBUF_SINGLE_LINE_SIZE(final_map.w);
-			pixbuf_pos += pad;
+			pixbuf_pos       += pad;
 		}
 
 		last_map = map;
@@ -813,11 +813,11 @@ static PyObject *get_py_map(struct submap *map)
 
 	map_pic = Py_BuildValue("s#", final_map.pixbuf, PIXBUF_BLOCK_SIZE * final_map.w * final_map.h);
 
-	PyDict_SetItemString(py_map, "id", Py_BuildValue("i", final_map.id));
-	PyDict_SetItemString(py_map, "map_w", Py_BuildValue("i", final_map.w));
-	PyDict_SetItemString(py_map, "map_h", Py_BuildValue("i", final_map.h));
+	PyDict_SetItemString(py_map, "id",      Py_BuildValue("i", final_map.id));
+	PyDict_SetItemString(py_map, "map_w",   Py_BuildValue("i", final_map.w));
+	PyDict_SetItemString(py_map, "map_h",   Py_BuildValue("i", final_map.h));
 	PyDict_SetItemString(py_map, "map_pic", map_pic);
-	PyDict_SetItemString(py_map, "info", final_map.info_list);
+	PyDict_SetItemString(py_map, "info",    final_map.info_list);
 	PyDict_SetItemString(py_map, "objects", final_map.objects);
 
 	return py_map;
