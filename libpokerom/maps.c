@@ -31,7 +31,7 @@ static char *color_set[][4] = {
 #define TILE_X 8
 #define TILE_Y 8
 
-static void load_tile_from_ptr(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_key)
+static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_key)
 {
 	int x, y;
 	char **colors = color_set[color_key];
@@ -66,7 +66,7 @@ void rle_sprite(u8 *dst, u8 *src)
 			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
 			int y, tile_offset = 0;
 
-			load_tile_from_ptr(tile_pixbuf, src, DEFAULT_COLORS_OFFSET);
+			load_tile(tile_pixbuf, src, DEFAULT_COLORS_OFFSET);
 			src += 0x10;
 			for (y = 0; y < TILE_Y; y++) {
 				memcpy(&dst[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
@@ -196,13 +196,13 @@ static void load_block_from_tiles_addr(u8 *stream, u8 * __restrict__ pixbuf, int
 				int n = (j % 2) * 2 + (i + bi.flip) % 2;
 				u8 entity_pixbuf[PIXBUF_TILE_SIZE];
 
-				load_tile_from_ptr(entity_pixbuf, &stream[bi.entity_addr + n * 16], bi.color_key);
+				load_tile(entity_pixbuf, &stream[bi.entity_addr + n * 16], bi.color_key);
 				if (bi.flip)
 					flip_tile(entity_pixbuf);
-				load_tile_from_ptr(tile_pixbuf, &stream[tiles_addr[j * BLOCK_X + i]], DEFAULT_COLORS_OFFSET);
+				load_tile(tile_pixbuf, &stream[tiles_addr[j * BLOCK_X + i]], DEFAULT_COLORS_OFFSET);
 				merge_tiles(tile_pixbuf, entity_pixbuf, color_set[ENTITIES_COLORS_OFFSET][0]);
 			} else {
-				load_tile_from_ptr(tile_pixbuf, &stream[tiles_addr[j * BLOCK_X + i]], bi.color_key);
+				load_tile(tile_pixbuf, &stream[tiles_addr[j * BLOCK_X + i]], bi.color_key);
 			}
 
 			for (y = 0; y < TILE_Y; y++) {
