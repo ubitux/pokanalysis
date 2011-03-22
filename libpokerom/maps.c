@@ -324,12 +324,6 @@ static u8 *get_map_pic_raw(u8 *stream, struct submap *map, void *mt)
 	return pixbuf;
 }
 
-#define DICT_ADD_BYTE(dict, key) PyDict_SetItemString(dict, key, Py_BuildValue("i", stream[addr++]))
-#define DICT_ADD_ADDR(dict, key) do {\
-	PyDict_SetItemString(dict, key, Py_BuildValue("i", GET_ADDR(addr)));\
-	addr += 2;\
-} while (0)
-
 static struct {
 	u8 k;
 	char c;
@@ -528,8 +522,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 
 	/* Seek to the object data address */
 	addr = current_map->obj_data - stream;
-
-	DICT_ADD_BYTE(dict, "maps_border_tile");
+	PyDict_SetItemString(dict, "maps_border_tile",   Py_BuildValue("i", stream[addr++]));
 
 	u8 nb;
 
