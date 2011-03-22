@@ -17,7 +17,7 @@ set(sources
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
-add_definitions(-Wall -Wextra -O3)
+add_definitions(-Wall -Wextra -O3 -std=c99)
 
 add_library(pokerom SHARED ${sources})
 set_target_properties(pokerom PROPERTIES PREFIX "")

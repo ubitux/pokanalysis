@@ -33,15 +33,14 @@ static char *color_set[][4] = {
 
 static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_key)
 {
-	int x, y;
 	char **colors = color_set[color_key];
 
-	for (y = 0; y < TILE_Y; y++) {
+	for (int y = 0; y < TILE_Y; y++) {
 		u8 byte1 = *src++;
 		u8 byte2 = *src++;
 		u8 mask  = 1 << 7;
 
-		for (x = 0; x < TILE_X; x++, mask >>= 1) {
+		for (int x = 0; x < TILE_X; x++, mask >>= 1) {
 			memcpy(pixbuf, colors[(!!(byte1 & mask) << 1) | !!(byte2 & mask)], 4);
 			pixbuf += 3;
 		}
@@ -59,16 +58,16 @@ static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_k
 
 void rle_sprite(u8 *dst, u8 *src)
 {
-	int i, j, pixbuf_offset = 0;
+	int pixbuf_offset = 0;
 
-	for (j = 0; j < SPRITE_Y; j++) {
-		for (i = 0; i < SPRITE_X; i++) {
+	for (int j = 0; j < SPRITE_Y; j++) {
+		for (int i = 0; i < SPRITE_X; i++) {
 			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
-			int y, tile_offset = 0;
+			int tile_offset = 0;
 
 			load_tile(tile_pixbuf, src, DEFAULT_COLORS_OFFSET);
 			src += 0x10;
-			for (y = 0; y < TILE_Y; y++) {
+			for (int y = 0; y < TILE_Y; y++) {
 				memcpy(&dst[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
 				tile_offset   += PIXBUF_TILE_LINE_SIZE;
 				pixbuf_offset += SPRITE_X * PIXBUF_TILE_LINE_SIZE;
@@ -163,9 +162,7 @@ static struct box_info get_box_info(u8 *stream, struct map_things *mt, int x, in
 
 static void merge_tiles(u8 *dst, u8 *src, char *alpha)
 {
-	int i;
-
-	for (i = 0; i < PIXBUF_TILE_SIZE; i += 3)
+	for (int i = 0; i < PIXBUF_TILE_SIZE; i += 3)
 		if (memcmp(&src[i], alpha, 3) != 0)
 			memcpy(&dst[i], &src[i], 3);
 }
@@ -173,23 +170,22 @@ static void merge_tiles(u8 *dst, u8 *src, char *alpha)
 static void flip_tile(u8 *tile)
 {
 	u8 old_tile[PIXBUF_TILE_SIZE];
-	int x, y;
 
 	memcpy(old_tile, tile, sizeof(old_tile));
-	for (y = 0; y < TILE_Y; y++)
-		for (x = 0; x < TILE_X; x++)
+	for (int y = 0; y < TILE_Y; y++)
+		for (int x = 0; x < TILE_X; x++)
 			memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 4);
 }
 
 /* 1 block = 4x4 tiles */
 static void load_block_from_tiles_addr(u8 *stream, u8 * __restrict__ pixbuf, int *__restrict__ tiles_addr, void *mt, int bx, int by)
 {
-	int i, j, pixbuf_offset = 0;
+	int pixbuf_offset = 0;
 
-	for (j = 0; j < BLOCK_Y; j++) {
-		for (i = 0; i < BLOCK_X; i++) {
+	for (int j = 0; j < BLOCK_Y; j++) {
+		for (int i = 0; i < BLOCK_X; i++) {
 			u8 tile_pixbuf[PIXBUF_TILE_SIZE];
-			int y, tile_offset = 0;
+			int tile_offset = 0;
 			struct box_info bi = get_box_info(stream, mt, bx * 2 + i / 2, by * 2 + j / 2);
 
 			if (bi.entity_addr) {
@@ -205,7 +201,7 @@ static void load_block_from_tiles_addr(u8 *stream, u8 * __restrict__ pixbuf, int
 				load_tile(tile_pixbuf, &stream[tiles_addr[j * BLOCK_X + i]], bi.color_key);
 			}
 
-			for (y = 0; y < TILE_Y; y++) {
+			for (int y = 0; y < TILE_Y; y++) {
 				memcpy(&pixbuf[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
 				tile_offset += PIXBUF_TILE_LINE_SIZE;
 				pixbuf_offset += BLOCK_X * PIXBUF_TILE_LINE_SIZE;
@@ -232,13 +228,12 @@ static struct blocks *get_blocks(u8 *stream, int n, int addr, int tiles_addr)
 {
 	u8 *data;
 	struct blocks *blocks;
-	int i, j;
 
 	if ((blocks = calloc(n, sizeof(*blocks))) == NULL)
 		return NULL;
 	data = &stream[addr];
-	for (i = 0; i < n; i++)
-		for (j = 0; j < 16; j++)
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < 16; j++)
 			blocks[i].b[j] = (*data++ << 4) + tiles_addr;
 	return blocks;
 }
@@ -295,7 +290,7 @@ static u8 *get_map_pic_raw(u8 *stream, struct submap *map, void *mt)
 	u8 map_h = map->header->map_h;
 	u8 map_w = map->header->map_w;
 	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
-	int i, j, pixbuf_offset = 0;
+	int pixbuf_offset = 0;
 
 	int blockdata_addr = get_blockdata_addr(stream, map->header->tileset_id);
 	int tiles_addr     = get_tiles_addr(stream, map->header->tileset_id);
@@ -305,8 +300,8 @@ static u8 *get_map_pic_raw(u8 *stream, struct submap *map, void *mt)
 	if (!blocks)
 		return NULL;
 
-	for (j = 0; j < map_h; j++) {
-		for (i = 0; i < map_w; i++) {
+	for (int j = 0; j < map_h; j++) {
+		for (int i = 0; i < map_w; i++) {
 			u8 block_pixbuf[PIXBUF_BLOCK_SIZE];
 			int y, block_offset = 0;
 			int *block = blocks[stream[r_map_pointer + j * map_w + i]].b;
@@ -365,10 +360,9 @@ struct map {
 
 static PyObject *get_wild_pokemon_at_addr(u8 *data)
 {
-	int i;
 	PyObject *list = PyList_New(0);
 
-	for (i = 0; i < 10; i++) {
+	for (int i = 0; i < 10; i++) {
 		if (!data[0])
 			break;
 		PyList_Append(list, Py_BuildValue("ii", data[0], data[1]));
@@ -497,7 +491,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 {
 	PyObject *dict = PyDict_New(), *list;
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
-	u8 connect_byte, i;
+	u8 connect_byte;
 	struct submap *current_map = &maps[id], *last, *tmp, *to_add;
 	u8 map_h = current_map->header->map_h, map_w = current_map->header->map_w;
 	int addr = current_map->addr;
@@ -530,7 +524,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	connect_byte = current_map->header->connect_byte;
 
 	list = PyList_New(0);
-	for (i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
+	for (int i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
 		if (!(connect_byte & cons[i].k))
 			continue ;
 		PyObject *con_dict = PyDict_New();
@@ -549,7 +543,6 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	PyDict_SetItemString(dict, "connections", list);
 
 	/* Object Data */
-	{
 		int word_addr = GET_ADDR(addr);
 		u8 nb;
 
@@ -564,8 +557,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 		nb = stream[addr++];
 		{
 			struct warp_item *last = NULL;
-
-			for (i = 0; i < nb; i++) {
+			for (int i = 0; i < nb; i++) {
 				struct warp_item *item = malloc(sizeof(*item));
 
 				item->data = (void *)&stream[addr];
@@ -578,8 +570,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 		nb = stream[addr++];
 		{
 			struct sign_item *last = NULL;
-
-			for (i = 0; i < nb; i++) {
+			for (int i = 0; i < nb; i++) {
 				struct sign_item *item = malloc(sizeof(*item));
 
 				item->data = (void *)&stream[addr];
@@ -615,8 +606,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 		nb = stream[addr++];
 		{
 			struct entity_item *last = NULL;
-
-			for (i = 0; i < nb; i++) {
+			for (int i = 0; i < nb; i++) {
 				struct entity_item *item = malloc(sizeof(*item));
 
 				item->data = (void *)&stream[addr];
@@ -634,8 +624,6 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 				ADD_ITEM_IN_LIST(map_things.entities);
 			}
 		}
-	}
-
 
 	set_map_things_in_python_dict(stream, dict, &map_things);
 	current_map->pixbuf = get_map_pic_raw(stream, current_map, &map_things);
@@ -651,7 +639,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	current_map->coords.y = y_init;
 
 	struct connection *con = (void *)current_map->cons;
-	for (i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
+	for (int i = 0; i < (u8)(sizeof(cons) / sizeof(*cons)); i++) {
 		int nx = 0, ny = 0;
 
 		if (!(connect_byte & cons[i].k))
@@ -730,9 +718,7 @@ static char *items_keys[] = {"warps", "signs", "entities"};
 
 static void insert_objects(PyObject *objects, PyObject *items, int x0, int y0)
 {
-	unsigned int i;
-
-	for (i = 0; i < sizeof(items_keys) / sizeof(*items_keys); i++) {
+	for (int i = 0; i < (int)(sizeof(items_keys) / sizeof(*items_keys)); i++) {
 		int j;
 		PyObject *data = PyDict_GetItemString(items, items_keys[i]);
 
@@ -764,11 +750,10 @@ static struct map get_final_map(struct submap *map)
 	final_map.objects = PyDict_New();
 
 	while (map) {
-		int x, y, line, final_pixbuf_pos, pixbuf_pos = 0, pad;
 		struct submap *last_map;
 
-		x = map->coords.x;
-		y = map->coords.y;
+		int x = map->coords.x;
+		int y = map->coords.y;
 
 		insert_objects(map->objects, map->info, 0, 0);
 		insert_objects(final_map.objects, map->info, x, y);
@@ -779,11 +764,12 @@ static struct map get_final_map(struct submap *map)
 		PyDict_SetItemString(map->info, "objects", map->objects);
 		PyList_Append(final_map.info_list, map->info);
 
-		pad = PIXBUF_SINGLE_LINE_SIZE(map->header->map_w);
+		int pad = PIXBUF_SINGLE_LINE_SIZE(map->header->map_w);
 
-		final_pixbuf_pos = y * (final_map.w * 2) * PIXBUF_BOX_SIZE + PIXBUF_SINGLE_LINE_SIZE(x) / 2;
+		int final_pixbuf_pos = y * (final_map.w * 2) * PIXBUF_BOX_SIZE + PIXBUF_SINGLE_LINE_SIZE(x) / 2;
 
-		for (line = 0; line < map->header->map_h * NB_PIXEL_PER_BLOCK_LINE; line++) {
+		int pixbuf_pos = 0;
+		for (int line = 0; line < map->header->map_h * NB_PIXEL_PER_BLOCK_LINE; line++) {
 			memcpy(&final_map.pixbuf[final_pixbuf_pos], &map->pixbuf[pixbuf_pos], pad);
 			final_pixbuf_pos += PIXBUF_SINGLE_LINE_SIZE(final_map.w);
 			pixbuf_pos       += pad;
@@ -801,12 +787,11 @@ static PyObject *get_py_map(struct submap *map)
 {
 	PyObject *py_map = PyDict_New();
 	PyObject *map_pic;
-	struct map final_map;
 
 	if (!map)
 		return NULL;
 
-	final_map = get_final_map(map);
+	struct map final_map = get_final_map(map);
 
 	if (!final_map.pixbuf)
 		return NULL;
@@ -837,8 +822,8 @@ static void track_maps(u8 *stream, struct submap *maps, int map_id)
 	map->cons   = (void *)(map->header + 1);
 
 	u8 cb = map->header->connect_byte;
-	int i, n_con = ((cb&8)>>3) + ((cb&4)>>2) + ((cb&2)>>1) + (cb&1);
-	for (i = 0; i < n_con; i++) {
+	int n_con = ((cb&8)>>3) + ((cb&4)>>2) + ((cb&2)>>1) + (cb&1);
+	for (int i = 0; i < n_con; i++) {
 		struct connection *con = (void *)(map->cons + sizeof(*con) * i);
 		track_maps(stream, maps, con->index);
 	}
@@ -846,19 +831,18 @@ static void track_maps(u8 *stream, struct submap *maps, int map_id)
 	map->obj_data = &stream[ROM_ADDR(map->bank, objaddr)];
 	int n_warps = *(map->obj_data + 1);
 	struct warp_raw *warps = (void *)(map->obj_data + 2);
-	for (i = 0; i < n_warps; i++)
+	for (int i = 0; i < n_warps; i++)
 		track_maps(stream, maps, warps[i].to_map);
 }
 
 PyObject *get_maps(struct rom *self)
 {
-	int i;
 	PyObject *list = PyList_New(0);
 	struct submap maps[0x100];
 
 	memset(maps, 0, sizeof(maps));
 	track_maps(self->stream, maps, 0);
-	for (i = 0; i < (int)(sizeof(maps) / sizeof(*maps)); i++) {
+	for (int i = 0; i < (int)(sizeof(maps) / sizeof(*maps)); i++) {
 		if (!maps[i].addr || maps[i].info)
 			continue;
 		maps[i].info = get_py_map(get_submap(self->stream, maps, i, 0, 0));
