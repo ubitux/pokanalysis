@@ -477,7 +477,7 @@ static void free_map_things(struct map_things *things) {
 	FREE_THINGS_LIST(warp);
 }
 
-#define ADD_ITEM_IN_LIST(list) do {\
+#define ADD_ITEM_IN_LIST(list, last) do {\
 	item->next = NULL;\
 	if (!last) {\
 		list = last = item;\
@@ -555,21 +555,18 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 
 		/* Warps */
 		nb = stream[addr++];
-		{
-			struct warp_item *last = NULL;
+			struct warp_item *last_w = NULL;
 			for (int i = 0; i < nb; i++) {
 				struct warp_item *item = malloc(sizeof(*item));
 
 				item->data = (void *)&stream[addr];
 				addr += sizeof(*item->data);
-				ADD_ITEM_IN_LIST(map_things.warps);
+				ADD_ITEM_IN_LIST(map_things.warps, last_w);
 			}
-		}
 
 		/* Signs */
 		nb = stream[addr++];
-		{
-			struct sign_item *last = NULL;
+			struct sign_item *last_s = NULL;
 			for (int i = 0; i < nb; i++) {
 				struct sign_item *item = malloc(sizeof(*item));
 
@@ -598,14 +595,12 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 						item->py_text_string = Py_BuildValue("s", buffer);
 					}
 				}
-				ADD_ITEM_IN_LIST(map_things.signs);
+				ADD_ITEM_IN_LIST(map_things.signs, last_s);
 			}
-		}
 
 		/* Entities (normal people, trainers, items) */
 		nb = stream[addr++];
-		{
-			struct entity_item *last = NULL;
+			struct entity_item *last_e = NULL;
 			for (int i = 0; i < nb; i++) {
 				struct entity_item *item = malloc(sizeof(*item));
 
@@ -621,9 +616,8 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 				} else {
 					item->type = "people";
 				}
-				ADD_ITEM_IN_LIST(map_things.entities);
+				ADD_ITEM_IN_LIST(map_things.entities, last_e);
 			}
-		}
 
 	set_map_things_in_python_dict(stream, dict, &map_things);
 	current_map->pixbuf = get_map_pic_raw(stream, current_map, &map_things);
