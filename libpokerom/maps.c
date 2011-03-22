@@ -490,15 +490,16 @@ static void free_map_things(struct map_things *things) {
 
 static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_init, int y_init)
 {
-	PyObject *dict = PyDict_New();
-	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
 	struct submap *current_map = &maps[id], *last, *tmp, *to_add;
-	u8 connect_byte = current_map->header->connect_byte;
-	u8 map_h = current_map->header->map_h, map_w = current_map->header->map_w;
-	int addr = current_map->addr;
 
 	if (current_map->loaded)
 		return NULL;
+
+	PyObject *dict = PyDict_New();
+	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
+	u8 connect_byte = current_map->header->connect_byte;
+	u8 map_h = current_map->header->map_h, map_w = current_map->header->map_w;
+	int addr = current_map->addr;
 
 	current_map->loaded = 1;
 
