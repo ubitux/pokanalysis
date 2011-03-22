@@ -259,6 +259,7 @@ struct submap {
 	struct map_header *header;
 	int n_cons;
 	u8 *cons;
+	u16 obj_addr;
 	u8 *obj_data;
 	PyObject *info;
 	int loaded;
@@ -522,18 +523,15 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	PyDict_SetItemString(dict, "map-script-pointer", Py_BuildValue("i", header->script_ptr));
 	PyDict_SetItemString(dict, "connect_byte",       Py_BuildValue("i", connect_byte));
 
-	addr += sizeof(struct map_header) + current_map->n_cons * sizeof(struct connection);
-
 	/* Object Data */
-	int word_addr = GET_ADDR(addr);
-	u8 nb;
-
-	DICT_ADD_ADDR(dict, "object-data");
+	PyDict_SetItemString(dict, "object-data",        Py_BuildValue("i", current_map->obj_addr));
 
 	/* Seek to the object data address */
-	addr = ROM_ADDR(current_map->bank, word_addr);
+	addr = current_map->obj_data - stream;
 
 	DICT_ADD_BYTE(dict, "maps_border_tile");
+
+	u8 nb;
 
 	/* Warps */
 	nb = stream[addr++];
@@ -819,8 +817,8 @@ static void track_maps(u8 *stream, struct submap *maps, int map_id)
 		struct connection *con = (void *)(map->cons + sizeof(*con) * i);
 		track_maps(stream, maps, con->index);
 	}
-	u16 objaddr = *(u16 *)(map->cons + sizeof(struct connection) * map->n_cons);
-	map->obj_data = &stream[ROM_ADDR(map->bank, objaddr)];
+	map->obj_addr = *(u16 *)(map->cons + sizeof(struct connection) * map->n_cons);
+	map->obj_data = &stream[ROM_ADDR(map->bank, map->obj_addr)];
 	int n_warps = *(map->obj_data + 1);
 	struct warp_raw *warps = (void *)(map->obj_data + 2);
 	for (int i = 0; i < n_warps; i++)
