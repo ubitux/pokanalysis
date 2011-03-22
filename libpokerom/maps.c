@@ -543,81 +543,81 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	PyDict_SetItemString(dict, "connections", list);
 
 	/* Object Data */
-		int word_addr = GET_ADDR(addr);
-		u8 nb;
+	int word_addr = GET_ADDR(addr);
+	u8 nb;
 
-		DICT_ADD_ADDR(dict, "object-data");
+	DICT_ADD_ADDR(dict, "object-data");
 
-		/* Seek to the object data address */
-		addr = ROM_ADDR(current_map->bank, word_addr);
+	/* Seek to the object data address */
+	addr = ROM_ADDR(current_map->bank, word_addr);
 
-		DICT_ADD_BYTE(dict, "maps_border_tile");
+	DICT_ADD_BYTE(dict, "maps_border_tile");
 
-		/* Warps */
-		nb = stream[addr++];
-			struct warp_item *last_w = NULL;
-			for (int i = 0; i < nb; i++) {
-				struct warp_item *item = malloc(sizeof(*item));
+	/* Warps */
+	nb = stream[addr++];
+	struct warp_item *last_w = NULL;
+	for (int i = 0; i < nb; i++) {
+		struct warp_item *item = malloc(sizeof(*item));
 
-				item->data = (void *)&stream[addr];
-				addr += sizeof(*item->data);
-				ADD_ITEM_IN_LIST(map_things.warps, last_w);
-			}
+		item->data = (void *)&stream[addr];
+		addr += sizeof(*item->data);
+		ADD_ITEM_IN_LIST(map_things.warps, last_w);
+	}
 
-		/* Signs */
-		nb = stream[addr++];
-			struct sign_item *last_s = NULL;
-			for (int i = 0; i < nb; i++) {
-				struct sign_item *item = malloc(sizeof(*item));
+	/* Signs */
+	nb = stream[addr++];
+	struct sign_item *last_s = NULL;
+	for (int i = 0; i < nb; i++) {
+		struct sign_item *item = malloc(sizeof(*item));
 
-				item->data = (void *)&stream[addr];
-				addr += sizeof(*item->data);
-				item->py_text_string = NULL;
-				{
-					int base_addr = (addr / 0x4000) * 0x4000;
-					int text_pointer = GET_ADDR(base_addr + (current_map->header->text_ptr + ((item->data->tid - 1) << 1)) % 0x4000);
-					int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
-					int rom_text_addr = ROM_ADDR(stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
-					char buffer[512] = {0};
-					u8 c;
-					unsigned int d = 0;
+		item->data = (void *)&stream[addr];
+		addr += sizeof(*item->data);
+		item->py_text_string = NULL;
+		{
+			int base_addr = (addr / 0x4000) * 0x4000;
+			int text_pointer = GET_ADDR(base_addr + (current_map->header->text_ptr + ((item->data->tid - 1) << 1)) % 0x4000);
+			int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
+			int rom_text_addr = ROM_ADDR(stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
+			char buffer[512] = {0};
+			u8 c;
+			unsigned int d = 0;
 
-					if (stream[rom_text_pointer] == 0x17) {
-						while ((c = stream[rom_text_addr])) {
-							char *append = get_pkmn_char(c, "¿?");
+			if (stream[rom_text_pointer] == 0x17) {
+				while ((c = stream[rom_text_addr])) {
+					char *append = get_pkmn_char(c, "¿?");
 
-							memcpy(buffer + d, append, strlen(append));
-							d += strlen(append);
-							if (d >= sizeof(buffer))
-								break;
-							rom_text_addr++;
-						}
-						item->py_text_string = Py_BuildValue("s", buffer);
-					}
+					memcpy(buffer + d, append, strlen(append));
+					d += strlen(append);
+					if (d >= sizeof(buffer))
+						break;
+					rom_text_addr++;
 				}
-				ADD_ITEM_IN_LIST(map_things.signs, last_s);
+				item->py_text_string = Py_BuildValue("s", buffer);
 			}
+		}
+		ADD_ITEM_IN_LIST(map_things.signs, last_s);
+	}
 
-		/* Entities (normal people, trainers, items) */
-		nb = stream[addr++];
-			struct entity_item *last_e = NULL;
-			for (int i = 0; i < nb; i++) {
-				struct entity_item *item = malloc(sizeof(*item));
+	/* Entities (normal people, trainers, items) */
+	nb = stream[addr++];
+	struct entity_item *last_e = NULL;
+	for (int i = 0; i < nb; i++) {
+		struct entity_item *item = malloc(sizeof(*item));
 
-				item->data = (void *)&stream[addr];
-				addr += sizeof(*item->data) - 2;
+		item->data = (void *)&stream[addr];
+		addr += sizeof(*item->data) - 2;
 
-				if (item->data->tid & (1 << 6)) {
-					item->type = "trainer";
-					addr += 2;
-				} else if (item->data->tid & (1 << 7)) {
-					item->type = "item";
-					addr += 1;
-				} else {
-					item->type = "people";
-				}
-				ADD_ITEM_IN_LIST(map_things.entities, last_e);
-			}
+		if (item->data->tid & (1 << 6)) {
+			item->type = "trainer";
+			addr += 2;
+		} else if (item->data->tid & (1 << 7)) {
+			item->type = "item";
+			addr += 1;
+		} else {
+			item->type = "people";
+		}
+		ADD_ITEM_IN_LIST(map_things.entities, last_e);
+	}
 
 	set_map_things_in_python_dict(stream, dict, &map_things);
 	current_map->pixbuf = get_map_pic_raw(stream, current_map, &map_things);
