@@ -497,8 +497,9 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 
 	PyObject *dict = PyDict_New();
 	struct map_things map_things = {.warps = NULL, .signs = NULL, .entities = NULL};
-	u8 connect_byte = current_map->header->connect_byte;
-	u8 map_h = current_map->header->map_h, map_w = current_map->header->map_w;
+	struct map_header *header = current_map->header;
+	u8 connect_byte = header->connect_byte;
+	u8 map_h = header->map_h, map_w = header->map_w;
 	int addr = current_map->addr;
 
 	current_map->loaded = 1;
@@ -513,12 +514,12 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 	PyDict_SetItemString(dict, "special-items",      get_special_items(stream, id));
 
 	/* Map Header */
-	PyDict_SetItemString(dict, "tileset",            Py_BuildValue("i", current_map->header->tileset_id));
+	PyDict_SetItemString(dict, "tileset",            Py_BuildValue("i", header->tileset_id));
 	PyDict_SetItemString(dict, "map_h",              Py_BuildValue("i", map_h));
 	PyDict_SetItemString(dict, "map_w",              Py_BuildValue("i", map_w));
-	PyDict_SetItemString(dict, "map-pointer",        Py_BuildValue("i", current_map->header->map_ptr));
-	PyDict_SetItemString(dict, "map-text-pointer",   Py_BuildValue("i", current_map->header->text_ptr));
-	PyDict_SetItemString(dict, "map-script-pointer", Py_BuildValue("i", current_map->header->script_ptr));
+	PyDict_SetItemString(dict, "map-pointer",        Py_BuildValue("i", header->map_ptr));
+	PyDict_SetItemString(dict, "map-text-pointer",   Py_BuildValue("i", header->text_ptr));
+	PyDict_SetItemString(dict, "map-script-pointer", Py_BuildValue("i", header->script_ptr));
 	PyDict_SetItemString(dict, "connect_byte",       Py_BuildValue("i", connect_byte));
 
 	addr += sizeof(struct map_header) + current_map->n_cons * sizeof(struct connection);
@@ -556,7 +557,7 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 		item->py_text_string = NULL;
 		{
 			int base_addr = (addr / 0x4000) * 0x4000;
-			int text_pointer = GET_ADDR(base_addr + (current_map->header->text_ptr + ((item->data->tid - 1) << 1)) % 0x4000);
+			int text_pointer = GET_ADDR(base_addr + (header->text_ptr + ((item->data->tid - 1) << 1)) % 0x4000);
 			int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
 			int rom_text_addr = ROM_ADDR(stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
 			char buffer[512] = {0};
