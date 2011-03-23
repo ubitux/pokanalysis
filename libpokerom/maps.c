@@ -174,9 +174,6 @@ static struct box_info get_box_info(u8 *stream, struct submap *map, int x, int y
 #define PIXBUF_BOX_SIZE		(PIXBUF_TILE_SIZE * 2 * 2)
 #define PIXBUF_BOX_LINE_SIZE	(PIXBUF_TILE_LINE_SIZE * 2)
 
-#define BLOCK_X 4
-#define BLOCK_Y 4
-
 static void merge_tiles(u8 *dst, u8 *src, char *alpha)
 {
 	for (int i = 0; i < PIXBUF_TILE_SIZE; i += 3)
@@ -193,6 +190,9 @@ static void flip_tile(u8 *tile)
 		for (int x = 0; x < TILE_X; x++)
 			memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 4);
 }
+
+#define BLOCK_X 4
+#define BLOCK_Y 4
 
 /* 1 block = 4x4 tiles */
 static void load_block_from_tiles_addr(u8 *stream, struct submap *map, u8 *__restrict__ pixbuf, int *__restrict__ tiles_addr, int bx, int by)
@@ -229,12 +229,6 @@ static void load_block_from_tiles_addr(u8 *stream, struct submap *map, u8 *__res
 	}
 }
 
-#define PIXBUF_BLOCK_SIZE	(PIXBUF_BOX_SIZE * 2 * 2)
-#define PIXBUF_BLOCK_LINE_SIZE	(PIXBUF_BOX_LINE_SIZE * 2)
-
-#define TILES_PER_ROW 4
-#define TILES_PER_COL 4
-
 /* Map blocks */
 struct blocks {
 	int b[4 * 4];
@@ -255,8 +249,6 @@ static struct blocks *get_blocks(u8 *stream, int n, int addr, int tiles_addr)
 	return blocks;
 }
 
-#define PIXEL_LINES_PER_BLOCK 32
-
 #define TILESET_HEADERS ROM_ADDR(3, 0x47BE)
 
 static int get_blockdata_addr(u8 *stream, u8 tileset_id)
@@ -274,6 +266,10 @@ static int get_tiles_addr(u8 *stream, u8 tileset_id)
 
 	return ROM_ADDR(bank_id, GET_ADDR(header_offset + 2 + 1));
 }
+
+#define NB_PIXEL_PER_BLOCK_LINE	32
+#define PIXBUF_BLOCK_SIZE	(PIXBUF_BOX_SIZE * 2 * 2)
+#define PIXBUF_BLOCK_LINE_SIZE	(PIXBUF_BOX_LINE_SIZE * 2)
 
 static u8 *get_map_pic_raw(u8 *stream, struct submap *map)
 {
@@ -300,14 +296,14 @@ static u8 *get_map_pic_raw(u8 *stream, struct submap *map)
 				return NULL;
 
 			load_block_from_tiles_addr(stream, map, block_pixbuf, block, i, j);
-			for (y = 0; y < PIXEL_LINES_PER_BLOCK; y++) {
+			for (y = 0; y < NB_PIXEL_PER_BLOCK_LINE; y++) {
 				memcpy(&pixbuf[pixbuf_offset], &block_pixbuf[block_offset], PIXBUF_BLOCK_LINE_SIZE);
 				block_offset += PIXBUF_BLOCK_LINE_SIZE;
 				pixbuf_offset += map_w * PIXBUF_BLOCK_LINE_SIZE;
 			}
-			pixbuf_offset = pixbuf_offset - PIXEL_LINES_PER_BLOCK * (map_w * PIXBUF_BLOCK_LINE_SIZE) + PIXBUF_BLOCK_LINE_SIZE;
+			pixbuf_offset = pixbuf_offset - NB_PIXEL_PER_BLOCK_LINE * (map_w * PIXBUF_BLOCK_LINE_SIZE) + PIXBUF_BLOCK_LINE_SIZE;
 		}
-		pixbuf_offset += (PIXEL_LINES_PER_BLOCK - 1) * (map_w * PIXBUF_BLOCK_LINE_SIZE);
+		pixbuf_offset += (NB_PIXEL_PER_BLOCK_LINE - 1) * (map_w * PIXBUF_BLOCK_LINE_SIZE);
 	}
 	return pixbuf;
 }
@@ -614,7 +610,6 @@ static struct coords process_submap(struct submap *map)
 	return s;
 }
 
-#define NB_PIXEL_PER_BLOCK_LINE 32
 #define PIXBUF_SINGLE_LINE_SIZE(w) ((w) * NB_PIXEL_PER_BLOCK_LINE * 3)
 
 static char *items_keys[] = {"warps", "signs", "entities"};
