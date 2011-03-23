@@ -448,26 +448,26 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 		PyDict_SetItemString(sign_dict, "x",       Py_BuildValue("i", sign->x));
 		PyDict_SetItemString(sign_dict, "text_id", Py_BuildValue("i", sign->tid));
 
-			int base_addr = (addr / 0x4000) * 0x4000;
-			int text_pointer = GET_ADDR(base_addr + (header->text_ptr + ((sign->tid - 1) << 1)) % 0x4000);
-			int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
-			int rom_text_addr = ROM_ADDR(stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
-			char buffer[512] = {0};
-			u8 c;
-			unsigned int d = 0;
+		int base_addr = (addr / 0x4000) * 0x4000;
+		int text_pointer = GET_ADDR(base_addr + (header->text_ptr + ((sign->tid - 1) << 1)) % 0x4000);
+		int rom_text_pointer = ((text_pointer < 0x4000) ? 0 : base_addr) + text_pointer % 0x4000;
+		int rom_text_addr = ROM_ADDR(stream[rom_text_pointer + 3], GET_ADDR(rom_text_pointer + 1)) + 1;
+		char buffer[512] = {0};
+		u8 c;
+		unsigned int d = 0;
 
-			if (stream[rom_text_pointer] == 0x17) {
-				while ((c = stream[rom_text_addr])) {
-					char *append = get_pkmn_char(c, "¿?");
+		if (stream[rom_text_pointer] == 0x17) {
+			while ((c = stream[rom_text_addr])) {
+				char *append = get_pkmn_char(c, "¿?");
 
-					memcpy(buffer + d, append, strlen(append));
-					d += strlen(append);
-					if (d >= sizeof(buffer))
-						break;
-					rom_text_addr++;
-				}
-				PyDict_SetItemString(sign_dict, "text", Py_BuildValue("s", buffer));
+				memcpy(buffer + d, append, strlen(append));
+				d += strlen(append);
+				if (d >= sizeof(buffer))
+					break;
+				rom_text_addr++;
 			}
+			PyDict_SetItemString(sign_dict, "text", Py_BuildValue("s", buffer));
+		}
 
 		PyList_Append(list, sign_dict);
 		sign++;
@@ -565,7 +565,6 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 				last = tmp;
 			last->next = to_add;
 		}
-
 
 		con += 1;
 	}
