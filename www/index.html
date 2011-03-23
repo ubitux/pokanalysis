@@ -62,7 +62,6 @@
 		<ul>
 			<li>Python &gt;= 2.6</li>
 			<li>PyGTK (GTK+ &gt;= 2.16)</li>
-			<li>CMake (build only)</li>
 			<li>GCC (build only)</li>
 		</ul>
 
@@ -70,7 +69,7 @@
 <pre>
 % tar -zxf pokanalysis-*.tar.gz
 % cd pokanalysis-*
-% make
+% python setup.py build_ext --inplace
 % ./pokanalysis /path/to/your/pokemon/rom.gb
 </pre>
 
