@@ -18,7 +18,14 @@
 #    along with Pokanalysis.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys, gtk, pango, pokerom, re
+import sys, gtk, pango, re
+
+try:
+    import pokerom
+except ImportError:
+    print('Unable to load module pokerom. Try to compile it with the following command:')
+    print('    python setup.py build_ext --inplace');
+    sys.exit(1)
 
 class Core:
 
