@@ -515,9 +515,6 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 
 	PyDict_SetItemString(dict, "map_pic", Py_BuildValue("s#", current_map->pixbuf, PIXBUF_BLOCK_SIZE * map_w * map_h));
 
-	map_w *= 2;
-	map_h *= 2;
-
 	current_map->coords.x = x_init;
 	current_map->coords.y = y_init;
 
@@ -549,14 +546,14 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 			break;
 		case 'S':
 			nx = x_init - (char)(con->x_align);
-			ny = y_init - (char)(con->y_align) + map_h;
+			ny = y_init - (char)(con->y_align) + map_h * 2;
 			break;
 		case 'W':
 			nx = x_init - (char)(con->x_align) - 1;
 			ny = y_init - (char)(con->y_align);
 			break;
 		case 'E':
-			nx = x_init - (char)(con->x_align) + map_w;
+			nx = x_init - (char)(con->x_align) + map_w * 2;
 			ny = y_init - (char)(con->y_align);
 			break;
 		}
