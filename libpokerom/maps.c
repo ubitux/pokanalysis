@@ -161,9 +161,9 @@ static struct box_info get_box_info(u8 *stream, struct submap *map, int x, int y
 			return bi;
 		}
 
-		if (entity->tid & (1 << 6))
+		if (entity->tid & 1<<6)
 			entities += 2;
-		else if (entity->tid & (1 << 7))
+		else if (entity->tid & 1<<7)
 			entities += 1;
 		entities += sizeof(*entity) - 2;
 	}
@@ -495,11 +495,11 @@ static struct submap *get_submap(u8 *stream, struct submap *maps, int id, int x_
 		PyDict_SetItemString(entity_dict, "mvt_2",   Py_BuildValue("i", entity->mvt_2));
 		PyDict_SetItemString(entity_dict, "text_id", Py_BuildValue("i", entity->tid));
 
-		if (entity->tid & (1 << 6)) {
+		if (entity->tid & 1<<6) {
 			PyDict_SetItemString(entity_dict, "trainer_type", Py_BuildValue("i", entity->extra_1));
 			PyDict_SetItemString(entity_dict, "pkmn_set",     Py_BuildValue("i", entity->extra_2));
 			addr += 2;
-		} else if (entity->tid & (1 << 7)) {
+		} else if (entity->tid & 1<<7) {
 			char iname[30];
 
 			get_pkmn_item_name(stream, iname, entity->extra_1, sizeof(iname));
