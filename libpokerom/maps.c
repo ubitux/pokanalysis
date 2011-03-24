@@ -195,7 +195,7 @@ static void flip_tile(u8 *tile)
 #define BLOCK_Y 4
 
 /* 1 block = 4x4 tiles */
-static void load_block_from_tiles_addr(u8 *stream, struct submap *map, u8 *__restrict__ pixbuf, int *__restrict__ tiles_addr, int bx, int by)
+static void load_block(u8 *stream, struct submap *map, u8 *pixbuf, u8 *blocks, u8 *tiles, int bx, int by)
 {
 	int pixbuf_offset = 0;
 
@@ -212,10 +212,10 @@ static void load_block_from_tiles_addr(u8 *stream, struct submap *map, u8 *__res
 				load_tile(entity_pixbuf, &stream[bi.entity_addr + n * 16], bi.color_key);
 				if (bi.flip)
 					flip_tile(entity_pixbuf);
-				load_tile(tile_pixbuf, &stream[tiles_addr[j * BLOCK_X + i]], DEFAULT_COLORS_OFFSET);
+				load_tile(tile_pixbuf, &tiles[*blocks++ * 16], DEFAULT_COLORS_OFFSET);
 				merge_tiles(tile_pixbuf, entity_pixbuf, color_set[ENTITIES_COLORS_OFFSET][0]);
 			} else {
-				load_tile(tile_pixbuf, &stream[tiles_addr[j * BLOCK_X + i]], bi.color_key);
+				load_tile(tile_pixbuf, &tiles[*blocks++ * 16], bi.color_key);
 			}
 
 			for (int y = 0; y < TILE_Y; y++) {
@@ -227,26 +227,6 @@ static void load_block_from_tiles_addr(u8 *stream, struct submap *map, u8 *__res
 		}
 		pixbuf_offset += (TILE_Y - 1) * (BLOCK_X * PIXBUF_TILE_LINE_SIZE);
 	}
-}
-
-/* Map blocks */
-struct blocks {
-	int b[4 * 4];
-};
-
-/* 4x4 tiles (1 tile = 8x8px) */
-static struct blocks *get_blocks(u8 *stream, int n, int addr, int tiles_addr)
-{
-	u8 *data;
-	struct blocks *blocks;
-
-	if ((blocks = calloc(n, sizeof(*blocks))) == NULL)
-		return NULL;
-	data = &stream[addr];
-	for (int i = 0; i < n; i++)
-		for (int j = 0; j < 16; j++)
-			blocks[i].b[j] = (*data++ << 4) + tiles_addr;
-	return blocks;
 }
 
 #define TILESET_HEADERS ROM_ADDR(3, 0x47BE)
@@ -278,24 +258,16 @@ static u8 *get_map_pic_raw(u8 *stream, struct submap *map)
 	u8 *pixbuf = malloc(map_w * map_h * PIXBUF_BLOCK_SIZE);
 	int pixbuf_offset = 0;
 
-	int blockdata_addr = get_blockdata_addr(stream, map->header->tileset_id);
-	int tiles_addr     = get_tiles_addr(stream, map->header->tileset_id);
-	int r_map_pointer  = ROM_ADDR(map->bank, map->header->map_ptr);
-
-	struct blocks *blocks = get_blocks(stream, 256, blockdata_addr, tiles_addr);
-	if (!blocks)
-		return NULL;
+	u8 *datablocks = &stream[get_blockdata_addr(stream, map->header->tileset_id)];
+	u8 *tiles      = &stream[get_tiles_addr(stream,     map->header->tileset_id)];
+	u8 *mapblocks  = &stream[ROM_ADDR(map->bank,        map->header->map_ptr)];
 
 	for (int j = 0; j < map_h; j++) {
 		for (int i = 0; i < map_w; i++) {
 			u8 block_pixbuf[PIXBUF_BLOCK_SIZE];
 			int y, block_offset = 0;
-			int *block = blocks[stream[r_map_pointer + j * map_w + i]].b;
 
-			if (!block)
-				return NULL;
-
-			load_block_from_tiles_addr(stream, map, block_pixbuf, block, i, j);
+			load_block(stream, map, block_pixbuf, &datablocks[*mapblocks++ * 16], tiles, i, j);
 			for (y = 0; y < NB_PIXEL_PER_BLOCK_LINE; y++) {
 				memcpy(&pixbuf[pixbuf_offset], &block_pixbuf[block_offset], PIXBUF_BLOCK_LINE_SIZE);
 				block_offset += PIXBUF_BLOCK_LINE_SIZE;
