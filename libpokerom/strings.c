@@ -2,7 +2,7 @@
  *  This file is part of Pokanalysis.
  *
  *  Pokanalysis
- *  Copyright © 2010 Clément Bœsch
+ *  Copyright © 2010-2011 Clément Bœsch
  *
  *  Pokanalysis is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
