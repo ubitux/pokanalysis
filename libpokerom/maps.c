@@ -38,10 +38,9 @@ static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_k
 	for (int y = 0; y < TILE_Y; y++) {
 		u8 byte1 = *src++;
 		u8 byte2 = *src++;
-		u8 mask  = 1 << 7;
 
-		for (int x = 0; x < TILE_X; x++, mask >>= 1) {
-			memcpy(pixbuf, colors[(!!(byte1 & mask) << 1) | !!(byte2 & mask)], 4);
+		for (int x = TILE_X - 1; x >= 0; x--) {
+			memcpy(pixbuf, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], 4);
 			pixbuf += 3;
 		}
 	}
