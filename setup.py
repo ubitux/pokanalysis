@@ -6,7 +6,7 @@ from distutils.core import setup, Extension
 
 setup(
     name='pokerom',
-    version='0.6~dev',
+    version='0.6',
     description='Pokémon ROM Red & Blue (US) analysis module',
     author='Clément Bœsch',
     author_email='ubitux@gmail.com',

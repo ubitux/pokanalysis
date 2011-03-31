@@ -1,3 +1,13 @@
+Version 0.6.0	31 Mar 2011
+
+	* API is much more pythonic
+	* No more buggy maps
+	* Remove CMake from build system (replaced with Python distutils)
+	* Hidden items now have a name
+	* Hidden items and other special entities now have different layout
+	* Various optimizations
+	* A lot of bug fixes and code cleanups
+
 Version 0.5.0	22 Sep 2010
 
 	* Water wild Pokémon support
