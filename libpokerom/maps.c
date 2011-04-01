@@ -40,7 +40,7 @@ static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_k
 		u8 byte2 = *src++;
 
 		for (int x = TILE_X - 1; x >= 0; x--) {
-			memcpy(pixbuf, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], 4);
+			memcpy(pixbuf, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], 3);
 			pixbuf += 3;
 		}
 	}
@@ -187,7 +187,7 @@ static void flip_tile(u8 *tile)
 	memcpy(old_tile, tile, sizeof(old_tile));
 	for (int y = 0; y < TILE_Y; y++)
 		for (int x = 0; x < TILE_X; x++)
-			memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 4);
+			memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 3);
 }
 
 #define BLOCK_X 4
