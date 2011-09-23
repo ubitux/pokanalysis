@@ -96,6 +96,8 @@ PyObject *str_getascii(struct rom *self, PyObject *args)
 	(void)self;
 	for (PyArg_ParseTuple(args, "s", &s); *s; s++) {
 		char *insert = alphabet[(u8)*s];
+		if (!insert)
+			insert = "?";
 		int len = strlen(insert);
 
 		if (j + len > (int)sizeof(b) - 1)
