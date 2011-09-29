@@ -258,9 +258,7 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
     current_bit = 1;
     p_flag = 3;
 
-    tile_x = 0;
-    tile_y = 0;
-    buffer_flag = 0;
+    tile_x = tile_y = 0;
 
     byte = sprite_get_next_byte(stream);
     sprite_height = low_nibble(byte) * 8;
