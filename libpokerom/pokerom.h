@@ -61,7 +61,7 @@ PyObject *str_getascii(struct rom *, PyObject *);
 PyObject *str_getbin(struct rom *, PyObject *);
 
 char *get_pkmn_char(u8, char *);
-void add_trainer(struct rom *rom, int map_id, int x, int y, int data, int set_id);
+void add_trainer(struct rom *rom, int map_id, int x, int y, int extra1, int extra2);
 void apply_filter(u8 *stream, u8 *pixbuf, int map_id, int w);
 void get_pkmn_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len);
 void get_pkmn_move_name(u8 *stream, char *mname, u8 move_id, size_t max_len);
