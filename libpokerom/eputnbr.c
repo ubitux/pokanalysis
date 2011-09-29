@@ -38,7 +38,7 @@ static u8 V0, V1, V2, V3;
 static void set_char(u8 *dest, u8 input_flag, u8 *C)    /* Red: ROM0:3D25 */
 {
     u8 c = 0;
-    u8 B1, B2, B3;
+    u8 B1, B2; //, B3;
 
     while (1) {
         B1 = V1;
@@ -56,7 +56,7 @@ static void set_char(u8 *dest, u8 input_flag, u8 *C)    /* Red: ROM0:3D25 */
         }
         V2 -= C[1];
 
-        B3 = V3;
+        //B3 = V3; FIXME: why?
         if (V3 < C[2]) {
             if (V2) {
                 V2--;
