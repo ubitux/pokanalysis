@@ -64,15 +64,9 @@ static u8 sprite_get_next_bit(u8 *stream) // 2670
 static void sprite_update_p1(u8 a) // 2649
 {
     switch (p_flag) {
-    case 1:
-        a <<= 2;
-        break;
-    case 2:
-        a = swap_u8(a);
-        break;
-    case 3:
-        a = (a&3)<<6 | a>>2;
-        break;
+    case 1: a = a << 2;          break;
+    case 2: a = swap_u8(a);      break;
+    case 3: a = (a&3)<<6 | a>>2; break;
     }
     buffer[p1] |= a;
 }
