@@ -243,17 +243,13 @@ static int f2595(u8 *stream)
         c++;
 
     u16 p = GET_ADDR(0x269f + 2*c);
-
-    c++;
     u16 de = 0x0000;
-
     while (1) {
         de |= get_next_bit(stream);
-        if (--c == 0)
+        if (c-- == 0)
             break;
         de <<= 1;
     }
-
     de += p;
 
     do {
