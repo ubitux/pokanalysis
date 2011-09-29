@@ -65,14 +65,14 @@ static void sprite_update_p1(u8 a) // 2649
 {
     switch (p_flag) {
     case 1:
-        a = a<<2 & 0xff;
+        a <<= 2;
         break;
     case 2:
         a = swap_u8(a);
         break;
     case 3:
-        a = ((a&1)<<7 | a>>1) & 0xff;
-        a = ((a&1)<<7 | a>>1) & 0xff;
+        a = (a&1)<<7 | a>>1;
+        a = (a&1)<<7 | a>>1;
         break;
     }
     buffer[p1] |= a;
