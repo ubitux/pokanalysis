@@ -295,8 +295,7 @@ lbl_2595:
     while ((b = get_next_bit(stream)) != 0)
         c++;
 
-    p = 0x269f + 2 * c;
-    p = *(u16*)&stream[p];
+    p = GET_ADDR(0x269f + 2*c);
 
     c++;
     de = 0x0000;
