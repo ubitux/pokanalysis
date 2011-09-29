@@ -278,39 +278,39 @@ start:
         goto lbl_2595;
 
     for (;;) {
-    b = get_next_bit(stream)<<1 | get_next_bit(stream);
-    if (b) {
-        update_p1(b);
-        r = f25d8(stream);
-        HANDLE_RET(r);
-        continue;
-    }
+        b = get_next_bit(stream)<<1 | get_next_bit(stream);
+        if (b) {
+            update_p1(b);
+            r = f25d8(stream);
+            HANDLE_RET(r);
+            continue;
+        }
 
 lbl_2595:
-    c = 0;
-    while ((b = get_next_bit(stream)) != 0)
+        c = 0;
+        while ((b = get_next_bit(stream)) != 0)
+            c++;
+
+        p = GET_ADDR(0x269f + 2*c);
+
         c++;
+        de = 0x0000;
 
-    p = GET_ADDR(0x269f + 2*c);
+        while (1) {
+            de |= get_next_bit(stream);
+            if (--c == 0)
+                break;
+            de <<= 1;
+        }
 
-    c++;
-    de = 0x0000;
+        de += p;
 
-    while (1) {
-        de |= get_next_bit(stream);
-        if (--c == 0)
-            break;
-        de <<= 1;
-    }
-
-    de += p;
-
-    do {
-        update_p1(0);
-        r = f25d8(stream);
-        HANDLE_RET(r);
-        de--;
-    } while (de);
+        do {
+            update_p1(0);
+            r = f25d8(stream);
+            HANDLE_RET(r);
+            de--;
+        } while (de);
     }
 }
 
