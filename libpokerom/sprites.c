@@ -144,7 +144,6 @@ static void sprite_load_data(u8 *stream, u16 p) // 26D4
 
         p1 = p2 = p2+1;
     }
-    tile_y = 0;
 }
 
 static void sprite_uncompress_data(u8 *stream) // 27C7
