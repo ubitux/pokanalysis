@@ -61,12 +61,6 @@ static u8 sprite_get_next_bit(u8 *stream) // 2670
     return current_byte & 1;
 }
 
-static u16 sprite_set_p1_p2(u16 hl) // 2897
-{
-    p1 = p2 = hl;
-    return hl;
-}
-
 static void sprite_update_p1(u8 a) // 2649
 {
     switch (p_flag) {
@@ -124,7 +118,7 @@ static void sprite_load_data(u8 *stream, u16 p) // 26D4
 
     tile_x = 0;
     tile_y = 0;
-    sprite_set_p1_p2(p);
+    p1 = p2 = p;
     if (input_flag) {
         hl = input_p1 = 0x27b7;
         de = input_p2 = 0x27bf;
@@ -169,7 +163,7 @@ static void sprite_load_data(u8 *stream, u16 p) // 26D4
             return;
         }
 
-        sprite_set_p1_p2(p2 + 1);
+        p1 = p2 = p2+1;
     }
 }
 
@@ -239,7 +233,7 @@ static int f25d8(u8 *stream)
     p_flag = 3;
     tile_x += 8;
     if (tile_x != sprite_width) {
-        sprite_set_p1_p2(p1 + 1);
+        p1 = p2 = p1 + 1;
         return Z_RET;
     }
 
@@ -303,7 +297,7 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 
 start:
     // 2556
-    sprite_set_p1_p2(buffer_flag&1 ? a310 : a188);
+    p1 = p2 = buffer_flag&1 ? a310 : a188;
     if (buffer_flag & 2) { /* 0b10 or 0b11 */
         b = sprite_get_next_bit(stream);
         if (b) {
