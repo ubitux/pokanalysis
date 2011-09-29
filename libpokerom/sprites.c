@@ -196,24 +196,22 @@ static void sprite_uncompress_data(u8 *stream) // 27C7
     // 27EF
     for (tile_x = 0; tile_x != sprite_width; tile_x += 8) {
         for (tile_y = 0; tile_y != sprite_height; tile_y++) {
+            if (input_flag) {
+                // 27F6
+                u8 a, c, v;
 
-        if (input_flag) {
-            // 27F6
-            u8 a, c, v;
+                v = read_buffer(de);
+                a = stream[0x2867 + high_nibble(v)];
+                c = swap_u8(a);
+                a = stream[0x2867 + low_nibble(v)];
+                a |= c;
+                write_buffer(de, a);
+            }
 
-            v = read_buffer(de);
-            a = stream[0x2867 + high_nibble(v)];
-            c = swap_u8(a);
-            a = stream[0x2867 + low_nibble(v)];
-            a |= c;
-            write_buffer(de, a);
-        }
-
-        // 280b
-        write_buffer(de, read_buffer(de) ^ read_buffer(hl));
-        hl++;
-
-        de++;
+            // 280b
+            write_buffer(de, read_buffer(de) ^ read_buffer(hl));
+            hl++;
+            de++;
         }
     }
 }
