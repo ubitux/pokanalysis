@@ -582,10 +582,8 @@ static char *items_keys[] = {"warps", "signs", "entities"};
 static void insert_objects(PyObject *objects, PyObject *items, int x0, int y0)
 {
     for (int i = 0; i < (int)(sizeof(items_keys) / sizeof(*items_keys)); i++) {
-        int j;
         PyObject *data = PyDict_GetItemString(items, items_keys[i]);
-
-        for (j = 0; j < PyList_Size(data); j++) {
+        for (int j = 0; j < PyList_Size(data); j++) {
             PyObject *item = PyList_GetItem(data, j);
             long x = PyLong_AsLong(PyDict_GetItemString(item, "x")) + x0;
             long y = PyLong_AsLong(PyDict_GetItemString(item, "y")) + y0;
