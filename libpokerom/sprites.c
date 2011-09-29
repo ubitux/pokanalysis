@@ -290,10 +290,8 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 start:
     // 2556
     p1 = p2 = buffer_flag&1 ? a310 : a188;
-    if (buffer_flag & 2) { /* 0b10 or 0b11 */
-        b = get_next_bit(stream);
-        misc_flag = b ? get_next_bit(stream)+1 : 0;
-    }
+    if (buffer_flag & 2)
+        misc_flag = get_next_bit(stream) ? get_next_bit(stream)+1 : 0;
 
     // 257A
     if (!get_next_bit(stream)) {
