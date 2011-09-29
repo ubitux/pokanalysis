@@ -46,17 +46,6 @@ static u16 p2;              // d0af-d0b0
 static u16 input_p1;        // d0b1-d0b2
 static u16 input_p2;        // d0b3-d0b4
 
-static void write_buffer(u16 addr, u8 v)
-{
-    if (addr < 0x188 * 2)
-        buffer[addr] = v;
-}
-
-static u8 read_buffer(u16 addr)
-{
-    return addr < 0x188*2 ? buffer[addr] : 0;
-}
-
 static u8 sprite_get_next_byte(u8 *stream) // 268B
 {
     return stream[current_addr++];
@@ -92,7 +81,7 @@ static void sprite_update_p1(u8 a) // 2649
         a = ((a&1)<<7 | a>>1) & 0xff;
         break;
     }
-    write_buffer(p1, read_buffer(p1) | a);
+    buffer[p1] |= a;
 }
 
 static void sprite_reset_p1_p2(void) // 2841
@@ -149,7 +138,7 @@ static void sprite_load_data(u8 *stream, u16 p) // 26D4
     // 2704
     while (1) {
         hl = p1;
-        z = read_buffer(hl);
+        z = buffer[hl];
 
         nibble = sprite_update_input_ptr(stream, high_nibble(z), &hl, &de);
         nibble = swap_u8(nibble);
@@ -161,7 +150,7 @@ static void sprite_load_data(u8 *stream, u16 p) // 26D4
         hl = p1;
 
         // 2729
-        write_buffer(p1, nibble);
+        buffer[p1] = nibble;
 
         hl += sprite_height;
 
@@ -204,16 +193,16 @@ static void sprite_uncompress_data(u8 *stream) // 27C7
                 // 27F6
                 u8 a, c, v;
 
-                v = read_buffer(de);
+                v = buffer[de];
                 a = stream[0x2867 + high_nibble(v)];
                 c = swap_u8(a);
                 a = stream[0x2867 + low_nibble(v)];
                 a |= c;
-                write_buffer(de, a);
+                buffer[de] = a;
             }
 
             // 280b
-            write_buffer(de, read_buffer(de) ^ read_buffer(hl));
+            buffer[de] ^= buffer[hl];
             hl++;
             de++;
         }
