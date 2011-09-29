@@ -113,58 +113,38 @@ static u8 sprite_update_input_ptr(u8 *stream, u8 nibble, u16 *_hl, u16 *_de) // 
 
 static void sprite_load_data(u8 *stream, u16 p) // 26D4
 {
-    u16 hl, de;
-    u8 z, nibble;
+    u16 de;
 
-    tile_x = 0;
-    tile_y = 0;
     p1 = p2 = p;
-    if (input_flag) {
-        hl = input_p1 = 0x27b7;
-        de = input_p2 = 0x27bf;
-    } else {
-        hl = input_p1 = 0x27a7;
-        de = input_p2 = 0x27af;
-    }
+
+    if (input_flag) input_p1 = 0x27b7, de = input_p2 = 0x27bf;
+    else            input_p1 = 0x27a7, de = input_p2 = 0x27af;
 
     de = de & 0xff00;
 
     // 2704
-    while (1) {
-        hl = p1;
-        z = buffer[hl];
+    for (tile_y = 0; tile_y != sprite_height; tile_y++) {
+        for (tile_x = 0; tile_x != sprite_width; tile_x += 8) {
+        u16 hl = p1;
+        u8 z = buffer[hl];
 
-        nibble = sprite_update_input_ptr(stream, high_nibble(z), &hl, &de);
-        nibble = swap_u8(nibble);
+        u8 nibble = swap_u8(sprite_update_input_ptr(stream, high_nibble(z), &hl, &de));
         de = nibble<<8 | (de & 0x00ff);
 
         nibble = sprite_update_input_ptr(stream, low_nibble(z), &hl, &de);
-        nibble = de>>8 | nibble;
-
-        hl = p1;
+        nibble |= de>>8;
 
         // 2729
         buffer[p1] = nibble;
-
-        hl += sprite_height;
-
-        // 2731
-        p1 = hl;
-        tile_x += 8;
-        if (tile_x != sprite_width)
-            continue;
+        p1 += sprite_height;
+        }
 
         // 2747
         de = de & 0xff00; // e = 0
-        tile_x = 0;
-        tile_y++;
-        if (tile_y == sprite_height) {
-            tile_y = 0;
-            return;
-        }
 
         p1 = p2 = p2+1;
     }
+    tile_y = 0;
 }
 
 static void sprite_uncompress_data(u8 *stream) // 27C7
