@@ -287,7 +287,7 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
     sprite_width = high_nibble(byte) * 8;
     buffer_flag = get_next_bit(stream);
 
-    for (;;) {
+    do {
         // 2556
         p1 = p2 = buffer_flag&1 ? a310 : a188;
         if (buffer_flag & 2)
@@ -308,10 +308,8 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
             } else {
                 r = f2595(stream);
             }
-            if (r == Z_END)
-                return;
-        } while (r != Z_START);
-    }
+        } while (r == Z_RET);
+    } while (r == Z_START);
 }
 
 static void merge_buffers(u8 *buffer)
