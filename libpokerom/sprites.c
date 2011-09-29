@@ -246,7 +246,7 @@ static int f25d8(u8 *stream)
 
 static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 {
-    u8 byte, b, b1, b2, c;
+    u8 byte, b, c;
     u16 p, de;
     int r;
 
@@ -282,12 +282,9 @@ start:
         goto lbl_2595;
 
 lbl_2580:
-    b1 = sprite_get_next_bit(stream);
-    b2 = sprite_get_next_bit(stream);
-
-    b2 = b2 | b1<<1;
-    if (b2) {
-        sprite_update_p1(b2);
+    b = sprite_get_next_bit(stream)<<1 | sprite_get_next_bit(stream);
+    if (b) {
+        sprite_update_p1(b);
         r = f25d8(stream);
         HANDLE_RET(r);
         goto lbl_2580;
