@@ -157,14 +157,11 @@ static void uncompress_data(u8 *stream) // 27C7
         for (tile_y = 0; tile_y != sprite_height; tile_y++) {
             if (input_flag) {
                 // 27F6
-                u8 a, c, v;
-
+                u8 v;
+                u8 *col_interlaced_paths = stream + 0x2867;
                 v = buffer[de];
-                a = stream[0x2867 + high_nibble(v)];
-                c = swap_u8(a);
-                a = stream[0x2867 + low_nibble(v)];
-                a |= c;
-                buffer[de] = a;
+                buffer[de] = col_interlaced_paths[high_nibble(v)]<<4 |
+                             col_interlaced_paths[low_nibble(v)];
             }
 
             // 280b
