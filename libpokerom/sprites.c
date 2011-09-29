@@ -175,15 +175,7 @@ static void uncompress_data(u8 *stream) // 27C7
     }
 }
 
-enum {Z_RET, Z_END, Z_CONTINUE};
-
-#define HANDLE_RET(r) do { \
-    switch (r) { \
-    case Z_RET:      break;      /* normal function call */                                \
-    case Z_END:      return;     /* stack pwned, return is a return in calling function */ \
-    case Z_CONTINUE: goto start; /* stack pwned, but continue loop in calling function */  \
-    } \
-} while (0)
+enum {Z_RET, Z_END, Z_START};
 
 static int f25d8(u8 *stream)
 {
@@ -215,7 +207,7 @@ static int f25d8(u8 *stream)
     tile_x = 0;
     if (!(buffer_flag & 2)) {
         buffer_flag = (buffer_flag^1) | 2;
-        return Z_CONTINUE; // ♥ How to goto over function ♥
+        return Z_START; // ♥ How to goto over function ♥
     }
 
     // 2646 (-> 26BF)
@@ -244,10 +236,40 @@ static int f25d8(u8 *stream)
     return Z_END;
 }
 
+static int f2595(u8 *stream)
+{
+    u8 c = 0;
+    while (get_next_bit(stream))
+        c++;
+
+    u16 p = GET_ADDR(0x269f + 2*c);
+
+    c++;
+    u16 de = 0x0000;
+
+    while (1) {
+        de |= get_next_bit(stream);
+        if (--c == 0)
+            break;
+        de <<= 1;
+    }
+
+    de += p;
+
+    do {
+        update_p1(0);
+        int r = f25d8(stream);
+        if (r != Z_RET)
+            return r;
+        de--;
+    } while (de);
+
+    return Z_RET;
+}
+
 static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 {
-    u8 byte, b, c;
-    u16 p, de;
+    u8 byte, b;
     int r;
 
     current_addr = addr;
@@ -274,43 +296,22 @@ start:
     }
 
     // 257A
-    if (!get_next_bit(stream))
-        goto lbl_2595;
+    if (!get_next_bit(stream)) {
+        r = f2595(stream);
+        if (r == Z_START) goto start;
+        if (r == Z_END)   return;
+    }
 
     for (;;) {
         b = get_next_bit(stream)<<1 | get_next_bit(stream);
         if (b) {
             update_p1(b);
             r = f25d8(stream);
-            HANDLE_RET(r);
-            continue;
+        } else {
+            r = f2595(stream);
         }
-
-lbl_2595:
-        c = 0;
-        while ((b = get_next_bit(stream)) != 0)
-            c++;
-
-        p = GET_ADDR(0x269f + 2*c);
-
-        c++;
-        de = 0x0000;
-
-        while (1) {
-            de |= get_next_bit(stream);
-            if (--c == 0)
-                break;
-            de <<= 1;
-        }
-
-        de += p;
-
-        do {
-            update_p1(0);
-            r = f25d8(stream);
-            HANDLE_RET(r);
-            de--;
-        } while (de);
+        if (r == Z_START) goto start;
+        if (r == Z_END)   return;
     }
 }
 
