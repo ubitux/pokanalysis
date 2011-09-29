@@ -71,8 +71,7 @@ static void sprite_update_p1(u8 a) // 2649
         a = swap_u8(a);
         break;
     case 3:
-        a = (a&1)<<7 | a>>1;
-        a = (a&1)<<7 | a>>1;
+        a = (a&3)<<6 | a>>2;
         break;
     }
     buffer[p1] |= a;
