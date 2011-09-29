@@ -22,6 +22,10 @@
 
 #include "pokerom.h"
 
+static inline u8 high_nibble(u8 c) { return c >> 4;      }
+static inline u8 low_nibble (u8 c) { return c & 0x0f;    }
+static inline u8 swap_u8    (u8 c) { return c<<4 | c>>4; }
+
 static u8 *buffer;          // output buffer
 static u16 a188 = 0x0000;   // focus part1
 static u16 a310 = 0x0188;   // focus part2
