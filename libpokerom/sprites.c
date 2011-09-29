@@ -50,7 +50,7 @@ static void write_buffer(u16 addr, u8 v)
 
 static u8 read_buffer(u16 addr)
 {
-    return (addr < 0x188 * 2) ? buffer[addr] : 0;
+    return addr < 0x188*2 ? buffer[addr] : 0;
 }
 
 static u8 sprite_get_next_byte(u8 *stream) // 268B
@@ -64,7 +64,7 @@ static u8 sprite_get_next_bit(u8 *stream) // 2670
         current_byte = sprite_get_next_byte(stream);
         current_bit = 8;
     }
-    current_byte = ((current_byte << 1) | ((current_byte & (1 << 7)) >> 7)) & 0xff;
+    current_byte = (current_byte<<1 | (current_byte>>7 & 1)) & 0xff;
     return current_byte & 1;
 }
 
@@ -78,14 +78,14 @@ static void sprite_update_p1(u8 a) // 2649
 {
     switch (p_flag) {
     case 1:
-        a = (a << 2) & 0xff;
+        a = a<<2 & 0xff;
         break;
     case 2:
         a = swap_u8(a);
         break;
     case 3:
-        a = (((a & 1) << 7) | (a >> 1)) & 0xff;
-        a = (((a & 1) << 7) | (a >> 1)) & 0xff;
+        a = ((a&1)<<7 | a>>1) & 0xff;
+        a = ((a&1)<<7 | a>>1) & 0xff;
         break;
     }
     write_buffer(p1, read_buffer(p1) | a);
@@ -107,10 +107,10 @@ static u8 sprite_update_input_ptr(u8 *stream, u8 nibble, u16 *_hl, u16 *_de) // 
     nibble >>= 1;
 
     hl = (hl & 0xff00) | nibble;
-    condition = (input_flag) ? (de & (1 << 3)) : (de & (1 << 0));
+    condition = input_flag ? de&1<<3 : de&1;
     de = (de & 0xff00) | (hl & 0x00ff);
-    hl = (condition == 0) ? input_p1 : input_p2;
-    hl += (de & 0x00ff);
+    hl = condition == 0 ? input_p1 : input_p2;
+    hl += de & 0x00ff;
 
     a = stream[hl];
     if (swap_flag == 0)
@@ -263,8 +263,8 @@ static int f25d8(u8 *stream)
 
     // 2630
     tile_x = 0;
-    if (!(buffer_flag & (1 << 1))) {
-        buffer_flag = (buffer_flag ^ 1) | (1 << 1);
+    if (!(buffer_flag & 2)) {
+        buffer_flag = (buffer_flag^1) | 2;
         return Z_CONTINUE; // ♥ How to goto over function ♥
     }
 
@@ -319,8 +319,8 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 
 start:
     // 2556
-    sprite_set_p1_p2(((buffer_flag & 1) == 0) ? a188 : a310);
-    if (buffer_flag & (1 << 1)) { /* 0b10 or 0b11 */
+    sprite_set_p1_p2(buffer_flag&1 ? a310 : a188);
+    if (buffer_flag & 2) { /* 0b10 or 0b11 */
         b = sprite_get_next_bit(stream);
         if (b) {
             b = sprite_get_next_bit(stream);
@@ -337,7 +337,7 @@ lbl_2580:
     b1 = sprite_get_next_bit(stream);
     b2 = sprite_get_next_bit(stream);
 
-    b2 = b2 | (b1 << 1);
+    b2 = b2 | b1<<1;
     if (b2) {
         sprite_update_p1(b2);
         r = f25d8(stream);
