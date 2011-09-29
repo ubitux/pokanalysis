@@ -367,30 +367,25 @@ static void merge_buffers(u8 *buffer)
     }
 }
 
-static void fill_data(u8 *dst, u8 *src, u8 ff8b, u8 ff8c, u8 ff8d)
+static void fill_column(u8 *dst, u8 *src, int w, int h)
 {
-    int a, c;
-
-    dst += ff8d;
-    for (a = 0; a < ff8b; a++, dst += 0x38)
-        for (c = 0; c < ff8c; c++)
-            dst[c] = *src++;
+    for (int x = 0; x < w; x++, dst += 7*8)
+        for (int y = 0; y < h; y++)
+            dst[y] = *src++;
 }
 
 void load_sprite(u8 *stream, u8 *pixbuf, u8 sprite_dim, int addr)
 {
     u8 b[3 * 0x188];
-    u8 ff8b, ff8c, ff8d;
 
-    ff8b = low_nibble(sprite_dim);
-    ff8d = 7 * ((8 - ff8b) >> 1);
-    ff8c = 8 * high_nibble(sprite_dim);
-    ff8d = 8 * (ff8d + 7 - high_nibble(sprite_dim));
+    int width    =     low_nibble(sprite_dim);
+    int height   = 8 * high_nibble(sprite_dim);
+    int top_skip = 8 * (7 * ((8 - width) >> 1) + 7 - high_nibble(sprite_dim));
 
     uncompress_sprite(stream, b + 0x188, addr);
 
-    memset(b,       0, 0x188); fill_data(b,       b+0x188, ff8b, ff8c, ff8d);
-    memset(b+0x188, 0, 0x188); fill_data(b+0x188, b+0x310, ff8b, ff8c, ff8d);
+    memset(b,       0, 0x188); fill_column(b+top_skip,       b+0x188, width, height);
+    memset(b+0x188, 0, 0x188); fill_column(b+top_skip+0x188, b+0x310, width, height);
     merge_buffers(b);
     rle_sprite(pixbuf, b + 0x188);
 }
