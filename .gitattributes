@@ -2,3 +2,4 @@
 .gitignore	export-ignore
 /www		export-ignore
 /utils		export-ignore
+/tests		export-ignore

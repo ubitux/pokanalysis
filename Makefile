@@ -5,3 +5,5 @@ clean:
 distclean: clean
 	$(RM) pokerom.so
 re: distclean all
+tests: all
+	$(MAKE) -C tests
