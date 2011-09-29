@@ -288,30 +288,30 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
     buffer_flag = get_next_bit(stream);
 
     for (;;) {
-    // 2556
-    p1 = p2 = buffer_flag&1 ? a310 : a188;
-    if (buffer_flag & 2)
-        misc_flag = get_next_bit(stream) ? get_next_bit(stream)+1 : 0;
+        // 2556
+        p1 = p2 = buffer_flag&1 ? a310 : a188;
+        if (buffer_flag & 2)
+            misc_flag = get_next_bit(stream) ? get_next_bit(stream)+1 : 0;
 
-    // 257A
-    if (!get_next_bit(stream)) {
-        r = f2595(stream);
-        if (r == Z_START) continue;
-        if (r == Z_END)   return;
-    }
-
-    do {
-        b = get_next_bit(stream)<<1 | get_next_bit(stream);
-        if (b) {
-            update_p1(b);
-            r = f25d8(stream);
-        } else {
+        // 257A
+        if (!get_next_bit(stream)) {
             r = f2595(stream);
+            if (r == Z_START) continue;
+            if (r == Z_END)   return;
         }
-        if (r == Z_END)
-            return;
-    } while (r != Z_START);
-}
+
+        do {
+            b = get_next_bit(stream)<<1 | get_next_bit(stream);
+            if (b) {
+                update_p1(b);
+                r = f25d8(stream);
+            } else {
+                r = f2595(stream);
+            }
+            if (r == Z_END)
+                return;
+        } while (r != Z_START);
+    }
 }
 
 static void merge_buffers(u8 *buffer)
