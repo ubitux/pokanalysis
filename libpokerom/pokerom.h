@@ -1,3 +1,5 @@
+/* vim: set et sw=4 sts=4: */
+
 /*
  *  This file is part of Pokanalysis.
  *
@@ -26,27 +28,27 @@
 # include <sys/mman.h>
 # include <fcntl.h>
 
-# define GET_ADDR(offset)	(*(u16*)&stream[offset])
-# define ROM_ADDR(bank, addr)	(((addr) > 0x3fff) ? (bank) * 0x4000 + (addr) - 0x4000 : (addr))
-# define REL_ADDR(addr)		(((addr) > 0x3fff) ? (addr) % 0x4000 + 0x4000 : (addr))
+# define GET_ADDR(offset)       (*(u16*)&stream[offset])
+# define ROM_ADDR(bank, addr)   (((addr) > 0x3fff) ? (bank) * 0x4000 + (addr) - 0x4000 : (addr))
+# define REL_ADDR(addr)         (((addr) > 0x3fff) ? (addr) % 0x4000 + 0x4000 : (addr))
 
 typedef uint8_t u8;
 typedef uint16_t u16;
 
-# define high_nibble(c)		((c) >> 4)
-# define low_nibble(c)		((c) & 0x0f)
-# define swap_u8(c)		(((c) << 4) | ((c) >> 4))
+# define high_nibble(c)         ((c) >> 4)
+# define low_nibble(c)          ((c) & 0x0f)
+# define swap_u8(c)             (((c) << 4) | ((c) >> 4))
 
 # define PACKED __attribute__((__packed__))
 
 struct rom {
-	PyObject_HEAD;
-	char *fname;
-	int fd;
-	struct stat st;
-	u8 *stream;
-	PyObject *maps;
-	PyObject *trainers;
+    PyObject_HEAD;
+    char *fname;
+    int fd;
+    struct stat st;
+    u8 *stream;
+    PyObject *maps;
+    PyObject *trainers;
 };
 
 PyObject *disasm(struct rom *, PyObject *);
