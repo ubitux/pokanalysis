@@ -238,27 +238,22 @@ static int f25d8(u8 *stream)
 
 static int f2595(u8 *stream)
 {
-    u8 c = 0;
-    while (get_next_bit(stream))
-        c++;
+    int bitlen, p, idx;
 
-    u16 p = GET_ADDR(0x269f + 2*c);
-    u16 de = 0x0000;
-    while (1) {
-        de |= get_next_bit(stream);
-        if (c-- == 0)
-            break;
-        de <<= 1;
-    }
-    de += p;
+    for (bitlen = 0; get_next_bit(stream); bitlen++);
+
+    p = GET_ADDR(0x269f + 2*bitlen);
+    for (idx = 0; bitlen >= 0; bitlen--)
+        idx = idx<<1 | get_next_bit(stream);
+    p += idx;
 
     do {
         update_p1(0);
         int r = f25d8(stream);
         if (r != Z_RET)
             return r;
-        de--;
-    } while (de);
+        p--;
+    } while (p);
 
     return Z_RET;
 }
