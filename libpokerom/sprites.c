@@ -207,7 +207,7 @@ static int f25d8(u8 *stream)
     tile_x = 0;
     if (!(buffer_flag & 2)) {
         buffer_flag = (buffer_flag^1) | 2;
-        return Z_START; // ♥ How to goto over function ♥
+        return Z_START;
     }
 
     // 2646 (-> 26BF)
@@ -287,7 +287,7 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
     sprite_width = high_nibble(byte) * 8;
     buffer_flag = get_next_bit(stream);
 
-start:
+    for (;;) {
     // 2556
     p1 = p2 = buffer_flag&1 ? a310 : a188;
     if (buffer_flag & 2)
@@ -296,11 +296,11 @@ start:
     // 257A
     if (!get_next_bit(stream)) {
         r = f2595(stream);
-        if (r == Z_START) goto start;
+        if (r == Z_START) continue;
         if (r == Z_END)   return;
     }
 
-    for (;;) {
+    do {
         b = get_next_bit(stream)<<1 | get_next_bit(stream);
         if (b) {
             update_p1(b);
@@ -308,9 +308,10 @@ start:
         } else {
             r = f2595(stream);
         }
-        if (r == Z_START) goto start;
-        if (r == Z_END)   return;
-    }
+        if (r == Z_END)
+            return;
+    } while (r != Z_START);
+}
 }
 
 static void merge_buffers(u8 *buffer)
