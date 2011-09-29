@@ -270,11 +270,7 @@ start:
     p1 = p2 = buffer_flag&1 ? a310 : a188;
     if (buffer_flag & 2) { /* 0b10 or 0b11 */
         b = get_next_bit(stream);
-        if (b) {
-            b = get_next_bit(stream);
-            b++;
-        }
-        misc_flag = b;
+        misc_flag = b ? get_next_bit(stream)+1 : 0;
     }
 
     // 257A
