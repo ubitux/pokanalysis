@@ -125,18 +125,18 @@ static void sprite_load_data(u8 *stream, u16 p) // 26D4
     // 2704
     for (tile_y = 0; tile_y != sprite_height; tile_y++) {
         for (tile_x = 0; tile_x != sprite_width; tile_x += 8) {
-        u16 hl = p1;
-        u8 z = buffer[hl];
+            u16 hl = p1;
+            u8 z = buffer[hl];
 
-        u8 nibble = swap_u8(sprite_update_input_ptr(stream, high_nibble(z), &hl, &de));
-        de = nibble<<8 | (de & 0x00ff);
+            u8 nibble = swap_u8(sprite_update_input_ptr(stream, high_nibble(z), &hl, &de));
+            de = nibble<<8 | (de & 0x00ff);
 
-        nibble = sprite_update_input_ptr(stream, low_nibble(z), &hl, &de);
-        nibble |= de>>8;
+            nibble = sprite_update_input_ptr(stream, low_nibble(z), &hl, &de);
+            nibble |= de>>8;
 
-        // 2729
-        buffer[p1] = nibble;
-        p1 += sprite_height;
+            // 2729
+            buffer[p1] = nibble;
+            p1 += sprite_height;
         }
 
         // 2747
