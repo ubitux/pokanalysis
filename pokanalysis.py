@@ -23,8 +23,7 @@ import sys, gtk, pango, re
 try:
     import pokerom
 except ImportError:
-    print('Unable to load module pokerom. Try to compile it with the following command:')
-    print('    python setup.py build_ext --inplace');
+    print('Unable to load module pokerom. Try to compile it with `make`')
     sys.exit(1)
 
 class Core:
