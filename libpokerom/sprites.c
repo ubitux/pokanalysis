@@ -277,13 +277,13 @@ start:
     if (!get_next_bit(stream))
         goto lbl_2595;
 
-lbl_2580:
+    for (;;) {
     b = get_next_bit(stream)<<1 | get_next_bit(stream);
     if (b) {
         update_p1(b);
         r = f25d8(stream);
         HANDLE_RET(r);
-        goto lbl_2580;
+        continue;
     }
 
 lbl_2595:
@@ -311,7 +311,7 @@ lbl_2595:
         HANDLE_RET(r);
         de--;
     } while (de);
-    goto lbl_2580;
+    }
 }
 
 static void merge_buffers(u8 *buffer)
