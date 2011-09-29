@@ -15,3 +15,7 @@ trainers = rom.get_trainers()
 for trainer in trainers:
     if 'name' in trainer:
         print '%-12s %08X' % (trainer['name'], crc32(trainer['pic']))
+
+maps = rom.get_maps()
+for m in maps:
+    print 'MAP%03d: %08X' % (m['id'], crc32(m['map_pic']))
