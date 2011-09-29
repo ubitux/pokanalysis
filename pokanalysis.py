@@ -217,7 +217,7 @@ class Core:
         if re.match("[A-F0-9]{2}:[A-F0-9]{4}", value):
             (bank_id, addr) = value.split(':')
             bank_id = int(bank_id, 16)
-            self.gui.get_object('notebook_main').set_current_page(2)
+            self.gui.get_object('notebook_main').set_current_page(3)
             self.gui.get_object('combobox_asm_banks').set_active(bank_id)
             text_buffer = self.gui.get_object('textview_asm').get_buffer()
             text_start_iter = text_buffer.get_start_iter()
