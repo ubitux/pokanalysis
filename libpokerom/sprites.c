@@ -92,7 +92,7 @@ static void load_data(u8 *dst, u8 *stream, u16 p) // 26D4
 
             nibble = get_tile_id(high_nibble(dst[p1]), cache);
             cache  = swap_u8(nibble)<<8 | nibble;
-            nibble = get_tile_id(low_nibble(dst[p1]),  cache);
+            nibble = get_tile_id(low_nibble(dst[p1]),  nibble);
             cache  = (cache & 0xff00) | nibble;
 
             dst[p1] = nibble | cache>>8;
@@ -106,6 +106,8 @@ static void load_data(u8 *dst, u8 *stream, u16 p) // 26D4
 
 enum {Z_RET, Z_END, Z_START};
 
+static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
+
 static int uncompress_data(u8 *dst, u8 *stream) // 27C7
 {
     reset_p1_p2(buffer_flag, &p1, &p2);
@@ -116,9 +118,8 @@ static int uncompress_data(u8 *dst, u8 *stream) // 27C7
     for (int x = 0; x != sprite_width; x += 8) {
         for (int y = 0; y != sprite_height; y++) {
             if (input_flag) {
-                u8 v, *col_interlaced_paths = stream + 0x2867;
-                v = dst[j];
-                dst[j] = col_interlaced_paths[high_nibble(v)]<<4 |
+                u8 v = dst[j];
+                dst[j] = col_interlaced_paths[high_nibble(v)+1]<<4 |
                          col_interlaced_paths[low_nibble(v)];
             }
             dst[j++] ^= dst[i++];
