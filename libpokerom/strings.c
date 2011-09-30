@@ -131,8 +131,8 @@ void get_pkmn_name(u8 *stream, char *pname, u8 pkmn_id, size_t max_len)
 
 void get_pkmn_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len)
 {
-    if      (item_id > 200) snprintf(iname, 5, "TM%02d", item_id - 200);
-    else if (item_id > 250) snprintf(iname, 5, "HM%02d", item_id - 250);
+    if      (item_id > 250) snprintf(iname, 5, "HM%02d", item_id - 250);
+    else if (item_id > 200) snprintf(iname, 5, "TM%02d", item_id - 200);
     else    load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x01, 4), iname, item_id, max_len);
 }
 

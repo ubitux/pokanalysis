@@ -93,8 +93,7 @@ static PyObject *get_pkmn_HM_TM(u8 *stream, struct pkmn_header_raw *h)
             char name[30];
             char tmhm[5];
 
-            if (id <= 50) snprintf(tmhm, 5, "TM%02d", id);
-            else          snprintf(tmhm, 5, "HM%02d", id - 50);
+            get_pkmn_item_name(stream, tmhm, id+200, sizeof tmhm);
             get_pkmn_move_name(stream, name, stream[ROM_ADDR(0x04, 0x7773 + id - 1)], sizeof(name));
             PyList_Append(list, Py_BuildValue("ss", tmhm, name));
         }
