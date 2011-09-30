@@ -72,30 +72,23 @@ static const u8 tileid_map[] = {
     15,  7,  3, 11,  1,  9, 13,  5,  0,  8, 12,  4, 14,  6,  2, 10,
 };
 
-static u8 get_tile_id(int i, u16 cache, int flag)
+static u8 get_tile_id(int i, u8 prev, int flag)
 {
-    if (flag) return tileid_map[2*16 + (cache>>3 & 1) * 16 + i];
-    else      return tileid_map[       (cache    & 1) * 16 + i];
+    if (flag) return tileid_map[2*16 + (prev>>3 & 1) * 16 + i];
+    else      return tileid_map[       (prev    & 1) * 16 + i];
 }
 
 static void load_data(u8 *dst, int flag)
 {
-    u16 cache = 0;
-
     for (int y = 0; y != sprite_height; y++) {
         u8 *d = dst;
+        u8 a, b = 0;
         for (int x = 0; x != sprite_width; x += 8) {
-            u8 nibble;
-
-            nibble = get_tile_id(high_nibble(d[y]), cache,  flag);
-            cache  = swap_u8(nibble)<<8 | nibble;
-            nibble = get_tile_id(low_nibble(d[y]),  nibble, flag);
-            cache  = (cache & 0xff00) | nibble;
-
-            d[y] = nibble | cache>>8;
+            a = get_tile_id(high_nibble(d[y]), b, flag);
+            b = get_tile_id(low_nibble(d[y]),  a, flag);
+            d[y] = a<<4 | b;
             d += sprite_height;
         }
-        cache &= 0xff00;
     }
 }
 
