@@ -74,9 +74,9 @@ void get_item_name(     u8 *stream, char *iname, u8 item_id,    size_t max_len);
 void get_pkmn_move_name(u8 *stream, char *mname, u8 move_id,    size_t max_len);
 void get_trainer_name(  u8 *stream, char *tname, u8 trainer_id, size_t max_len);
 
-void load_tile(  u8 *dst, const u8 *src, int color_key);
-void merge_tiles(u8 *dst, const u8 *src, int color_key);
-void flip_tile(u8 *tile);
+void load_tile     (u8 *dst, const u8 *src, int color_key);
+void load_flip_tile(u8 *dst, const u8 *src, int color_key);
+void merge_tiles   (u8 *dst, const u8 *src, int color_key);
 
 void load_sprite(u8 *pixbuf, const u8 *src);
 void load_string(char *dest, u8 *src, size_t max_len, int fixed_str_len);

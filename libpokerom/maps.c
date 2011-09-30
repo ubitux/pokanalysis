@@ -129,9 +129,9 @@ static void load_block(u8 *stream, struct submap *map, u8 *pixbuf, u8 *blocks, u
                 int n = (j % 2) * 2 + (i + bi.flip) % 2;
                 u8 entity_pixbuf[8*8 * BPP];
 
-                load_tile(entity_pixbuf, &stream[bi.entity_addr + n * 16], bi.color_key);
-                if (bi.flip)
-                    flip_tile(entity_pixbuf);
+                if (bi.flip) load_flip_tile(entity_pixbuf, &stream[bi.entity_addr + n * 16], bi.color_key);
+                else         load_tile     (entity_pixbuf, &stream[bi.entity_addr + n * 16], bi.color_key);
+
                 load_tile(tile_pixbuf, &tiles[*blocks++ * 16], DEFAULT_COLORS_OFFSET);
                 merge_tiles(tile_pixbuf, entity_pixbuf, ENTITIES_COLORS_OFFSET);
             } else {
