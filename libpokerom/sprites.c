@@ -135,7 +135,7 @@ static int uncompress_data(u8 *dst, u8 *stream) // 27C7
                 u8 v, *col_interlaced_paths = stream + 0x2867;
                 v = dst[j];
                 dst[j] = col_interlaced_paths[high_nibble(v)]<<4 |
-                            col_interlaced_paths[low_nibble(v)];
+                         col_interlaced_paths[low_nibble(v)];
             }
             dst[j++] ^= dst[i++];
         }
