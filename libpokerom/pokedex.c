@@ -216,7 +216,7 @@ static void load_pokemon_sprite(u8 *stream, struct pkmn_header_raw *h, u8 *pixbu
         }
     }
     addr = ROM_ADDR(get_bank_from_rom_pkmn_id(rom_pkmn_id), sprite_addr);
-    load_sprite(stream, pixbuf, sprite_dim, addr);
+    load_sprite(pixbuf, stream+addr, sprite_dim);
 }
 
 static PyObject *get_pixbuf(u8 *stream, struct pkmn_header_raw *h, u8 pkmn_id)

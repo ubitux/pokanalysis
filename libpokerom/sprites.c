@@ -80,7 +80,7 @@ static u8 get_tile_id(int i, u16 cache) // 276D
     else            return tileid_map[       (cache    & 1) * 16 + i];
 }
 
-static void load_data(u8 *dst, u8 *stream, u16 p) // 26D4
+static void load_data(u8 *dst, u16 p) // 26D4
 {
     u16 cache = 0;
 
@@ -108,10 +108,10 @@ enum {Z_RET, Z_END, Z_START};
 
 static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 
-static int uncompress_data(u8 *dst, u8 *stream) // 27C7
+static int uncompress_data(u8 *dst) // 27C7
 {
     reset_p1_p2(buffer_flag, &p1, &p2);
-    load_data(dst, stream, p1);
+    load_data(dst, p1);
     reset_p1_p2(buffer_flag, &p1, &p2);
 
     int i = p1, j = p2;
@@ -130,7 +130,7 @@ static int uncompress_data(u8 *dst, u8 *stream) // 27C7
 
 struct tile { int x, y; };
 
-static int f25d8(u8 *dst, u8 *stream, struct tile *tile)
+static int f25d8(u8 *dst, struct tile *tile)
 {
     if (tile->y+1 != sprite_height) {
         tile->y++;
@@ -170,23 +170,23 @@ static int f25d8(u8 *dst, u8 *stream, struct tile *tile)
 
         reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = 0;
-        load_data(dst, stream, p2);
+        load_data(dst, p2);
         reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = input_flag_backup;
-        return uncompress_data(dst, stream);
+        return uncompress_data(dst);
     }
 
     // 26C7
     if (misc_flag)
-        return uncompress_data(dst, stream);
+        return uncompress_data(dst);
 
     // 26CB
-    load_data(dst, stream,     0);
-    load_data(dst, stream, 7*7*8);
+    load_data(dst,     0);
+    load_data(dst, 7*7*8);
     return Z_END;
 }
 
-static int f2595(u8 *dst, u8 *stream, struct tile *tile, struct getbits *gb)
+static int f2595(u8 *dst, struct tile *tile, struct getbits *gb)
 {
     int bitlen, p = 1, idx;
 
@@ -199,7 +199,7 @@ static int f2595(u8 *dst, u8 *stream, struct tile *tile, struct getbits *gb)
 
     do {
         dst[p1] |= next_a(0, p_flag);
-        int r = f25d8(dst, stream, tile);
+        int r = f25d8(dst, tile);
         if (r != Z_RET)
             return r;
         p--;
@@ -208,11 +208,11 @@ static int f2595(u8 *dst, u8 *stream, struct tile *tile, struct getbits *gb)
     return Z_RET;
 }
 
-static void uncompress_sprite(u8 *stream, u8 *dst, int addr) // 251A
+static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
 {
     u8 byte, b;
     int r;
-    struct getbits gb = {.stream=stream+addr, .bit=1};
+    struct getbits gb = {.stream=src, .bit=1};
     struct tile tile  = {.x = 0, .y = 0};
 
     memset(dst, 0, 0x310);
@@ -231,7 +231,7 @@ static void uncompress_sprite(u8 *stream, u8 *dst, int addr) // 251A
 
         // 257A
         if (!get_next_bit(&gb)) {
-            r = f2595(dst, stream, &tile, &gb);
+            r = f2595(dst, &tile, &gb);
             if (r == Z_START) continue;
             if (r == Z_END)   return;
         }
@@ -240,9 +240,9 @@ static void uncompress_sprite(u8 *stream, u8 *dst, int addr) // 251A
             b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
                 dst[p1] |= next_a(b, p_flag);
-                r = f25d8(dst, stream, &tile);
+                r = f25d8(dst, &tile);
             } else {
-                r = f2595(dst, stream, &tile, &gb);
+                r = f2595(dst, &tile, &gb);
             }
         } while (r == Z_RET);
     } while (r == Z_START);
@@ -270,7 +270,7 @@ static void fill_column(u8 *dst, u8 *src, int w, int h)
             dst[y] = *src++;
 }
 
-void load_sprite(u8 *stream, u8 *pixbuf, u8 sprite_dim, int addr)
+void load_sprite(u8 *pixbuf, const u8 *src, u8 sprite_dim)
 {
     u8 b[3 * 0x188];
 
@@ -278,7 +278,7 @@ void load_sprite(u8 *stream, u8 *pixbuf, u8 sprite_dim, int addr)
     int height   = 8 * high_nibble(sprite_dim);
     int top_skip = 8 * (7 * ((8 - width) >> 1) + 7 - high_nibble(sprite_dim));
 
-    uncompress_sprite(stream, b + 0x188, addr);
+    uncompress_sprite(b+0x188, src);
 
     memset(b,       0, 0x188); fill_column(b+top_skip,       b+0x188, width, height);
     memset(b+0x188, 0, 0x188); fill_column(b+top_skip+0x188, b+0x310, width, height);

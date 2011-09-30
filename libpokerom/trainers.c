@@ -53,7 +53,7 @@ static PyObject *get_trainer(u8 *stream, int id, int set_id)
 
     // extract trainer pic
     addr = ROM_ADDR(0x13, GET_ADDR(hdr_addr)); // bank #4 when is for link, otherwise #13
-    load_sprite(stream, pixbuf, 0x77, addr);
+    load_sprite(pixbuf, stream+addr, 0x77);
 
     PyDict_SetItemString(trainer, "team", team);
     PyDict_SetItemString(trainer, "name", Py_BuildValue("s", tname));
