@@ -197,7 +197,7 @@ static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
 
 static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
 {
-    u8 byte;
+    u8 dim;
     int r = -1, misc_flag = 0, op = OP_ROTATE_2;
     struct getbits gb = {.stream=src, .bit=1};
     struct tile tile  = {.x = 0, .y = 0};
@@ -205,9 +205,9 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
     memset(dst, 0, 0x310);
 
     /* Header */
-    byte = *gb.stream++;
-    int sprite_w    = high_nibble(byte) * 8;
-    int sprite_h    = low_nibble(byte)  * 8;
+    dim = *gb.stream++;
+    int sprite_w    = high_nibble(dim) * 8;
+    int sprite_h    = low_nibble(dim)  * 8;
     int buffer_flag = get_next_bit(&gb);
 
     /* Decompression */
@@ -241,7 +241,7 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
             }
         } while (r == Z_RET);
     } while (r == Z_START);
-    return byte;
+    return dim;
 }
 
 /*          src2       src1       dest
