@@ -188,11 +188,11 @@ static int f25d8(u8 *dst, u8 *stream, struct tile *tile)
 
 static int f2595(u8 *dst, u8 *stream, struct tile *tile, struct getbits *gb)
 {
-    int bitlen, p, idx;
+    int bitlen, p = 1, idx;
 
-    for (bitlen = 0; get_next_bit(gb); bitlen++);
+    for (bitlen = 0; get_next_bit(gb); bitlen++)
+        p = p<<1 | 1;
 
-    p = GET_ADDR(0x269f + 2*bitlen);
     for (idx = 0; bitlen >= 0; bitlen--)
         idx = idx<<1 | get_next_bit(gb);
     p += idx;
