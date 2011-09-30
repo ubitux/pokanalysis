@@ -27,13 +27,13 @@
 PyObject *get_special_items(u8 *stream, int map_id)
 {
     u8 *data;
-    int index = 0;
+    int idx = 0;
     PyObject *list = PyList_New(0);
 
-    for (data = &stream[MAP_IDS_ADDR]; *data != 0xff; data++, index += 2) {
+    for (data = &stream[MAP_IDS_ADDR]; *data != 0xff; data++, idx += 2) {
         if (*data != map_id)
             continue;
-        u8 *item_data = &stream[ROM_ADDR(0x11, GET_ADDR(ROM_ADDR(0x11, 0x6a96 + index)))];
+        u8 *item_data = &stream[ROM_ADDR(0x11, GET_ADDR(ROM_ADDR(0x11, 0x6a96 + idx)))];
         if (item_data[3] == 0x1d) {
             char iname[30];
 
@@ -49,16 +49,16 @@ PyObject *get_special_items(u8 *stream, int map_id)
 void apply_filter(u8 *stream, u8 *pixbuf, int map_id, int w)
 {
     int map_id_addr;
-    int index = 0;
+    int idx = 0;
 
     if (!pixbuf)
         return;
 
-    for (map_id_addr = MAP_IDS_ADDR; stream[map_id_addr] != 0xff; map_id_addr++, index += 2) {
+    for (map_id_addr = MAP_IDS_ADDR; stream[map_id_addr] != 0xff; map_id_addr++, idx += 2) {
         if (stream[map_id_addr] != map_id)
             continue;
 
-        int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + index);
+        int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + idx);
         int item_addr = ROM_ADDR(0x11, GET_ADDR(item_ptr_addr));
         int y = stream[item_addr];
         int x = stream[item_addr + 1];
