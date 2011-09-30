@@ -80,27 +80,24 @@ static u8 get_tile_id(int i, u16 cache) // 276D
     else            return tileid_map[       (cache    & 1) * 16 + i];
 }
 
-static void load_data(u8 *dst, u16 p) // 26D4
+static void load_data(u8 *dst)
 {
     u16 cache = 0;
 
-    p1 = p2 = p;
-
     for (int y = 0; y != sprite_height; y++) {
+        u8 *d = dst;
         for (int x = 0; x != sprite_width; x += 8) {
             u8 nibble;
 
-            nibble = get_tile_id(high_nibble(dst[p1]), cache);
+            nibble = get_tile_id(high_nibble(d[y]), cache);
             cache  = swap_u8(nibble)<<8 | nibble;
-            nibble = get_tile_id(low_nibble(dst[p1]),  nibble);
+            nibble = get_tile_id(low_nibble(d[y]),  nibble);
             cache  = (cache & 0xff00) | nibble;
 
-            dst[p1] = nibble | cache>>8;
-            p1 += sprite_height;
+            d[y] = nibble | cache>>8;
+            d += sprite_height;
         }
-
         cache &= 0xff00;
-        p1 = p2 = p2+1;
     }
 }
 
@@ -111,7 +108,7 @@ static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15}
 static int uncompress_data(u8 *dst) // 27C7
 {
     reset_p1_p2(buffer_flag, &p1, &p2);
-    load_data(dst, p1);
+    load_data(dst + p1);
     reset_p1_p2(buffer_flag, &p1, &p2);
 
     int i = p1, j = p2;
@@ -170,7 +167,7 @@ static int f25d8(u8 *dst, struct tile *tile)
 
         reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = 0;
-        load_data(dst, p2);
+        load_data(dst + p2);
         reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = input_flag_backup;
         return uncompress_data(dst);
@@ -181,8 +178,8 @@ static int f25d8(u8 *dst, struct tile *tile)
         return uncompress_data(dst);
 
     // 26CB
-    load_data(dst,     0);
-    load_data(dst, 7*7*8);
+    load_data(dst);
+    load_data(dst + 7*7*8);
     return Z_END;
 }
 
