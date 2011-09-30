@@ -26,9 +26,6 @@ static inline u8 high_nibble(u8 c) { return c >> 4;      }
 static inline u8 low_nibble (u8 c) { return c & 0x0f;    }
 static inline u8 swap_u8    (u8 c) { return c<<4 | c>>4; }
 
-static u16 a188 = 0x0000;   // focus part1
-static u16 a310 = 0x0188;   // focus part2
-
 static u8 sprite_width;     // d0a3
 static u8 sprite_height;    // d0a4
 static u8 p_flag;           // d0a7
@@ -68,8 +65,8 @@ static u8 next_a(u8 a, int x) // 2649
 
 static void reset_p1_p2(int b, u16 *ptr1, u16 *ptr2) // 2841
 {
-    if (b & 1) *ptr1 = a188, *ptr2 = a310;
-    else       *ptr1 = a310, *ptr2 = a188;
+    if (b & 1) *ptr1 =     0, *ptr2 = 7*7*8;
+    else       *ptr1 = 7*7*8, *ptr2 =     0;
 }
 
 static int update_input_ptr(u8 *stream, u8 nibble, u16 *hl, u16 *de) // 276D
@@ -194,8 +191,8 @@ static int f25d8(u8 *dst, u8 *stream, struct tile *tile)
         return uncompress_data(dst, stream);
 
     // 26CB
-    load_data(dst, stream, a188);
-    load_data(dst, stream, a310);
+    load_data(dst, stream,     0);
+    load_data(dst, stream, 7*7*8);
     return Z_END;
 }
 
@@ -238,7 +235,7 @@ static void uncompress_sprite(u8 *stream, u8 *dst, int addr) // 251A
 
     do {
         // 2556
-        p1 = p2 = buffer_flag&1 ? a310 : a188;
+        p1 = p2 = (buffer_flag & 1) * 7*7*8;
         if (buffer_flag & 2)
             misc_flag = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
 
