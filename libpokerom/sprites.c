@@ -61,14 +61,14 @@ static u8 get_next_bit(u8 *stream) // 2670
     return current_byte & 1;
 }
 
-static void update_p1(u8 a) // 2649
+static u8 next_a(u8 a, int x) // 2649
 {
-    switch (p_flag) {
-    case 1: a = a << 2;          break;
-    case 2: a = swap_u8(a);      break;
-    case 3: a = (a&3)<<6 | a>>2; break;
+    switch (x) {
+    case 1:  return a << 2;
+    case 2:  return swap_u8(a);
+    case 3:  return (a&3)<<6 | a>>2;
+    default: return a;
     }
-    buffer[p1] |= a;
 }
 
 static void reset_p1_p2(int b, u16 *ptr1, u16 *ptr2) // 2841
@@ -216,7 +216,7 @@ static int f2595(u8 *stream)
     p += idx;
 
     do {
-        update_p1(0);
+        buffer[p1] |= next_a(0, p_flag);
         int r = f25d8(stream);
         if (r != Z_RET)
             return r;
@@ -262,7 +262,7 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
         do {
             b = get_next_bit(stream)<<1 | get_next_bit(stream);
             if (b) {
-                update_p1(b);
+                buffer[p1] |= next_a(b, p_flag);
                 r = f25d8(stream);
             } else {
                 r = f2595(stream);
