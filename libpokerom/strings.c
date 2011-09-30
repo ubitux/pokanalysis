@@ -121,27 +121,27 @@ static void load_packed_text_string(u8 *data, char *dst, u8 id, size_t max_len)
     load_string(dst, data, max_len, 0);
 }
 
+#define TEXT_BASE_ADDR(b, i) &stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
+
 void get_pkmn_name(u8 *stream, char *pname, u8 pkmn_id, size_t max_len)
 {
-    int rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (pkmn_id - 1));
-    load_string(pname, stream + rom_addr, max_len, 10);
+    u8 *addr = TEXT_BASE_ADDR(0x07, 1) + 0x0A * (pkmn_id - 1);
+    load_string(pname, addr, max_len, 10);
 }
-
-#define PACKED_TEXT_BASE_ADDR(b, i) &stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
 
 void get_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len)
 {
     if      (item_id > 250) snprintf(iname, 5, "HM%02d", item_id - 250);
     else if (item_id > 200) snprintf(iname, 5, "TM%02d", item_id - 200);
-    else    load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x01, 4), iname, item_id, max_len);
+    else    load_packed_text_string(TEXT_BASE_ADDR(0x01, 4), iname, item_id, max_len);
 }
 
 void get_pkmn_move_name(u8 *stream, char *mname, u8 move_id, size_t max_len)
 {
-    load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x2c, 2), mname, move_id, max_len);
+    load_packed_text_string(TEXT_BASE_ADDR(0x2c, 2), mname, move_id, max_len);
 }
 
 void get_trainer_name(u8 *stream, char *tname, u8 trainer_id, size_t max_len)
 {
-    load_packed_text_string(PACKED_TEXT_BASE_ADDR(0x0e, 7), tname, trainer_id, max_len);
+    load_packed_text_string(TEXT_BASE_ADDR(0x0e, 7), tname, trainer_id, max_len);
 }
