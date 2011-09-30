@@ -125,33 +125,20 @@ static void load_data(u8 *stream, u16 p) // 26D4
 
 static void uncompress_data(u8 *stream) // 27C7
 {
-    u16 hl, de;
-
-    tile_x = tile_y = 0;
     reset_p1_p2();
     load_data(stream, p1);
     reset_p1_p2();
 
-    // 27DF
-    hl = p1;
-    de = p2;
-
-    // 27EF
+    int i = p1, j = p2;
     for (tile_x = 0; tile_x != sprite_width; tile_x += 8) {
         for (tile_y = 0; tile_y != sprite_height; tile_y++) {
             if (input_flag) {
-                // 27F6
-                u8 v;
-                u8 *col_interlaced_paths = stream + 0x2867;
-                v = buffer[de];
-                buffer[de] = col_interlaced_paths[high_nibble(v)]<<4 |
-                             col_interlaced_paths[low_nibble(v)];
+                u8 v, *col_interlaced_paths = stream + 0x2867;
+                v = buffer[j];
+                buffer[j] = col_interlaced_paths[high_nibble(v)]<<4 |
+                            col_interlaced_paths[low_nibble(v)];
             }
-
-            // 280b
-            buffer[de] ^= buffer[hl];
-            hl++;
-            de++;
+            buffer[j++] ^= buffer[i++];
         }
     }
 }
