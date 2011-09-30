@@ -65,20 +65,20 @@ static const u8 tileid_map[] = {
     15,  7,  3, 11,  1,  9, 13,  5,  0,  8, 12,  4, 14,  6,  2, 10,
 };
 
-static u8 get_tile_id(int i, u8 prev, int flag)
+static u8 get_tile_id(int i, u8 prev, int flip)
 {
-    if (flag) return tileid_map[2*16 + (prev>>3 & 1) * 16 + i];
+    if (flip) return tileid_map[2*16 + (prev>>3 & 1) * 16 + i];
     else      return tileid_map[       (prev    & 1) * 16 + i];
 }
 
-static void load_data(u8 *dst, int flag, int sprite_h, int sprite_w)
+static void load_data(u8 *dst, int flip, int sprite_h, int sprite_w)
 {
     for (int y = 0; y != sprite_h; y++) {
         u8 *d = dst;
         u8 a, b = 0;
         for (int x = 0; x != sprite_w; x += 8) {
-            a = get_tile_id(high_nibble(d[y]), b, flag);
-            b = get_tile_id(low_nibble(d[y]),  a, flag);
+            a = get_tile_id(high_nibble(d[y]), b, flip);
+            b = get_tile_id(low_nibble(d[y]),  a, flip);
             d[y] = a<<4 | b;
             d += sprite_h;
         }
@@ -89,16 +89,16 @@ enum {Z_RET, Z_END, Z_START};
 
 static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 
-static int uncompress_data(u8 *dst, int flag, int *b_flag, int *p1, int *p2,
+static int uncompress_data(u8 *dst, int flip, int *b_flag, int *p1, int *p2,
                            int sprite_w, int sprite_h)
 {
     reset_p1_p2(*b_flag, p1, p2);
-    load_data(dst + *p1, flag, sprite_w, sprite_h);
+    load_data(dst + *p1, flip, sprite_w, sprite_h);
 
     int i = *p1, j = *p2;
     for (int x = 0; x != sprite_w; x += 8) {
         for (int y = 0; y != sprite_h; y++) {
-            if (flag) {
+            if (flip) {
                 u8 v = dst[j];
                 dst[j] = col_interlaced_paths[high_nibble(v)+1]<<4 |
                          col_interlaced_paths[low_nibble(v)];
@@ -145,24 +145,24 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
         return Z_START;
     }
 
-    int input_flag = 0; // XXX: 0xd0aa; does not seem to work with ≠ 0
+    int flip = 0; // XXX: 0xd0aa; does not seem to work with ≠ 0
 
     // 2646 (-> 26BF)
     if (misc_flag == 2) {
         reset_p1_p2(*b_flag, p1, p2);
         load_data(dst + *p2, 0, sprite_w, sprite_h);
-        return uncompress_data(dst, input_flag, b_flag, p1, p2,
+        return uncompress_data(dst, flip, b_flag, p1, p2,
                                sprite_w, sprite_h);
     }
 
     // 26C7
     if (misc_flag)
-        return uncompress_data(dst, input_flag, b_flag, p1, p2,
+        return uncompress_data(dst, flip, b_flag, p1, p2,
                                sprite_w, sprite_h);
 
     // 26CB
-    load_data(dst        , input_flag, sprite_w, sprite_h);
-    load_data(dst + 7*7*8, input_flag, sprite_w, sprite_h);
+    load_data(dst        , flip, sprite_w, sprite_h);
+    load_data(dst + 7*7*8, flip, sprite_w, sprite_h);
     return Z_END;
 }
 
