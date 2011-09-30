@@ -195,7 +195,7 @@ static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
     return Z_RET;
 }
 
-static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
+static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
 {
     u8 byte, b;
     int r = -1, misc_flag = 0, op = OP_ROTATE_2;
@@ -226,7 +226,7 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
             r = f2595(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
                       sprite_w, sprite_h, misc_flag);
             if (r == Z_START) continue;
-            if (r == Z_END)   return;
+            if (r == Z_END)   break;
         }
 
         do {
@@ -241,6 +241,7 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
             }
         } while (r == Z_RET);
     } while (r == Z_START);
+    return byte;
 }
 
 /*          src2       src1       dest
@@ -276,15 +277,14 @@ static void place_pic(u8 *dst, int w, int h, int start_skip)
             dst[y] = *src++;
 }
 
-void load_sprite(u8 *pixbuf, const u8 *src, u8 sprite_dim)
+void load_sprite(u8 *pixbuf, const u8 *src)
 {
     u8 b[3 * 0x188];
+    u8 sprite_dim = uncompress_sprite(b+0x188, src);
 
     int width      =     low_nibble(sprite_dim);
     int height     = 8 * high_nibble(sprite_dim);
     int start_skip = 8 * (7 * ((8 - width) >> 1) + 7 - high_nibble(sprite_dim));
-
-    uncompress_sprite(b+0x188, src);
 
     place_pic(b,       width, height, start_skip);
     place_pic(b+0x188, width, height, start_skip);

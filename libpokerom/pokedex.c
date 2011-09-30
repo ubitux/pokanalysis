@@ -199,24 +199,21 @@ static int get_pkmn_header_address(u8 *stream, u8 rom_pkmn_id)
 static void load_pokemon_sprite(u8 *stream, struct pkmn_header_raw *h, u8 *pixbuf, u8 rom_pkmn_id, int back)
 {
     int addr;
-    u8 sprite_dim;
     u16 sprite_addr;
 
     if (back) {
         sprite_addr = h->sprite_back_addr;
-        sprite_dim = 0x44;
     } else {
         switch (rom_pkmn_id) {
-        case 0xb6: sprite_addr = 0x79E8; sprite_dim = 0x66; break;
-        case 0xb7: sprite_addr = 0x6536; sprite_dim = 0x77; break;
-        case 0xb8: sprite_addr = 0x66b5; sprite_dim = 0x66; break;
+        case 0xb6: sprite_addr = 0x79E8; break;
+        case 0xb7: sprite_addr = 0x6536; break;
+        case 0xb8: sprite_addr = 0x66b5; break;
         default:
             sprite_addr = h->sprite_front_addr;
-            sprite_dim = h->sprite_front_dim;
         }
     }
     addr = ROM_ADDR(get_bank_from_rom_pkmn_id(rom_pkmn_id), sprite_addr);
-    load_sprite(pixbuf, stream+addr, sprite_dim);
+    load_sprite(pixbuf, stream+addr);
 }
 
 static PyObject *get_pixbuf(u8 *stream, struct pkmn_header_raw *h, u8 pkmn_id)
