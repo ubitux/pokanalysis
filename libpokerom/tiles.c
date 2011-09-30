@@ -38,8 +38,8 @@ void load_tile(u8 *dst, const u8 *src, int color_key)
         u8 byte2 = *src++;
 
         for (int x = 7; x >= 0; x--) {
-            memcpy(dst, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], 3);
-            dst += 3;
+            memcpy(dst, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], BPP);
+            dst += BPP;
         }
     }
 }
@@ -53,8 +53,8 @@ void load_flip_tile(u8 *dst, const u8 *src, int color_key)
         u8 byte2 = *src++;
 
         for (int x = 0; x < 8; x++) {
-            memcpy(dst, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], 3);
-            dst += 3;
+            memcpy(dst, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], BPP);
+            dst += BPP;
         }
     }
 }
