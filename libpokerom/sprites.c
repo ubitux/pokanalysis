@@ -69,13 +69,13 @@ static void reset_p1_p2(int b, u16 *ptr1, u16 *ptr2) // 2841
     else       *ptr1 = 7*7*8, *ptr2 =     0;
 }
 
-static int update_input_ptr(u8 *stream, u8 nibble, u16 *hl, u16 *de) // 276D
+static int update_input_ptr(u8 *stream, u8 nibble, u16 *de) // 276D
 {
-    int r, in;
+    int r, in, i;
 
     in  = input_flag ? *de & 1<<3 : *de & 1;
-    *hl = (in == 0 ? input_p1 : input_p2) + (nibble>>1);
-    r   = nibble&1 ? low_nibble(stream[*hl]) : high_nibble(stream[*hl]);
+    i   = (in == 0 ? input_p1 : input_p2) + (nibble>>1);
+    r   = nibble&1 ? low_nibble(stream[i]) : high_nibble(stream[i]);
     *de = (*de & 0xff00) | r;
     return r;
 }
@@ -94,13 +94,12 @@ static void load_data(u8 *dst, u8 *stream, u16 p) // 26D4
     // 2704
     for (int y = 0; y != sprite_height; y++) {
         for (int x = 0; x != sprite_width; x += 8) {
-            u16 hl = p1;
-            u8 z = dst[hl];
+            u8 z = dst[p1];
 
-            u8 nibble = swap_u8(update_input_ptr(stream, high_nibble(z), &hl, &de));
+            u8 nibble = swap_u8(update_input_ptr(stream, high_nibble(z), &de));
             de = nibble<<8 | (de & 0x00ff);
 
-            nibble = update_input_ptr(stream, low_nibble(z), &hl, &de);
+            nibble = update_input_ptr(stream, low_nibble(z), &de);
             nibble |= de>>8;
 
             // 2729
