@@ -82,7 +82,7 @@ static u8 get_tile_id(int i, u16 cache) // 276D
 
 static void load_data(u8 *dst, u8 *stream, u16 p) // 26D4
 {
-    u16 cache = 0x2700; // input_p2 & 0xff00; XXX: pointless?
+    u16 cache = 0;
 
     p1 = p2 = p;
 
