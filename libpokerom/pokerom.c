@@ -43,10 +43,10 @@ static int rom_init(struct rom *self, PyObject *args, PyObject *kwds)
 }
 
 static PyMethodDef rom_methods[] = {
-    {"get_maps",    (PyCFunction)get_maps,    METH_NOARGS,  "Game maps"},
-    {"get_pokedex", (PyCFunction)get_pokedex, METH_NOARGS,  "Get all Pokémon"},
-    {"get_trainers", (PyCFunction)get_trainers, METH_NOARGS, "Get all trainers"},
-    {"disasm",      (PyCFunction)disasm,      METH_VARARGS, "Disassemble given bank"},
+    {"get_maps",     (PyCFunction)get_maps,     METH_NOARGS,  "Game maps"},
+    {"get_pokedex",  (PyCFunction)get_pokedex,  METH_NOARGS,  "Get all Pokémon"},
+    {"get_trainers", (PyCFunction)get_trainers, METH_NOARGS,  "Get all trainers"},
+    {"disasm",       (PyCFunction)disasm,       METH_VARARGS, "Disassemble given bank"},
     {NULL, NULL, 0, NULL}
 };
 
