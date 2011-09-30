@@ -244,6 +244,28 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
     return dim;
 }
 
+static void runlength_dec_sprite(u8 *dst, const u8 *src)
+{
+    int i, j, pixbuf_offset = 0;
+
+    for (j = 0; j < 7; j++) {
+        for (i = 0; i < 7; i++) {
+            u8 tile_pixbuf[8*8 * BPP];
+            int tile_offset = 0;
+
+            load_tile(tile_pixbuf, src, 0);
+            src += 0x10;
+            for (int y = 0; y < 8; y++) {
+                memcpy(dst+pixbuf_offset, tile_pixbuf+tile_offset, 8*BPP);
+                tile_offset   +=     8*BPP;
+                pixbuf_offset += 7 * 8*BPP;
+            }
+        }
+        pixbuf_offset = pixbuf_offset - 7*7*8*BPP*8 + BPP*8;
+    }
+}
+
+
 /*          src2       src1       dest
  *  n=0   AAAAAAAAAA BBBBBBBBBB ..........
  *  n=1   AAAAAAAAAA BBBBBBBBB# .........B
@@ -277,6 +299,7 @@ static void place_pic(u8 *dst, int w, int h, int start_skip)
             dst[y] = *src++;
 }
 
+/* 1 sprite = 7x7 tiles (max) */
 void load_sprite(u8 *pixbuf, const u8 *src)
 {
     u8 b[3 * 0x188];
@@ -289,5 +312,5 @@ void load_sprite(u8 *pixbuf, const u8 *src)
     place_pic(b,       width, height, start_skip);
     place_pic(b+0x188, width, height, start_skip);
     interlace_merge(b);
-    rle_sprite(pixbuf, b + 0x188);
+    runlength_dec_sprite(pixbuf, b + 0x188);
 }

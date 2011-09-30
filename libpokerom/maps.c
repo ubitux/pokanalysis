@@ -22,31 +22,8 @@
 
 #include "pokerom.h"
 
-enum {DEFAULT_COLORS_OFFSET, WARPS_COLORS_OFFSET, SIGNS_COLORS_OFFSET, ENTITIES_COLORS_OFFSET};
-static char *color_set[][4] = {
-    [DEFAULT_COLORS_OFFSET]  = {"\xE8\xE8\xE8", "\x58\x58\x58", "\xA0\xA0\xA0", "\x10\x10\x10"},
-    [WARPS_COLORS_OFFSET]    = {"\xE8\xC0\xC0", "\xC0\x58\x58", "\xC0\xA0\xA0", "\xC0\x10\x10"},
-    [SIGNS_COLORS_OFFSET]    = {"\xC0\xC0\xE8", "\x58\x58\xC0", "\xA0\xA0\xC0", "\x10\x10\xC0"},
-    [ENTITIES_COLORS_OFFSET] = {"\xE8\xC0\xE8", "\xC0\x58\xC0", "\xC0\xA0\xC0", "\xC0\x10\xC0"},
-};
-
 #define TILE_X 8
 #define TILE_Y 8
-
-static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_key)
-{
-    char **colors = color_set[color_key];
-
-    for (int y = 0; y < TILE_Y; y++) {
-        u8 byte1 = *src++;
-        u8 byte2 = *src++;
-
-        for (int x = TILE_X - 1; x >= 0; x--) {
-            memcpy(pixbuf, colors[(byte1>>x & 1) << 1 | (byte2>>x & 1)], 3);
-            pixbuf += 3;
-        }
-    }
-}
 
 #define PIXBUF_TILE_SIZE        (TILE_Y * TILE_X * 3)
 #define PIXBUF_TILE_LINE_SIZE   (TILE_X * 3)
@@ -56,27 +33,6 @@ static void load_tile(u8 *__restrict__ pixbuf, u8 *__restrict__ src, int color_k
 
 #define SPRITE_X 7
 #define SPRITE_Y 7
-
-void rle_sprite(u8 *dst, u8 *src)
-{
-    int pixbuf_offset = 0;
-
-    for (int j = 0; j < SPRITE_Y; j++) {
-        for (int i = 0; i < SPRITE_X; i++) {
-            u8 tile_pixbuf[PIXBUF_TILE_SIZE];
-            int tile_offset = 0;
-
-            load_tile(tile_pixbuf, src, DEFAULT_COLORS_OFFSET);
-            src += 0x10;
-            for (int y = 0; y < TILE_Y; y++) {
-                memcpy(&dst[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
-                tile_offset   += PIXBUF_TILE_LINE_SIZE;
-                pixbuf_offset += SPRITE_X * PIXBUF_TILE_LINE_SIZE;
-            }
-        }
-        pixbuf_offset = pixbuf_offset - (SPRITE_Y * (SPRITE_X * PIXBUF_TILE_LINE_SIZE) * TILE_Y) + PIXBUF_TILE_LINE_SIZE;
-    }
-}
 
 struct box_info {
     int color_key;
@@ -173,23 +129,6 @@ static struct box_info get_box_info(u8 *stream, struct submap *map, int x, int y
 #define PIXBUF_BOX_SIZE         (PIXBUF_TILE_SIZE * 2 * 2)
 #define PIXBUF_BOX_LINE_SIZE    (PIXBUF_TILE_LINE_SIZE * 2)
 
-static void merge_tiles(u8 *dst, u8 *src, char *alpha)
-{
-    for (int i = 0; i < PIXBUF_TILE_SIZE; i += 3)
-        if (memcmp(&src[i], alpha, 3) != 0)
-            memcpy(&dst[i], &src[i], 3);
-}
-
-static void flip_tile(u8 *tile)
-{
-    u8 old_tile[PIXBUF_TILE_SIZE];
-
-    memcpy(old_tile, tile, sizeof(old_tile));
-    for (int y = 0; y < TILE_Y; y++)
-        for (int x = 0; x < TILE_X; x++)
-            memcpy(&tile[3 * (y * TILE_X + x)], &old_tile[3 * (y * TILE_X + (TILE_X - x - 1))], 3);
-}
-
 #define BLOCK_X 4
 #define BLOCK_Y 4
 
@@ -212,7 +151,7 @@ static void load_block(u8 *stream, struct submap *map, u8 *pixbuf, u8 *blocks, u
                 if (bi.flip)
                     flip_tile(entity_pixbuf);
                 load_tile(tile_pixbuf, &tiles[*blocks++ * 16], DEFAULT_COLORS_OFFSET);
-                merge_tiles(tile_pixbuf, entity_pixbuf, color_set[ENTITIES_COLORS_OFFSET][0]);
+                merge_tiles(tile_pixbuf, entity_pixbuf, ENTITIES_COLORS_OFFSET);
             } else {
                 load_tile(tile_pixbuf, &tiles[*blocks++ * 16], bi.color_key);
             }

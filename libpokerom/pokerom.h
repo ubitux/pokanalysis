@@ -28,6 +28,15 @@
 # include <sys/mman.h>
 # include <fcntl.h>
 
+# define BPP 3 /* Byte per pixel for output pixbuf */
+
+enum {
+    DEFAULT_COLORS_OFFSET,
+    WARPS_COLORS_OFFSET,
+    SIGNS_COLORS_OFFSET,
+    ENTITIES_COLORS_OFFSET,
+};
+
 # define GET_ADDR(offset)       (*(u16*)&stream[offset])
 # define ROM_ADDR(bank, addr)   (((addr) > 0x3fff) ? (bank) * 0x4000 + (addr) - 0x4000 : (addr))
 # define REL_ADDR(addr)         (((addr) > 0x3fff) ? (addr) % 0x4000 + 0x4000 : (addr))
@@ -65,9 +74,12 @@ void get_item_name(     u8 *stream, char *iname, u8 item_id,    size_t max_len);
 void get_pkmn_move_name(u8 *stream, char *mname, u8 move_id,    size_t max_len);
 void get_trainer_name(  u8 *stream, char *tname, u8 trainer_id, size_t max_len);
 
+void load_tile(  u8 *dst, const u8 *src, int color_key);
+void merge_tiles(u8 *dst, const u8 *src, int color_key);
+void flip_tile(u8 *tile);
+
 void load_sprite(u8 *pixbuf, const u8 *src);
 void load_string(char *dest, u8 *src, size_t max_len, int fixed_str_len);
 void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);
-void rle_sprite(u8 *dst, u8 *src);
 
 #endif
