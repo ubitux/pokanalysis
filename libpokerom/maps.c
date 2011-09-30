@@ -553,15 +553,15 @@ static struct coords process_submap(struct submap *map)
     struct submap *map_start = map;
 
     for (; map; map = map->next) {
-        int x1 = map->coords.x;
-        int y1 = map->coords.y;
-        int x2 = x1 + map->header->map_w * 2;
-        int y2 = y1 + map->header->map_h * 2;
+        int x_1 = map->coords.x;
+        int y_1 = map->coords.y;
+        int x_2 = x_1 + map->header->map_w * 2;
+        int y_2 = y_1 + map->header->map_h * 2;
 
-        if (x1 < xmin) xmin = x1;
-        if (y1 < ymin) ymin = y1;
-        if (x2 > xmax) xmax = x2;
-        if (y2 > ymax) ymax = y2;
+        if (x_1 < xmin) xmin = x_1;
+        if (y_1 < ymin) ymin = y_1;
+        if (x_2 > xmax) xmax = x_2;
+        if (y_2 > ymax) ymax = y_2;
     }
 
     // Shift coords so they start at (0, 0)
@@ -579,16 +579,16 @@ static struct coords process_submap(struct submap *map)
 
 static char *items_keys[] = {"warps", "signs", "entities"};
 
-static void insert_objects(PyObject *objects, PyObject *items, int x0, int y0)
+static void insert_objects(PyObject *objects, PyObject *items, int x, int y)
 {
     for (int i = 0; i < (int)(sizeof(items_keys) / sizeof(*items_keys)); i++) {
         PyObject *data = PyDict_GetItemString(items, items_keys[i]);
         for (int j = 0; j < PyList_Size(data); j++) {
             PyObject *item = PyList_GetItem(data, j);
-            long x = PyLong_AsLong(PyDict_GetItemString(item, "x")) + x0;
-            long y = PyLong_AsLong(PyDict_GetItemString(item, "y")) + y0;
+            long xx = PyLong_AsLong(PyDict_GetItemString(item, "x")) + x;
+            long yy = PyLong_AsLong(PyDict_GetItemString(item, "y")) + y;
 
-            PyDict_SetItem(objects, Py_BuildValue("ii", x, y), item);
+            PyDict_SetItem(objects, Py_BuildValue("ii", xx, yy), item);
         }
     }
 }
