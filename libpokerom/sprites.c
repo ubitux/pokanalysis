@@ -26,8 +26,6 @@ static inline u8 high_nibble(u8 c) { return c >> 4;      }
 static inline u8 low_nibble (u8 c) { return c & 0x0f;    }
 static inline u8 swap_u8    (u8 c) { return c<<4 | c>>4; }
 
-static u8 sprite_width;     // d0a3
-static u8 sprite_height;    // d0a4
 static u8 misc_flag;        // d0a9
 
 struct getbits {
@@ -75,16 +73,16 @@ static u8 get_tile_id(int i, u8 prev, int flag)
     else      return tileid_map[       (prev    & 1) * 16 + i];
 }
 
-static void load_data(u8 *dst, int flag)
+static void load_data(u8 *dst, int flag, int sprite_h, int sprite_w)
 {
-    for (int y = 0; y != sprite_height; y++) {
+    for (int y = 0; y != sprite_h; y++) {
         u8 *d = dst;
         u8 a, b = 0;
-        for (int x = 0; x != sprite_width; x += 8) {
+        for (int x = 0; x != sprite_w; x += 8) {
             a = get_tile_id(high_nibble(d[y]), b, flag);
             b = get_tile_id(low_nibble(d[y]),  a, flag);
             d[y] = a<<4 | b;
-            d += sprite_height;
+            d += sprite_h;
         }
     }
 }
@@ -93,14 +91,15 @@ enum {Z_RET, Z_END, Z_START};
 
 static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 
-static int uncompress_data(u8 *dst, int flag, int *b_flag, int *p1, int *p2)
+static int uncompress_data(u8 *dst, int flag, int *b_flag, int *p1, int *p2,
+                           int sprite_w, int sprite_h)
 {
     reset_p1_p2(*b_flag, p1, p2);
-    load_data(dst + *p1, flag);
+    load_data(dst + *p1, flag, sprite_w, sprite_h);
 
     int i = *p1, j = *p2;
-    for (int x = 0; x != sprite_width; x += 8) {
-        for (int y = 0; y != sprite_height; y++) {
+    for (int x = 0; x != sprite_w; x += 8) {
+        for (int y = 0; y != sprite_h; y++) {
             if (flag) {
                 u8 v = dst[j];
                 dst[j] = col_interlaced_paths[high_nibble(v)+1]<<4 |
@@ -115,9 +114,9 @@ static int uncompress_data(u8 *dst, int flag, int *b_flag, int *p1, int *p2)
 struct tile { int x, y; };
 
 static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
-                 int *p1, int *p2)
+                 int *p1, int *p2, int sprite_w, int sprite_h)
 {
-    if (tile->y+1 != sprite_height) {
+    if (tile->y+1 != sprite_h) {
         tile->y++;
         (*p1)++;
         return Z_RET;
@@ -134,7 +133,7 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
     // 2610
     *p_flag = 3;
     tile->x += 8;
-    if (tile->x != sprite_width) {
+    if (tile->x != sprite_w) {
         *p1 = *p2 = *p1 + 1;
         return Z_RET;
     }
@@ -153,22 +152,24 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
     // 2646 (-> 26BF)
     if (misc_flag == 2) {
         reset_p1_p2(*b_flag, p1, p2);
-        load_data(dst + *p2, 0);
-        return uncompress_data(dst, input_flag, b_flag, p1, p2);
+        load_data(dst + *p2, 0, sprite_w, sprite_h);
+        return uncompress_data(dst, input_flag, b_flag, p1, p2,
+                               sprite_w, sprite_h);
     }
 
     // 26C7
     if (misc_flag)
-        return uncompress_data(dst, input_flag, b_flag, p1, p2);
+        return uncompress_data(dst, input_flag, b_flag, p1, p2,
+                               sprite_w, sprite_h);
 
     // 26CB
-    load_data(dst        , input_flag);
-    load_data(dst + 7*7*8, input_flag);
+    load_data(dst        , input_flag, sprite_w, sprite_h);
+    load_data(dst + 7*7*8, input_flag, sprite_w, sprite_h);
     return Z_END;
 }
 
 static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *p_flag,
-                 int *b_flag, int *p1, int *p2)
+                 int *b_flag, int *p1, int *p2, int sprite_w, int sprite_h)
 {
     int bitlen, p = 1, idx;
 
@@ -181,7 +182,8 @@ static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *p_flag,
 
     do {
         dst[*p1] |= next_a(0, *p_flag);
-        int r = f25d8(dst, tile, p_flag, b_flag, p1, p2);
+        int r = f25d8(dst, tile, p_flag, b_flag, p1, p2,
+                      sprite_w, sprite_h);
         if (r != Z_RET)
             return r;
         p--;
@@ -200,8 +202,8 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
     memset(dst, 0, 0x310);
 
     byte = *gb.stream++;
-    sprite_height = low_nibble(byte) * 8;
-    sprite_width = high_nibble(byte) * 8;
+    int sprite_w = high_nibble(byte) * 8;
+    int sprite_h = low_nibble(byte)  * 8;
 
     int buffer_flag = get_next_bit(&gb);
 
@@ -214,7 +216,8 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
 
         // 257A
         if (!get_next_bit(&gb)) {
-            r = f2595(dst, &tile, &gb, &p_flag, &buffer_flag, &p1, &p2);
+            r = f2595(dst, &tile, &gb, &p_flag, &buffer_flag, &p1, &p2,
+                      sprite_w, sprite_h);
             if (r == Z_START) continue;
             if (r == Z_END)   return;
         }
@@ -223,9 +226,11 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
             b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
                 dst[p1] |= next_a(b, p_flag);
-                r = f25d8(dst, &tile,      &p_flag, &buffer_flag, &p1, &p2);
+                r = f25d8(dst, &tile, &p_flag, &buffer_flag, &p1, &p2,
+                          sprite_w, sprite_h);
             } else {
-                r = f2595(dst, &tile, &gb, &p_flag, &buffer_flag, &p1, &p2);
+                r = f2595(dst, &tile, &gb, &p_flag, &buffer_flag, &p1, &p2,
+                          sprite_w, sprite_h);
             }
         } while (r == Z_RET);
     } while (r == Z_START);
