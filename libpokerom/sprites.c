@@ -138,12 +138,9 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
 
     /* Break context here: calling function must end after processing */
 
-    // 2630
     tile->x = 0;
-    if (!(*b_flag & 2)) {
-        *b_flag = (*b_flag^1) | 2;
+    if (!(*b_flag & 2))
         return Z_START;
-    }
 
     int flip = 0; // XXX: 0xd0aa; does not seem to work with ≠ 0
 
@@ -194,7 +191,7 @@ static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *p_flag,
 static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
 {
     u8 byte, b;
-    int r, p_flag = 3;
+    int r = -1, p_flag = 3;
     struct getbits gb = {.stream=src, .bit=1};
     struct tile tile  = {.x = 0, .y = 0};
 
@@ -208,11 +205,14 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
     int buffer_flag = get_next_bit(&gb);
 
     do {
-        // 2556
-        int p1 = (buffer_flag & 1) * 7*7*8;
-        int p2 = p1;
+        if (r == Z_START && !(buffer_flag & 2))
+            buffer_flag = 2 | (buffer_flag^1);
+
         if (buffer_flag & 2)
             misc_flag = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
+
+        int p1 = (buffer_flag & 1) * 7*7*8;
+        int p2 = p1;
 
         // 257A
         if (!get_next_bit(&gb)) {
