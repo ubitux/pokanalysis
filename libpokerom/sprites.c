@@ -111,7 +111,7 @@ static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
 
 struct tile { int x, y; };
 
-static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
+static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int b_flag,
                  int *p1, int *p2, int sprite_w, int sprite_h, int misc_flag)
 {
     if (tile->y+1 != sprite_h) {
@@ -139,22 +139,22 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
     /* Break context here: calling function must end after processing */
 
     tile->x = 0;
-    if (!(*b_flag & 2))
+    if (!(b_flag & 2))
         return Z_START;
 
     int flip = 0; // XXX: 0xd0aa; does not seem to work with ≠ 0
 
     // 2646 (-> 26BF)
     if (misc_flag == 2) {
-        reset_p1_p2(*b_flag, p1, p2);
+        reset_p1_p2(b_flag, p1, p2);
         load_data(dst + *p2, 0, sprite_w, sprite_h);
-        return uncompress_data(dst, flip, *b_flag, p1, p2,
+        return uncompress_data(dst, flip, b_flag, p1, p2,
                                sprite_w, sprite_h);
     }
 
     // 26C7
     if (misc_flag)
-        return uncompress_data(dst, flip, *b_flag, p1, p2,
+        return uncompress_data(dst, flip, b_flag, p1, p2,
                                sprite_w, sprite_h);
 
     // 26CB
@@ -164,7 +164,7 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
 }
 
 static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *p_flag,
-                 int *b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
+                 int b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
                  int misc_flag)
 {
     int bitlen, p = 1, idx;
@@ -216,7 +216,7 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
 
         // 257A
         if (!get_next_bit(&gb)) {
-            r = f2595(dst, &tile, &gb, &p_flag, &buffer_flag, &p1, &p2,
+            r = f2595(dst, &tile, &gb, &p_flag, buffer_flag, &p1, &p2,
                       sprite_w, sprite_h, misc_flag);
             if (r == Z_START) continue;
             if (r == Z_END)   return;
@@ -226,10 +226,10 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
             b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
                 dst[p1] |= next_a(b, p_flag);
-                r = f25d8(dst, &tile, &p_flag, &buffer_flag, &p1, &p2,
+                r = f25d8(dst, &tile, &p_flag, buffer_flag, &p1, &p2,
                           sprite_w, sprite_h, misc_flag);
             } else {
-                r = f2595(dst, &tile, &gb, &p_flag, &buffer_flag, &p1, &p2,
+                r = f2595(dst, &tile, &gb, &p_flag, buffer_flag, &p1, &p2,
                           sprite_w, sprite_h, misc_flag);
             }
         } while (r == Z_RET);
