@@ -89,10 +89,10 @@ enum {Z_RET, Z_END, Z_START};
 
 static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 
-static int uncompress_data(u8 *dst, int flip, int *b_flag, int *p1, int *p2,
+static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
                            int sprite_w, int sprite_h)
 {
-    reset_p1_p2(*b_flag, p1, p2);
+    reset_p1_p2(b_flag, p1, p2);
     load_data(dst + *p1, flip, sprite_w, sprite_h);
 
     int i = *p1, j = *p2;
@@ -151,13 +151,13 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int *b_flag,
     if (misc_flag == 2) {
         reset_p1_p2(*b_flag, p1, p2);
         load_data(dst + *p2, 0, sprite_w, sprite_h);
-        return uncompress_data(dst, flip, b_flag, p1, p2,
+        return uncompress_data(dst, flip, *b_flag, p1, p2,
                                sprite_w, sprite_h);
     }
 
     // 26C7
     if (misc_flag)
-        return uncompress_data(dst, flip, b_flag, p1, p2,
+        return uncompress_data(dst, flip, *b_flag, p1, p2,
                                sprite_w, sprite_h);
 
     // 26CB
