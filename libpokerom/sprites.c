@@ -197,7 +197,7 @@ static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
 
 static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
 {
-    u8 byte, b;
+    u8 byte;
     int r = -1, misc_flag = 0, op = OP_ROTATE_2;
     struct getbits gb = {.stream=src, .bit=1};
     struct tile tile  = {.x = 0, .y = 0};
@@ -230,7 +230,7 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
         }
 
         do {
-            b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
+            u8 b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
                 dst[p1] |= do_op(b, op);
                 r = f25d8(dst, &tile, &op, buffer_flag, &p1, &p2,
