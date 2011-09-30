@@ -471,7 +471,7 @@ static struct submap *get_submap(struct rom *rom, struct submap *maps, int id, i
         } else if (entity->tid & 1<<7) {
             char iname[30];
 
-            get_pkmn_item_name(stream, iname, entity->extra_1, sizeof(iname));
+            get_item_name(stream, iname, entity->extra_1, sizeof(iname));
             PyDict_SetItemString(entity_dict, "item_id",   Py_BuildValue("i", entity->extra_1));
             PyDict_SetItemString(entity_dict, "item_name", Py_BuildValue("s", iname));
             addr += 1;

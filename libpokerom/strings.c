@@ -129,7 +129,7 @@ void get_pkmn_name(u8 *stream, char *pname, u8 pkmn_id, size_t max_len)
 
 #define PACKED_TEXT_BASE_ADDR(b, i) &stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
 
-void get_pkmn_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len)
+void get_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len)
 {
     if      (item_id > 250) snprintf(iname, 5, "HM%02d", item_id - 250);
     else if (item_id > 200) snprintf(iname, 5, "TM%02d", item_id - 200);

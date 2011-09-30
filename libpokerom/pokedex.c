@@ -93,7 +93,7 @@ static PyObject *get_pkmn_HM_TM(u8 *stream, struct pkmn_header_raw *h)
             char name[30];
             char tmhm[5];
 
-            get_pkmn_item_name(stream, tmhm, id+200, sizeof tmhm);
+            get_item_name(stream, tmhm, id+200, sizeof tmhm);
             get_pkmn_move_name(stream, name, stream[ROM_ADDR(0x04, 0x7773 + id - 1)], sizeof(name));
             PyList_Append(list, Py_BuildValue("ss", tmhm, name));
         }
@@ -125,7 +125,7 @@ static PyObject *get_pkmn_evolutions(u8 *stream, u8 rom_pkmn_id)
             break;
         case 2: {
             char iname[30];
-            get_pkmn_item_name(stream, iname, *ptr++, sizeof(iname));
+            get_item_name(stream, iname, *ptr++, sizeof(iname));
             PyDict_SetItemString(evol, "type",    Py_BuildValue("s", "stone"));
             PyDict_SetItemString(evol, "stone",   Py_BuildValue("s", iname));
             PyDict_SetItemString(evol, "level",   Py_BuildValue("i", *ptr++));

@@ -37,7 +37,7 @@ PyObject *get_special_items(u8 *stream, int map_id)
         if (item_data[3] == 0x1d) {
             char iname[30];
 
-            get_pkmn_item_name(stream, iname, item_data[2], sizeof(iname));
+            get_item_name(stream, iname, item_data[2], sizeof(iname));
             PyList_Append(list, Py_BuildValue("iisii", item_data[0], item_data[1], iname, item_data[3], *(u16*)&item_data[4]));
         } else {
             PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], *(u16*)&item_data[4]));
