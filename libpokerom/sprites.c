@@ -109,7 +109,6 @@ static int uncompress_data(u8 *dst) // 27C7
 {
     reset_p1_p2(buffer_flag, &p1, &p2);
     load_data(dst + p1);
-    reset_p1_p2(buffer_flag, &p1, &p2);
 
     int i = p1, j = p2;
     for (int x = 0; x != sprite_width; x += 8) {
@@ -168,7 +167,6 @@ static int f25d8(u8 *dst, struct tile *tile)
         reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = 0;
         load_data(dst + p2);
-        reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = input_flag_backup;
         return uncompress_data(dst);
     }
