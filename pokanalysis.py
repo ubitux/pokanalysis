@@ -281,7 +281,7 @@ class Core:
         trainerteam_lstore.clear()
         for pkmn_id, lvl in trainer.get('team', []):
             pkmn  = self.pokedex_rom_id[pkmn_id]
-            trainerteam_lstore.append((pkmn['name'], pkmn['pic'][0], 'lvl %d' % lvl))
+            trainerteam_lstore.append((pkmn['fmt_name'], pkmn['pic'][0], 'lvl %d' % lvl))
 
     def on_treeview_wild_pkmn_row_activated(self, treeview, path, column):
         self.gui.get_object('notebook_main').set_current_page(0)
