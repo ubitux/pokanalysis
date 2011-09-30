@@ -226,15 +226,6 @@ static PyObject *get_pixbuf(u8 *stream, struct pkmn_header_raw *h, u8 pkmn_id)
     return Py_BuildValue("s#s#", pixbuf, sizeof(pixbuf), pixbuf_back, sizeof(pixbuf));
 }
 
-static PyObject *get_pkmn_name(u8 *stream, int pkmn_rom_id)
-{
-    int rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (pkmn_rom_id - 1));
-    char name[20];
-
-    load_string(name, &stream[rom_addr], sizeof(name), 10);
-    return Py_BuildValue("s", name);
-}
-
 static void trad_num(u8 *b)
 {
     for (; *b; b++)
@@ -309,9 +300,12 @@ PyObject *get_pokedex(struct rom *self)
         u8 pkmn_rom_id = get_pkmn_rom_id_from_pkmn_id(self->stream, real_pkmn_id) + 1;
         int header_addr = get_pkmn_header_address(self->stream, pkmn_rom_id);
         struct pkmn_header_raw *pkmn_header = (void *)&self->stream[header_addr];
+        char pname[30];
+
+        get_pkmn_name(self->stream, pname, pkmn_rom_id, sizeof pname);
 
         PyDict_SetItemString(pkmn, "pic",  get_pixbuf(self->stream, pkmn_header, pkmn_rom_id));
-        PyDict_SetItemString(pkmn, "name", get_pkmn_name(self->stream, pkmn_rom_id));
+        PyDict_SetItemString(pkmn, "name", Py_BuildValue("s", pname));
 
         set_pkmn_texts(self->stream, pkmn, pkmn_rom_id);
 

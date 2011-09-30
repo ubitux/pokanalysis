@@ -121,6 +121,12 @@ static void load_packed_text_string(u8 *data, char *dst, u8 id, size_t max_len)
     load_string(dst, data, max_len, 0);
 }
 
+void get_pkmn_name(u8 *stream, char *pname, u8 pkmn_id, size_t max_len)
+{
+    int rom_addr = ROM_ADDR(0x07, 0x421E + 0x0A * (pkmn_id - 1));
+    load_string(pname, stream + rom_addr, max_len, 10);
+}
+
 #define PACKED_TEXT_BASE_ADDR(b, i) &stream[ROM_ADDR((b), GET_ADDR(0x375d + ((i) - 1) * 2))]
 
 void get_pkmn_item_name(u8 *stream, char *iname, u8 item_id, size_t max_len)
