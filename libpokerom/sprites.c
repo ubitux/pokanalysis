@@ -34,31 +34,30 @@ static u8 tile_x;           // d0a1
 static u8 tile_y;           // d0a2
 static u8 sprite_width;     // d0a3
 static u8 sprite_height;    // d0a4
-static u8 current_byte;     // d0a5
-static u8 current_bit;      // d0a6
 static u8 p_flag;           // d0a7
 static u8 buffer_flag;      // d0a8
 static u8 misc_flag;        // d0a9
 static u8 input_flag;       // d0aa
-static int current_addr;    // d0ab-d0ac
 static u16 p1;              // d0ad-d0ae
 static u16 p2;              // d0af-d0b0
 static u16 input_p1;        // d0b1-d0b2
 static u16 input_p2;        // d0b3-d0b4
 
-static u8 get_next_byte(u8 *stream) // 268B
-{
-    return stream[current_addr++];
-}
+struct getbits {
+    const u8 *stream;
+    u8 byte;
+    int pos;
+    int bit;
+};
 
-static u8 get_next_bit(u8 *stream) // 2670
+static u8 get_next_bit(struct getbits *gb)
 {
-    if (--current_bit == 0) {
-        current_byte = get_next_byte(stream);
-        current_bit = 8;
+    if (--gb->bit == 0) {
+        gb->byte = gb->stream[gb->pos++];
+        gb->bit  = 8;
     }
-    current_byte = (current_byte<<1 | (current_byte>>7 & 1)) & 0xff;
-    return current_byte & 1;
+    gb->byte = gb->byte<<1 | gb->byte>>7;
+    return gb->byte & 1;
 }
 
 static u8 next_a(u8 a, int x) // 2649
@@ -204,15 +203,15 @@ static int f25d8(u8 *stream)
     return Z_END;
 }
 
-static int f2595(u8 *stream)
+static int f2595(u8 *stream, struct getbits *gb)
 {
     int bitlen, p, idx;
 
-    for (bitlen = 0; get_next_bit(stream); bitlen++);
+    for (bitlen = 0; get_next_bit(gb); bitlen++);
 
     p = GET_ADDR(0x269f + 2*bitlen);
     for (idx = 0; bitlen >= 0; bitlen--)
-        idx = idx<<1 | get_next_bit(stream);
+        idx = idx<<1 | get_next_bit(gb);
     p += idx;
 
     do {
@@ -230,42 +229,41 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 {
     u8 byte, b;
     int r;
+    struct getbits gb = {.stream=stream, .pos=addr, .bit=1};
 
-    current_addr = addr;
     buffer = dest;
 
     // Init (251D)
     memset(buffer, 0, 0x310);
-    current_bit = 1;
     p_flag = 3;
 
     tile_x = tile_y = 0;
 
-    byte = get_next_byte(stream);
+    byte = stream[gb.pos++];
     sprite_height = low_nibble(byte) * 8;
     sprite_width = high_nibble(byte) * 8;
-    buffer_flag = get_next_bit(stream);
+    buffer_flag = get_next_bit(&gb);
 
     do {
         // 2556
         p1 = p2 = buffer_flag&1 ? a310 : a188;
         if (buffer_flag & 2)
-            misc_flag = get_next_bit(stream) ? get_next_bit(stream)+1 : 0;
+            misc_flag = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
 
         // 257A
-        if (!get_next_bit(stream)) {
-            r = f2595(stream);
+        if (!get_next_bit(&gb)) {
+            r = f2595(stream, &gb);
             if (r == Z_START) continue;
             if (r == Z_END)   return;
         }
 
         do {
-            b = get_next_bit(stream)<<1 | get_next_bit(stream);
+            b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
                 buffer[p1] |= next_a(b, p_flag);
                 r = f25d8(stream);
             } else {
-                r = f2595(stream);
+                r = f2595(stream, &gb);
             }
         } while (r == Z_RET);
     } while (r == Z_START);
