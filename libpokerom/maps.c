@@ -22,18 +22,6 @@
 
 #include "pokerom.h"
 
-#define TILE_X 8
-#define TILE_Y 8
-
-#define PIXBUF_TILE_SIZE        (TILE_Y * TILE_X * 3)
-#define PIXBUF_TILE_LINE_SIZE   (TILE_X * 3)
-
-/* 1 block = 4x4 tiles */
-/* 1 sprite = 7x7 tiles */
-
-#define SPRITE_X 7
-#define SPRITE_Y 7
-
 struct box_info {
     int color_key;
     int entity_addr;
@@ -126,26 +114,20 @@ static struct box_info get_box_info(u8 *stream, struct submap *map, int x, int y
     return bi;
 }
 
-#define PIXBUF_BOX_SIZE         (PIXBUF_TILE_SIZE * 2 * 2)
-#define PIXBUF_BOX_LINE_SIZE    (PIXBUF_TILE_LINE_SIZE * 2)
-
-#define BLOCK_X 4
-#define BLOCK_Y 4
-
 /* 1 block = 4x4 tiles */
 static void load_block(u8 *stream, struct submap *map, u8 *pixbuf, u8 *blocks, u8 *tiles, int bx, int by)
 {
     int pixbuf_offset = 0;
 
-    for (int j = 0; j < BLOCK_Y; j++) {
-        for (int i = 0; i < BLOCK_X; i++) {
-            u8 tile_pixbuf[PIXBUF_TILE_SIZE];
+    for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < 4; i++) {
+            u8 tile_pixbuf[8*8 * BPP];
             int tile_offset = 0;
             struct box_info bi = get_box_info(stream, map, bx * 2 + i / 2, by * 2 + j / 2);
 
             if (bi.entity_addr) {
                 int n = (j % 2) * 2 + (i + bi.flip) % 2;
-                u8 entity_pixbuf[PIXBUF_TILE_SIZE];
+                u8 entity_pixbuf[8*8 * BPP];
 
                 load_tile(entity_pixbuf, &stream[bi.entity_addr + n * 16], bi.color_key);
                 if (bi.flip)
@@ -156,14 +138,14 @@ static void load_block(u8 *stream, struct submap *map, u8 *pixbuf, u8 *blocks, u
                 load_tile(tile_pixbuf, &tiles[*blocks++ * 16], bi.color_key);
             }
 
-            for (int y = 0; y < TILE_Y; y++) {
-                memcpy(&pixbuf[pixbuf_offset], &tile_pixbuf[tile_offset], PIXBUF_TILE_LINE_SIZE);
-                tile_offset += PIXBUF_TILE_LINE_SIZE;
-                pixbuf_offset += BLOCK_X * PIXBUF_TILE_LINE_SIZE;
+            for (int y = 0; y < 8; y++) {
+                memcpy(&pixbuf[pixbuf_offset], &tile_pixbuf[tile_offset], 8*BPP);
+                tile_offset   += 8*BPP;
+                pixbuf_offset += 8*BPP * 4;
             }
-            pixbuf_offset = pixbuf_offset - TILE_Y * (BLOCK_X * PIXBUF_TILE_LINE_SIZE) + PIXBUF_TILE_LINE_SIZE;
+            pixbuf_offset = pixbuf_offset - 8 * 4 * 8*BPP + 8*BPP;
         }
-        pixbuf_offset += (TILE_Y - 1) * (BLOCK_X * PIXBUF_TILE_LINE_SIZE);
+        pixbuf_offset += 7 * 4 * 8*BPP;
     }
 }
 
@@ -186,8 +168,9 @@ static int get_tiles_addr(u8 *stream, u8 tileset_id)
 }
 
 #define NB_PIXEL_PER_BLOCK_LINE 32
-#define PIXBUF_BLOCK_SIZE       (PIXBUF_BOX_SIZE * 2 * 2)
-#define PIXBUF_BLOCK_LINE_SIZE  (PIXBUF_BOX_LINE_SIZE * 2)
+#define PIXBUF_BOX_SIZE         (8*8*BPP * 2*2)
+#define PIXBUF_BLOCK_SIZE       (8*8*BPP * 4*4)
+#define PIXBUF_BLOCK_LINE_SIZE  (8*BPP*2 * 2)
 
 static u8 *get_map_pic_raw(u8 *stream, struct submap *map)
 {
@@ -502,8 +485,6 @@ static struct coords process_submap(struct submap *map)
     return s;
 }
 
-#define PIXBUF_SINGLE_LINE_SIZE(w) ((w) * NB_PIXEL_PER_BLOCK_LINE * 3)
-
 static char *items_keys[] = {"warps", "signs", "entities"};
 
 static void insert_objects(PyObject *objects, PyObject *items, int x, int y)
@@ -519,6 +500,8 @@ static void insert_objects(PyObject *objects, PyObject *items, int x, int y)
         }
     }
 }
+
+#define PIXBUF_SINGLE_LINE_SIZE(w) ((w) * NB_PIXEL_PER_BLOCK_LINE * BPP)
 
 static struct map get_final_map(struct submap *map)
 {
