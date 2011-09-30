@@ -46,14 +46,13 @@ static u16 input_p2;        // d0b3-d0b4
 struct getbits {
     const u8 *stream;
     u8 byte;
-    int pos;
     int bit;
 };
 
 static u8 get_next_bit(struct getbits *gb)
 {
     if (--gb->bit == 0) {
-        gb->byte = gb->stream[gb->pos++];
+        gb->byte = *gb->stream++;
         gb->bit  = 8;
     }
     gb->byte = gb->byte<<1 | gb->byte>>7;
@@ -229,7 +228,7 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 {
     u8 byte, b;
     int r;
-    struct getbits gb = {.stream=stream, .pos=addr, .bit=1};
+    struct getbits gb = {.stream=stream+addr, .bit=1};
 
     buffer = dest;
 
@@ -239,7 +238,7 @@ static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
 
     tile_x = tile_y = 0;
 
-    byte = stream[gb.pos++];
+    byte = *gb.stream++;
     sprite_height = low_nibble(byte) * 8;
     sprite_width = high_nibble(byte) * 8;
     buffer_flag = get_next_bit(&gb);
