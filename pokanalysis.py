@@ -206,6 +206,11 @@ class Core:
         model = iconview.get_model()
         self.select_pkmn(self.pokedex_rom_id[model.get_value(model.get_iter(path), 0)]['id'])
 
+    def on_iconview_trainer_team_activated(self, iconview, path):
+        model = iconview.get_model()
+        self.on_iconview_evolutions_item_activated(iconview, path)
+        self.gui.get_object('notebook_main').set_current_page(0)
+
     def on_treeview_gameinfo_cursor_changed(self, treeview):
         (path, column_focus) = treeview.get_cursor()
         model = treeview.get_model()
@@ -281,7 +286,7 @@ class Core:
         trainerteam_lstore.clear()
         for pkmn_id, lvl in trainer.get('team', []):
             pkmn  = self.pokedex_rom_id[pkmn_id]
-            trainerteam_lstore.append((pkmn['fmt_name'], pkmn['pic'][0], 'lvl %d' % lvl))
+            trainerteam_lstore.append((pkmn_id, pkmn['pic'][0], pkmn['fmt_name'], 'lvl %d' % lvl))
 
     def on_treeview_wild_pkmn_row_activated(self, treeview, path, column):
         self.gui.get_object('notebook_main').set_current_page(0)
@@ -305,6 +310,7 @@ class Core:
             'on_eventbox_image_map_leave_notify_event': self.on_eventbox_image_map_leave_notify_event,
             'on_eventbox_image_map_motion_notify_event': self.on_eventbox_image_map_motion_notify_event,
             'on_iconview_evolutions_item_activated': self.on_iconview_evolutions_item_activated,
+            'on_iconview_trainer_team_activated': self.on_iconview_trainer_team_activated,
             'on_treeview_gameinfo_cursor_changed': self.on_treeview_gameinfo_cursor_changed,
             'on_treeview_gameinfo_row_activated': self.on_treeview_gameinfo_row_activated,
             'on_treeview_pokedex_cursor_changed': self.on_treeview_pokedex_cursor_changed,
