@@ -120,7 +120,9 @@ static void load_data(u8 *dst, u8 *stream, u16 p) // 26D4
     }
 }
 
-static void uncompress_data(u8 *dst, u8 *stream) // 27C7
+enum {Z_RET, Z_END, Z_START};
+
+static int uncompress_data(u8 *dst, u8 *stream) // 27C7
 {
     reset_p1_p2(buffer_flag, &p1, &p2);
     load_data(dst, stream, p1);
@@ -138,9 +140,8 @@ static void uncompress_data(u8 *dst, u8 *stream) // 27C7
             dst[j++] ^= dst[i++];
         }
     }
+    return Z_END;
 }
-
-enum {Z_RET, Z_END, Z_START};
 
 static int f25d8(u8 *dst, u8 *stream)
 {
@@ -185,15 +186,12 @@ static int f25d8(u8 *dst, u8 *stream)
         load_data(dst, stream, p2);
         reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = input_flag_backup;
-        uncompress_data(dst, stream); // jp 27c7
-        return Z_END;
+        return uncompress_data(dst, stream);
     }
 
     // 26C7
-    if (misc_flag) {
-        uncompress_data(dst, stream); // jp 27c7
-        return Z_END;
-    }
+    if (misc_flag)
+        return uncompress_data(dst, stream);
 
     // 26CB
     load_data(dst, stream, a188);
