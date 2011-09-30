@@ -42,12 +42,19 @@ static u8 get_next_bit(struct getbits *gb)
     return gb->byte & 1;
 }
 
-static u8 next_a(u8 a, int x) // 2649
+enum {
+    OP_UNCHANGED   = 0,
+    OP_SHIFTLEFT_2 = 1,
+    OP_BSWAP       = 2,
+    OP_ROTATE_2    = 3,
+};
+
+static u8 do_op(u8 a, int x) // 2649
 {
     switch (x) {
-    case 1:  return a << 2;
-    case 2:  return swap_u8(a);
-    case 3:  return (a&3)<<6 | a>>2;
+    case OP_SHIFTLEFT_2: return a << 2;
+    case OP_BSWAP:       return swap_u8(a);
+    case OP_ROTATE_2:    return (a&3)<<6 | a>>2;
     default: return a;
     }
 }
@@ -111,7 +118,7 @@ static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
 
 struct tile { int x, y; };
 
-static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int b_flag,
+static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
                  int *p1, int *p2, int sprite_w, int sprite_h, int misc_flag)
 {
     if (tile->y+1 != sprite_h) {
@@ -122,14 +129,14 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int b_flag,
 
     // 25F6
     tile->y = 0;
-    if (*p_flag) {
-        (*p_flag)--;
+    if (*op) {
+        (*op)--;
         *p1 = *p2;
         return Z_RET;
     }
 
     // 2610
-    *p_flag = 3;
+    *op = OP_ROTATE_2;
     tile->x += 8;
     if (tile->x != sprite_w) {
         *p1 = *p2 = *p1 + 1;
@@ -163,7 +170,7 @@ static int f25d8(u8 *dst, struct tile *tile, int *p_flag, int b_flag,
     return Z_END;
 }
 
-static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *p_flag,
+static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
                  int b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
                  int misc_flag)
 {
@@ -177,8 +184,8 @@ static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *p_flag,
     p += idx;
 
     do {
-        dst[*p1] |= next_a(0, *p_flag);
-        int r = f25d8(dst, tile, p_flag, b_flag, p1, p2,
+        dst[*p1] |= do_op(0, *op);
+        int r = f25d8(dst, tile, op, b_flag, p1, p2,
                       sprite_w, sprite_h, misc_flag);
         if (r != Z_RET)
             return r;
@@ -191,7 +198,7 @@ static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *p_flag,
 static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
 {
     u8 byte, b;
-    int r = -1, p_flag = 3;
+    int r = -1, op = OP_ROTATE_2;
     struct getbits gb = {.stream=src, .bit=1};
     struct tile tile  = {.x = 0, .y = 0};
 
@@ -216,7 +223,7 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
 
         // 257A
         if (!get_next_bit(&gb)) {
-            r = f2595(dst, &tile, &gb, &p_flag, buffer_flag, &p1, &p2,
+            r = f2595(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
                       sprite_w, sprite_h, misc_flag);
             if (r == Z_START) continue;
             if (r == Z_END)   return;
@@ -225,11 +232,11 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
         do {
             b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
-                dst[p1] |= next_a(b, p_flag);
-                r = f25d8(dst, &tile, &p_flag, buffer_flag, &p1, &p2,
+                dst[p1] |= do_op(b, op);
+                r = f25d8(dst, &tile, &op, buffer_flag, &p1, &p2,
                           sprite_w, sprite_h, misc_flag);
             } else {
-                r = f2595(dst, &tile, &gb, &p_flag, buffer_flag, &p1, &p2,
+                r = f2595(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
                           sprite_w, sprite_h, misc_flag);
             }
         } while (r == Z_RET);
