@@ -243,16 +243,23 @@ static void uncompress_sprite(u8 *dst, const u8 *src) // 251A
     } while (r == Z_START);
 }
 
-static void merge_buffers(u8 *buffer)
+/*          src2       src1       dest
+ *  n=0   AAAAAAAAAA BBBBBBBBBB ..........
+ *  n=1   AAAAAAAAAA BBBBBBBBB# .........B
+ *  n=2   AAAAAAAAA# BBBBBBBBBB ........AB
+ *  n=3   AAAAAAAAAA BBBBBBBB#B .......BAB
+ *  n=4   AAAAAAAA#A BBBBBBBBBB ......ABAB
+ *                [...]
+ *  ...   AAAAAAAAAA ABABABABAB ABABABABAB
+ *                   =====================
+ */
+static void interlace_merge(u8 *buffer)
 {
-    u8 *dest = buffer + 0x0497;
-    u8 *src1 = buffer + 0x030F;
-    u8 *src2 = buffer + 0x0187;
-    int n;
+    u8 *dest = buffer + 0x188*3 - 1;
+    u8 *src1 = buffer + 0x188*2 - 1;
+    u8 *src2 = buffer + 0x188   - 1;
 
-    for (n = 0; n < 0xC4; n++) {
-        *dest-- = *src1--;
-        *dest-- = *src2--;
+    for (int n = 0; n < 0x188; n++) {
         *dest-- = *src1--;
         *dest-- = *src2--;
     }
@@ -281,6 +288,6 @@ void load_sprite(u8 *pixbuf, const u8 *src, u8 sprite_dim)
 
     place_pic(b,       width, height, start_skip);
     place_pic(b+0x188, width, height, start_skip);
-    merge_buffers(b);
+    interlace_merge(b);
     rle_sprite(pixbuf, b + 0x188);
 }
