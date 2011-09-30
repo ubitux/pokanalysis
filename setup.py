@@ -15,6 +15,6 @@ setup(
     ext_modules=[Extension(
         'pokerom',
         sources=glob.glob('libpokerom/*.c'),
-        extra_compile_args=['-Wall', '-Wextra', '-O3', '-std=c99'],
+        extra_compile_args=['-Wall', '-Wextra', '-Wshadow', '-fstack-protector', '-O3', '-std=c99'],
     )],
 )
