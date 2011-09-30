@@ -71,10 +71,10 @@ static void update_p1(u8 a) // 2649
     buffer[p1] |= a;
 }
 
-static void reset_p1_p2(void) // 2841
+static void reset_p1_p2(int b, u16 *ptr1, u16 *ptr2) // 2841
 {
-    if (buffer_flag & 1) p2 = a310, p1 = a188;
-    else                 p2 = a188, p1 = a310;
+    if (b & 1) *ptr1 = a188, *ptr2 = a310;
+    else       *ptr1 = a310, *ptr2 = a188;
 }
 
 static int update_input_ptr(u8 *stream, u8 nibble, u16 *hl, u16 *de) // 276D
@@ -125,9 +125,9 @@ static void load_data(u8 *stream, u16 p) // 26D4
 
 static void uncompress_data(u8 *stream) // 27C7
 {
-    reset_p1_p2();
+    reset_p1_p2(buffer_flag, &p1, &p2);
     load_data(stream, p1);
-    reset_p1_p2();
+    reset_p1_p2(buffer_flag, &p1, &p2);
 
     int i = p1, j = p2;
     for (tile_x = 0; tile_x != sprite_width; tile_x += 8) {
@@ -183,10 +183,10 @@ static int f25d8(u8 *stream)
         // 2877
         u8 input_flag_backup = input_flag;
 
-        reset_p1_p2();
+        reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = 0;
         load_data(stream, p2);
-        reset_p1_p2();
+        reset_p1_p2(buffer_flag, &p1, &p2);
         input_flag = input_flag_backup;
         uncompress_data(stream); // jp 27c7
         return Z_END;
