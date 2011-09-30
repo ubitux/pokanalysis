@@ -223,9 +223,9 @@ static int f2595(u8 *dst, u8 *stream, struct getbits *gb)
     return Z_RET;
 }
 
-static void uncompress_sprite(u8 *stream, u8 *dest, int addr) // 251A
+static void uncompress_sprite(u8 *stream, u8 *dst, int addr) // 251A
 {
-    u8 byte, b, *dst = dest;
+    u8 byte, b;
     int r;
     struct getbits gb = {.stream=stream+addr, .bit=1};
 
