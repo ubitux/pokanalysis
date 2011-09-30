@@ -77,31 +77,15 @@ static void reset_p1_p2(void) // 2841
     else                 p2 = a188, p1 = a310;
 }
 
-static u8 update_input_ptr(u8 *stream, u8 nibble, u16 *_hl, u16 *_de) // 276D
+static int update_input_ptr(u8 *stream, u8 nibble, u16 *hl, u16 *de) // 276D
 {
-    u16 hl = *_hl, de = *_de;
-    int condition, swap_flag;
-    u8 a;
+    int r, in;
 
-    swap_flag = nibble & 1;
-    nibble >>= 1;
-
-    hl = (hl & 0xff00) | nibble;
-    condition = input_flag ? de&1<<3 : de&1;
-    de = (de & 0xff00) | (hl & 0x00ff);
-    hl = condition == 0 ? input_p1 : input_p2;
-    hl += de & 0x00ff;
-
-    a = stream[hl];
-    if (swap_flag == 0)
-        a = swap_u8(a);
-
-    a = a & 0x0f;
-    de = (de & 0xff00) | a;
-
-    *_hl = hl;
-    *_de = de;
-    return a;
+    in  = input_flag ? *de & 1<<3 : *de & 1;
+    *hl = (in == 0 ? input_p1 : input_p2) + (nibble>>1);
+    r   = nibble&1 ? low_nibble(stream[*hl]) : high_nibble(stream[*hl]);
+    *de = (*de & 0xff00) | r;
+    return r;
 }
 
 static void load_data(u8 *stream, u16 p) // 26D4
