@@ -31,7 +31,6 @@ static u8 sprite_height;    // d0a4
 static u8 p_flag;           // d0a7
 static u8 buffer_flag;      // d0a8
 static u8 misc_flag;        // d0a9
-static u8 input_flag;       // d0aa
 static u16 p1;              // d0ad-d0ae
 static u16 p2;              // d0af-d0b0
 
@@ -74,13 +73,13 @@ static const u8 tileid_map[] = {
     15,  7,  3, 11,  1,  9, 13,  5,  0,  8, 12,  4, 14,  6,  2, 10,
 };
 
-static u8 get_tile_id(int i, u16 cache) // 276D
+static u8 get_tile_id(int i, u16 cache, int flag)
 {
-    if (input_flag) return tileid_map[2*16 + (cache>>3 & 1) * 16 + i];
-    else            return tileid_map[       (cache    & 1) * 16 + i];
+    if (flag) return tileid_map[2*16 + (cache>>3 & 1) * 16 + i];
+    else      return tileid_map[       (cache    & 1) * 16 + i];
 }
 
-static void load_data(u8 *dst)
+static void load_data(u8 *dst, int flag)
 {
     u16 cache = 0;
 
@@ -89,9 +88,9 @@ static void load_data(u8 *dst)
         for (int x = 0; x != sprite_width; x += 8) {
             u8 nibble;
 
-            nibble = get_tile_id(high_nibble(d[y]), cache);
+            nibble = get_tile_id(high_nibble(d[y]), cache,  flag);
             cache  = swap_u8(nibble)<<8 | nibble;
-            nibble = get_tile_id(low_nibble(d[y]),  nibble);
+            nibble = get_tile_id(low_nibble(d[y]),  nibble, flag);
             cache  = (cache & 0xff00) | nibble;
 
             d[y] = nibble | cache>>8;
@@ -105,15 +104,15 @@ enum {Z_RET, Z_END, Z_START};
 
 static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 
-static int uncompress_data(u8 *dst) // 27C7
+static int uncompress_data(u8 *dst, int flag)
 {
     reset_p1_p2(buffer_flag, &p1, &p2);
-    load_data(dst + p1);
+    load_data(dst + p1, flag);
 
     int i = p1, j = p2;
     for (int x = 0; x != sprite_width; x += 8) {
         for (int y = 0; y != sprite_height; y++) {
-            if (input_flag) {
+            if (flag) {
                 u8 v = dst[j];
                 dst[j] = col_interlaced_paths[high_nibble(v)+1]<<4 |
                          col_interlaced_paths[low_nibble(v)];
@@ -159,25 +158,22 @@ static int f25d8(u8 *dst, struct tile *tile)
         return Z_START;
     }
 
+    int input_flag = 0; // XXX: 0xd0aa; does not seem to work with ≠ 0
+
     // 2646 (-> 26BF)
     if (misc_flag == 2) {
-        // 2877
-        u8 input_flag_backup = input_flag;
-
         reset_p1_p2(buffer_flag, &p1, &p2);
-        input_flag = 0;
-        load_data(dst + p2);
-        input_flag = input_flag_backup;
-        return uncompress_data(dst);
+        load_data(dst + p2, 0);
+        return uncompress_data(dst, input_flag);
     }
 
     // 26C7
     if (misc_flag)
-        return uncompress_data(dst);
+        return uncompress_data(dst, input_flag);
 
     // 26CB
-    load_data(dst);
-    load_data(dst + 7*7*8);
+    load_data(dst        , input_flag);
+    load_data(dst + 7*7*8, input_flag);
     return Z_END;
 }
 
