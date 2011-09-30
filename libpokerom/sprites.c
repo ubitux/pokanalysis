@@ -258,8 +258,12 @@ static void merge_buffers(u8 *buffer)
     }
 }
 
-static void fill_column(u8 *dst, u8 *src, int w, int h)
+static void place_pic(u8 *dst, int w, int h, int start_skip)
 {
+    u8 *src = dst + 0x188;
+
+    memset(dst, 0, 0x188);
+    dst += start_skip;
     for (int x = 0; x < w; x++, dst += 7*8)
         for (int y = 0; y < h; y++)
             dst[y] = *src++;
@@ -269,14 +273,14 @@ void load_sprite(u8 *pixbuf, const u8 *src, u8 sprite_dim)
 {
     u8 b[3 * 0x188];
 
-    int width    =     low_nibble(sprite_dim);
-    int height   = 8 * high_nibble(sprite_dim);
-    int top_skip = 8 * (7 * ((8 - width) >> 1) + 7 - high_nibble(sprite_dim));
+    int width      =     low_nibble(sprite_dim);
+    int height     = 8 * high_nibble(sprite_dim);
+    int start_skip = 8 * (7 * ((8 - width) >> 1) + 7 - high_nibble(sprite_dim));
 
     uncompress_sprite(b+0x188, src);
 
-    memset(b,       0, 0x188); fill_column(b+top_skip,       b+0x188, width, height);
-    memset(b+0x188, 0, 0x188); fill_column(b+top_skip+0x188, b+0x310, width, height);
+    place_pic(b,       width, height, start_skip);
+    place_pic(b+0x188, width, height, start_skip);
     merge_buffers(b);
     rle_sprite(pixbuf, b + 0x188);
 }
