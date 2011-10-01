@@ -176,7 +176,7 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
 {
     // count number of consecutive 1-bit
     int nb_ones;
-    unsigned ones = 1;
+    u16 ones = 1;
     for (nb_ones = 0; get_next_bit(gb); nb_ones++)
         ones = ones<<1 | 1;
 
