@@ -185,17 +185,14 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
     for (data = 0x0000; nb_ones >= 0; nb_ones--)
         data = data<<1 | get_next_bit(gb);
 
-    int n = ones + data;
+    int r, n = ones + data;
     do {
         dst[*p1] |= do_op(0, *op);
-        int r = f25d8(dst, tile, op, b_flag, p1, p2,
-                      sprite_w, sprite_h, misc_flag);
-        if (r != Z_RET)
-            return r;
+        r = f25d8(dst, tile, op, b_flag, p1, p2,
+                  sprite_w, sprite_h, misc_flag);
         n--;
-    } while (n);
-
-    return Z_RET;
+    } while (n && r == Z_RET);
+    return r;
 }
 
 static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
