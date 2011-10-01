@@ -170,27 +170,30 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
     return Z_END;
 }
 
-static int f2595(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
-                 int b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
-                 int misc_flag)
+static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
+                        int b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
+                        int misc_flag)
 {
-    int bitlen, p = 1, idx;
+    // count number of consecutive 1-bit
+    int nb_ones;
+    unsigned ones = 1;
+    for (nb_ones = 0; get_next_bit(gb); nb_ones++)
+        ones = ones<<1 | 1;
 
-    for (bitlen = 0; get_next_bit(gb); bitlen++)
-        p = p<<1 | 1;
+    // read nb_ones bits (nb_ones = number of 1-bit previously counted)
+    u16 data;
+    for (data = 0x0000; nb_ones >= 0; nb_ones--)
+        data = data<<1 | get_next_bit(gb);
 
-    for (idx = 0; bitlen >= 0; bitlen--)
-        idx = idx<<1 | get_next_bit(gb);
-    p += idx;
-
+    int n = ones + data;
     do {
         dst[*p1] |= do_op(0, *op);
         int r = f25d8(dst, tile, op, b_flag, p1, p2,
                       sprite_w, sprite_h, misc_flag);
         if (r != Z_RET)
             return r;
-        p--;
-    } while (p);
+        n--;
+    } while (n);
 
     return Z_RET;
 }
@@ -223,8 +226,8 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
 
         // 257A
         if (!get_next_bit(&gb)) {
-            r = f2595(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                      sprite_w, sprite_h, misc_flag);
+            r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
+                             sprite_w, sprite_h, misc_flag);
             if (r == Z_START) continue;
             if (r == Z_END)   break;
         }
@@ -236,8 +239,8 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
                 r = f25d8(dst, &tile, &op, buffer_flag, &p1, &p2,
                           sprite_w, sprite_h, misc_flag);
             } else {
-                r = f2595(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                          sprite_w, sprite_h, misc_flag);
+                r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
+                                 sprite_w, sprite_h, misc_flag);
             }
         } while (r == Z_RET);
     } while (r == Z_START);
