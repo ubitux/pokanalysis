@@ -246,7 +246,7 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
 }
 
 /*
- * Get a pixbuf in BPP byte per pixel of 7x7 tiles.
+ * Get a pixbuf in BPP bytes per pixel of 7x7 tiles.
  *
  * Tiles are stored in column: first 7 tiles are the first column, second 7
  * tiles are the second column, …
