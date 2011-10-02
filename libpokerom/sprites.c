@@ -284,8 +284,8 @@ static void runlength_dec_sprite(u8 *dst, const u8 *src, int flip)
     }
 }
 
-
-/*          src2       src1       dest
+/*
+ *          src2       src1       dest
  *  n=0   AAAAAAAAAA BBBBBBBBBB ..........
  *  n=1   AAAAAAAAAA BBBBBBBBB# .........B
  *  n=2   AAAAAAAAA# BBBBBBBBBB ........AB
