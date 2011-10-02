@@ -221,7 +221,6 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
         int p1 = (buffer_flag & 1) * 7*7*8;
         int p2 = p1;
 
-        // 257A
         if (!get_next_bit(&gb)) {
             r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
                              sprite_w, sprite_h, packing, flip);
