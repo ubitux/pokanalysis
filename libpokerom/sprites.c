@@ -91,13 +91,9 @@ static const u8 col_flip_reorder[] = {
     3,11, 7,15,
 };
 
-static void uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
-                            int sprite_w, int sprite_h)
+static void xor_buf(u8 *dst, int flip, int i, int j,
+                    int sprite_w, int sprite_h)
 {
-    reset_p1_p2(b_flag, p1, p2);
-    load_data(dst + *p1, flip, sprite_w, sprite_h);
-
-    int i = *p1, j = *p2;
     for (int x = 0; x != sprite_w; x += 8) {
         for (int y = 0; y != sprite_h; y++) {
             if (flip)
@@ -148,7 +144,9 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
         reset_p1_p2(b_flag, p1, p2);
         load_data(dst + *p2, 0, sprite_w, sprite_h);
     case 1:
-        uncompress_data(dst, flip, b_flag, p1, p2, sprite_w, sprite_h);
+        reset_p1_p2(b_flag, p1, p2);
+        load_data(dst + *p1, flip, sprite_w, sprite_h);
+        xor_buf(dst, flip, *p1, *p2, sprite_w, sprite_h);
         break;
     case 0:
         load_data(dst        , flip, sprite_w, sprite_h);
