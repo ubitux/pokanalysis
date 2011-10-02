@@ -82,7 +82,7 @@ static void load_data(u8 *dst, int flip, int sprite_h, int sprite_w)
     }
 }
 
-enum {Z_RET, Z_END, Z_START};
+enum {Z_NOT_YET_READY, Z_END, Z_RESET};
 
 static const u8 col_flip_reorder[] = {
     0, 8, 4,12,
@@ -115,35 +115,35 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
                  int *p1, int *p2, int sprite_w, int sprite_h,
                  int misc_flag, int flip)
 {
+    /* start processing only when having a full column… */
     if (tile->y+1 != sprite_h) {
         tile->y++;
         (*p1)++;
-        return Z_RET;
+        return Z_NOT_YET_READY;
     }
-
-    // 25F6
     tile->y = 0;
-    if (*op) {
+
+    /* …and the op is OP_UNCHANGED… */
+    if (*op != OP_UNCHANGED) {
         (*op)--;
         *p1 = *p2;
-        return Z_RET;
+        return Z_NOT_YET_READY;
     }
 
-    // 2610
+    /* …and having all the lines */
     *op = OP_ROTATE_2;
     tile->x += 8;
     if (tile->x != sprite_w) {
         *p1 = *p2 = *p1 + 1;
-        return Z_RET;
+        return Z_NOT_YET_READY;
     }
 
-    /* Break context here: calling function must end after processing */
-
+    /* get everything but need to reset (XXX: why?) */
     tile->x = 0;
     if (!(b_flag & 2))
-        return Z_START;
+        return Z_RESET;
 
-    // 2646 (-> 26BF)
+    /* process data */
     if (misc_flag == 2) {
         reset_p1_p2(b_flag, p1, p2);
         load_data(dst + *p2, 0, sprite_w, sprite_h);
@@ -151,12 +151,10 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
                                sprite_w, sprite_h);
     }
 
-    // 26C7
     if (misc_flag)
         return uncompress_data(dst, flip, b_flag, p1, p2,
                                sprite_w, sprite_h);
 
-    // 26CB
     load_data(dst        , flip, sprite_w, sprite_h);
     load_data(dst + 7*7*8, flip, sprite_w, sprite_h);
     return Z_END;
@@ -182,7 +180,7 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
         r = f25d8(dst, tile, op, b_flag, p1, p2,
                   sprite_w, sprite_h, misc_flag, flip);
         n--;
-    } while (n && r == Z_RET);
+    } while (n && r == Z_NOT_YET_READY);
     return r;
 }
 
@@ -213,7 +211,7 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
 
     /* Decompression */
     do {
-        if (r == Z_START && !(buffer_flag & 2))
+        if (r == Z_RESET && !(buffer_flag & 2))
             buffer_flag = 2 | (buffer_flag^1);
 
         if (buffer_flag & 2)
@@ -226,7 +224,7 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
         if (!get_next_bit(&gb)) {
             r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
                              sprite_w, sprite_h, misc_flag, flip);
-            if (r == Z_START) continue;
+            if (r == Z_RESET) continue;
             if (r == Z_END)   break;
         }
 
@@ -240,8 +238,8 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
                 r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
                                  sprite_w, sprite_h, misc_flag, flip);
             }
-        } while (r == Z_RET);
-    } while (r == Z_START);
+        } while (r == Z_NOT_YET_READY);
+    } while (r == Z_RESET);
     return dim;
 }
 
