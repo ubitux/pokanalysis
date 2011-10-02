@@ -49,16 +49,6 @@ enum {
     OP_ROTATE_2    = 3,
 };
 
-static u8 do_op(u8 a, int x) // 2649
-{
-    switch (x) {
-    case OP_SHIFTLEFT_2: return a << 2;
-    case OP_BSWAP:       return swap_u8(a);
-    case OP_ROTATE_2:    return (a&3)<<6 | a>>2;
-    default: return a;
-    }
-}
-
 static void reset_p1_p2(int b, int *p1, int *p2)
 {
     if (b & 1) *p1 =     0, *p2 = 7*7*8;
@@ -192,6 +182,16 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
         n--;
     } while (n && r == Z_RET);
     return r;
+}
+
+static u8 do_op(u8 a, int x)
+{
+    switch (x) {
+    case OP_SHIFTLEFT_2: return a << 2;
+    case OP_BSWAP:       return swap_u8(a);
+    case OP_ROTATE_2:    return (a&3)<<6 | a>>2;
+    default:             return a;
+    }
 }
 
 static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
