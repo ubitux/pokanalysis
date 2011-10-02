@@ -142,9 +142,9 @@ static int unpack(struct decode_ctx *c)
         c->p1 = c->p2 = c->p1 + 1;
         return Z_NOT_YET_READY;
     }
-
-    /* get everything but need to reset (XXX: why?) */
     c->tile_x = 0;
+
+    /* b_flag bit 2 will not be set until packing is defined */
     if (!(c->b_flag & 2))
         return Z_RESET;
 
