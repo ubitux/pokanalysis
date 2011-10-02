@@ -78,7 +78,7 @@ void load_tile     (u8 *dst, const u8 *src, int color_key);
 void load_flip_tile(u8 *dst, const u8 *src, int color_key);
 void merge_tiles   (u8 *dst, const u8 *src, int color_key);
 
-void load_sprite(u8 *pixbuf, const u8 *src);
+void load_sprite(u8 *pixbuf, const u8 *src, int flip);
 void load_string(char *dest, u8 *src, size_t max_len, int fixed_str_len);
 void pkmn_put_nbr(u8 *dest, u8 *src, u8 input_flag, u8 precision);
 

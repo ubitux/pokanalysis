@@ -84,7 +84,12 @@ static void load_data(u8 *dst, int flip, int sprite_h, int sprite_w)
 
 enum {Z_RET, Z_END, Z_START};
 
-static const u8 col_interlaced_paths[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
+static const u8 col_flip_reorder[] = {
+    0, 8, 4,12,
+    2,10, 6,14,
+    1, 9, 5,13,
+    3,11, 7,15,
+};
 
 static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
                            int sprite_w, int sprite_h)
@@ -95,11 +100,9 @@ static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
     int i = *p1, j = *p2;
     for (int x = 0; x != sprite_w; x += 8) {
         for (int y = 0; y != sprite_h; y++) {
-            if (flip) {
-                u8 v = dst[j];
-                dst[j] = col_interlaced_paths[high_nibble(v)+1]<<4 |
-                         col_interlaced_paths[low_nibble(v)];
-            }
+            if (flip)
+                dst[j] = col_flip_reorder[high_nibble(dst[j])]<<4 |
+                         col_flip_reorder[low_nibble (dst[j])];
             dst[j++] ^= dst[i++];
         }
     }
@@ -109,7 +112,8 @@ static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
 struct tile { int x, y; };
 
 static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
-                 int *p1, int *p2, int sprite_w, int sprite_h, int misc_flag)
+                 int *p1, int *p2, int sprite_w, int sprite_h,
+                 int misc_flag, int flip)
 {
     if (tile->y+1 != sprite_h) {
         tile->y++;
@@ -139,8 +143,6 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
     if (!(b_flag & 2))
         return Z_START;
 
-    int flip = 0; // XXX: 0xd0aa; does not seem to work with ≠ 0
-
     // 2646 (-> 26BF)
     if (misc_flag == 2) {
         reset_p1_p2(b_flag, p1, p2);
@@ -162,7 +164,7 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
 
 static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
                         int b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
-                        int misc_flag)
+                        int misc_flag, int flip)
 {
     // count number of consecutive 1-bit
     int nb_ones;
@@ -178,7 +180,7 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
     int r, n = ones + data;
     do {
         r = f25d8(dst, tile, op, b_flag, p1, p2,
-                  sprite_w, sprite_h, misc_flag);
+                  sprite_w, sprite_h, misc_flag, flip);
         n--;
     } while (n && r == Z_RET);
     return r;
@@ -194,7 +196,7 @@ static u8 do_op(u8 a, int x)
     }
 }
 
-static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
+static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
 {
     u8 dim;
     int r = -1, misc_flag = 0, op = OP_ROTATE_2;
@@ -223,7 +225,7 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
         // 257A
         if (!get_next_bit(&gb)) {
             r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                             sprite_w, sprite_h, misc_flag);
+                             sprite_w, sprite_h, misc_flag, flip);
             if (r == Z_START) continue;
             if (r == Z_END)   break;
         }
@@ -233,20 +235,21 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src) // 251A
             if (b) {
                 dst[p1] |= do_op(b, op);
                 r = f25d8(dst, &tile, &op, buffer_flag, &p1, &p2,
-                          sprite_w, sprite_h, misc_flag);
+                          sprite_w, sprite_h, misc_flag, flip);
             } else {
                 r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                                 sprite_w, sprite_h, misc_flag);
+                                 sprite_w, sprite_h, misc_flag, flip);
             }
         } while (r == Z_RET);
     } while (r == Z_START);
     return dim;
 }
 
-static void runlength_dec_sprite(u8 *dst, const u8 *src)
+static void runlength_dec_sprite(u8 *dst, const u8 *src, int flip)
 {
-    int i, j, pixbuf_offset = 0;
+    int i, j, pixbuf_offset;
 
+    pixbuf_offset = flip ? 6 * 8*BPP : 0;
     for (j = 0; j < 7; j++) {
         for (i = 0; i < 7; i++) {
             u8 tile_pixbuf[8*8 * BPP];
@@ -260,7 +263,7 @@ static void runlength_dec_sprite(u8 *dst, const u8 *src)
                 pixbuf_offset += 7 * 8*BPP;
             }
         }
-        pixbuf_offset = pixbuf_offset - 7*7*8*BPP*8 + BPP*8;
+        pixbuf_offset = pixbuf_offset - 7*7*8*BPP*8 + BPP*8 * (flip ? -1 : 1);
     }
 }
 
@@ -275,7 +278,7 @@ static void runlength_dec_sprite(u8 *dst, const u8 *src)
  *  ...   AAAAAAAAAA ABABABABAB ABABABABAB
  *                   =====================
  */
-static void interlace_merge(u8 *buffer)
+static void interlace_merge(u8 *buffer, int flip)
 {
     u8 *dest = buffer + 0x188*3 - 1;
     u8 *src1 = buffer + 0x188*2 - 1;
@@ -284,6 +287,12 @@ static void interlace_merge(u8 *buffer)
     for (int n = 0; n < 0x188; n++) {
         *dest-- = *src1--;
         *dest-- = *src2--;
+    }
+
+    if (flip) {
+        u8 *p = buffer + 0x188;
+        for (int i = 0; i < 0x188*2; i++)
+            p[i] = swap_u8(p[i]);
     }
 }
 
@@ -299,10 +308,10 @@ static void place_pic(u8 *dst, int w, int h, int start_skip)
 }
 
 /* 1 sprite = 7x7 tiles (max) */
-void load_sprite(u8 *pixbuf, const u8 *src)
+void load_sprite(u8 *pixbuf, const u8 *src, int flip)
 {
     u8 b[3 * 0x188];
-    u8 sprite_dim = uncompress_sprite(b+0x188, src);
+    u8 sprite_dim = uncompress_sprite(b+0x188, src, flip);
 
     int width      =     low_nibble(sprite_dim);
     int height     = 8 * high_nibble(sprite_dim);
@@ -310,6 +319,6 @@ void load_sprite(u8 *pixbuf, const u8 *src)
 
     place_pic(b,       width, height, start_skip);
     place_pic(b+0x188, width, height, start_skip);
-    interlace_merge(b);
-    runlength_dec_sprite(pixbuf, b + 0x188);
+    interlace_merge(b, flip);
+    runlength_dec_sprite(pixbuf, b + 0x188, flip);
 }
