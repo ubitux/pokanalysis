@@ -245,24 +245,36 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
     return dim;
 }
 
+/*
+ * Get a pixbuf in BPP byte per pixel of 7x7 tiles.
+ *
+ * Tiles are stored in column: first 7 tiles are the first column, second 7
+ * tiles are the second column, …
+ * If flip flag is set, the columns are inversed (first 7 tiles are the last
+ * column).
+ * */
 static void runlength_dec_sprite(u8 *dst, const u8 *src, int flip)
 {
     int i, j, pixbuf_offset;
 
-    pixbuf_offset = flip ? 6 * 8*BPP : 0;
+    pixbuf_offset = flip ? 6 * 8*BPP : 0; // start on first or last column
     for (j = 0; j < 7; j++) {
         for (i = 0; i < 7; i++) {
             u8 tile_pixbuf[8*8 * BPP];
             int tile_offset = 0;
 
+            // load next tile
             load_tile(tile_pixbuf, src, 0);
             src += 0x10;
+
+            // copy tile lines
             for (int y = 0; y < 8; y++) {
                 memcpy(dst+pixbuf_offset, tile_pixbuf+tile_offset, 8*BPP);
                 tile_offset   +=     8*BPP;
-                pixbuf_offset += 7 * 8*BPP;
+                pixbuf_offset += 7 * 8*BPP; // skip sprite width
             }
         }
+        // rollback to the top of the column and select previous/next column
         pixbuf_offset = pixbuf_offset - 7*7*8*BPP*8 + BPP*8 * (flip ? -1 : 1);
     }
 }
