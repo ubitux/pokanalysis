@@ -45,14 +45,17 @@ static u8 get_next_bit(struct getbits *gb)
 static const u8 code_map[] = {
      0,  1,  3,  2,  7,  6,  4,  5, 15, 14, 12, 13,  8,  9, 11, 10,
     15, 14, 12, 13,  8,  9, 11, 10,  0,  1,  3,  2,  7,  6,  4,  5,
+};
+
+static const u8 code_map_flip[] = {
      0,  8, 12,  4, 14,  6,  2, 10, 15,  7,  3, 11,  1,  9, 13,  5,
     15,  7,  3, 11,  1,  9, 13,  5,  0,  8, 12,  4, 14,  6,  2, 10,
 };
 
 static u8 get_code(int i, u8 prev, int flip)
 {
-    if (flip) return code_map[2*16 + (prev>>3 & 1) * 16 + i];
-    else      return code_map[       (prev    & 1) * 16 + i];
+    if (flip) return code_map_flip[(prev>>3 & 1) * 16 + i];
+    else      return code_map     [(prev    & 1) * 16 + i];
 }
 
 static void load_data(u8 *dst, int flip, int sprite_h, int sprite_w)
