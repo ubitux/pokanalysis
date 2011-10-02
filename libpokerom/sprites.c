@@ -187,7 +187,6 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
 
     int r, n = ones + data;
     do {
-        dst[*p1] |= do_op(0, *op);
         r = f25d8(dst, tile, op, b_flag, p1, p2,
                   sprite_w, sprite_h, misc_flag);
         n--;
