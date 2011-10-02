@@ -106,9 +106,9 @@ static void xor_buf(u8 *dst, int flip, int i, int j,
 
 struct tile { int x, y; };
 
-static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
-                 int *p1, int *p2, int sprite_w, int sprite_h,
-                 int packing, int flip)
+static int unpack(u8 *dst, struct tile *tile, int *op, int b_flag,
+                  int *p1, int *p2, int sprite_w, int sprite_h,
+                  int packing, int flip)
 {
     /* start processing only when having a full column… */
     if (tile->y+1 != sprite_h) {
@@ -173,8 +173,8 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
 
     int r, n = ones + data;
     do {
-        r = f25d8(dst, tile, op, b_flag, p1, p2,
-                  sprite_w, sprite_h, packing, flip);
+        r = unpack(dst, tile, op, b_flag, p1, p2, sprite_w, sprite_h,
+                   packing, flip);
         n--;
     } while (n && r == Z_NOT_YET_READY);
     return r;
@@ -233,8 +233,8 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
             u8 b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
                 dst[p1] |= do_op(b, op);
-                r = f25d8(dst, &tile, &op, buffer_flag, &p1, &p2,
-                          sprite_w, sprite_h, packing, flip);
+                r = unpack(dst, &tile, &op, buffer_flag, &p1, &p2,
+                           sprite_w, sprite_h, packing, flip);
             } else {
                 r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
                                  sprite_w, sprite_h, packing, flip);
