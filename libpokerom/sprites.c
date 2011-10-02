@@ -147,8 +147,6 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
     case 2:
         reset_p1_p2(b_flag, p1, p2);
         load_data(dst + *p2, 0, sprite_w, sprite_h);
-        uncompress_data(dst, flip, b_flag, p1, p2, sprite_w, sprite_h);
-        break;
     case 1:
         uncompress_data(dst, flip, b_flag, p1, p2, sprite_w, sprite_h);
         break;
