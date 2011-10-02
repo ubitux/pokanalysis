@@ -91,8 +91,8 @@ static const u8 col_flip_reorder[] = {
     3,11, 7,15,
 };
 
-static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
-                           int sprite_w, int sprite_h)
+static void uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
+                            int sprite_w, int sprite_h)
 {
     reset_p1_p2(b_flag, p1, p2);
     load_data(dst + *p1, flip, sprite_w, sprite_h);
@@ -106,14 +106,13 @@ static int uncompress_data(u8 *dst, int flip, int b_flag, int *p1, int *p2,
             dst[j++] ^= dst[i++];
         }
     }
-    return Z_END;
 }
 
 struct tile { int x, y; };
 
 static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
                  int *p1, int *p2, int sprite_w, int sprite_h,
-                 int misc_flag, int flip)
+                 int packing, int flip)
 {
     /* start processing only when having a full column… */
     if (tile->y+1 != sprite_h) {
@@ -144,25 +143,26 @@ static int f25d8(u8 *dst, struct tile *tile, int *op, int b_flag,
         return Z_RESET;
 
     /* process data */
-    if (misc_flag == 2) {
+    switch (packing) {
+    case 2:
         reset_p1_p2(b_flag, p1, p2);
         load_data(dst + *p2, 0, sprite_w, sprite_h);
-        return uncompress_data(dst, flip, b_flag, p1, p2,
-                               sprite_w, sprite_h);
+        uncompress_data(dst, flip, b_flag, p1, p2, sprite_w, sprite_h);
+        break;
+    case 1:
+        uncompress_data(dst, flip, b_flag, p1, p2, sprite_w, sprite_h);
+        break;
+    case 0:
+        load_data(dst        , flip, sprite_w, sprite_h);
+        load_data(dst + 7*7*8, flip, sprite_w, sprite_h);
+        break;
     }
-
-    if (misc_flag)
-        return uncompress_data(dst, flip, b_flag, p1, p2,
-                               sprite_w, sprite_h);
-
-    load_data(dst        , flip, sprite_w, sprite_h);
-    load_data(dst + 7*7*8, flip, sprite_w, sprite_h);
     return Z_END;
 }
 
 static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
                         int b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
-                        int misc_flag, int flip)
+                        int packing, int flip)
 {
     // count number of consecutive 1-bit
     int nb_ones;
@@ -178,7 +178,7 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
     int r, n = ones + data;
     do {
         r = f25d8(dst, tile, op, b_flag, p1, p2,
-                  sprite_w, sprite_h, misc_flag, flip);
+                  sprite_w, sprite_h, packing, flip);
         n--;
     } while (n && r == Z_NOT_YET_READY);
     return r;
@@ -197,7 +197,7 @@ static u8 do_op(u8 a, int x)
 static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
 {
     u8 dim;
-    int r = -1, misc_flag = 0, op = OP_ROTATE_2;
+    int r = -1, packing = 0, op = OP_ROTATE_2;
     struct getbits gb = {.stream=src, .bit=1};
     struct tile tile  = {.x = 0, .y = 0};
 
@@ -214,8 +214,8 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
         if (r == Z_RESET && !(buffer_flag & 2))
             buffer_flag = 2 | (buffer_flag^1);
 
-        if (buffer_flag & 2)
-            misc_flag = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
+        if (buffer_flag & 2) /* packing = 0, 1 or 2 */
+            packing = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
 
         int p1 = (buffer_flag & 1) * 7*7*8;
         int p2 = p1;
@@ -223,7 +223,7 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
         // 257A
         if (!get_next_bit(&gb)) {
             r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                             sprite_w, sprite_h, misc_flag, flip);
+                             sprite_w, sprite_h, packing, flip);
             if (r == Z_RESET) continue;
             if (r == Z_END)   break;
         }
@@ -233,10 +233,10 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
             if (b) {
                 dst[p1] |= do_op(b, op);
                 r = f25d8(dst, &tile, &op, buffer_flag, &p1, &p2,
-                          sprite_w, sprite_h, misc_flag, flip);
+                          sprite_w, sprite_h, packing, flip);
             } else {
                 r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                                 sprite_w, sprite_h, misc_flag, flip);
+                                 sprite_w, sprite_h, packing, flip);
             }
         } while (r == Z_NOT_YET_READY);
     } while (r == Z_RESET);
