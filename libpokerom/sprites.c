@@ -212,7 +212,12 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
         if (r == Z_RESET && !(buffer_flag & 2))
             buffer_flag = 2 | (buffer_flag^1);
 
-        if (buffer_flag & 2) /* packing = 0, 1 or 2 */
+        /* packing:
+         *    0 X → 0
+         *    1 0 → 1
+         *    1 1 → 2
+         */
+        if (buffer_flag & 2)
             packing = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
 
         int p1 = (buffer_flag & 1) * 7*7*8;
