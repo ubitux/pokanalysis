@@ -104,61 +104,69 @@ static void reset_p1_p2(int b, int *p1, int *p2)
 
 enum {Z_NOT_YET_READY, Z_END, Z_RESET};
 
-struct tile { int x, y; };
+struct decode_ctx {
+    u8 *dst;
+    int tile_x, tile_y;
+    int op;
+    int b_flag;
+    int p1, p2;
+    int sprite_w, sprite_h;
+    int packing;
+    int flip;
+};
 
-static int unpack(u8 *dst, struct tile *tile, int *op, int b_flag,
-                  int *p1, int *p2, int sprite_w, int sprite_h,
-                  int packing, int flip)
+static int unpack(struct decode_ctx *c)
 {
+    u8 *b = c->dst;
+    int sw = c->sprite_w, sh = c->sprite_h, flip = c->flip;
+
     /* start processing only when having a full column… */
-    if (tile->y+1 != sprite_h) {
-        tile->y++;
-        (*p1)++;
+    if (c->tile_y+1 != sh) {
+        c->tile_y++;
+        c->p1++;
         return Z_NOT_YET_READY;
     }
-    tile->y = 0;
+    c->tile_y = 0;
 
     /* …and the op is OP_UNCHANGED… */
-    if (*op != OP_UNCHANGED) {
-        (*op)--;
-        *p1 = *p2;
+    if (c->op != OP_UNCHANGED) {
+        c->op--;
+        c->p1 = c->p2;
         return Z_NOT_YET_READY;
     }
 
     /* …and having all the lines */
-    *op = OP_ROTATE_2;
-    tile->x += 8;
-    if (tile->x != sprite_w) {
-        *p1 = *p2 = *p1 + 1;
+    c->op = OP_ROTATE_2;
+    c->tile_x += 8;
+    if (c->tile_x != sw) {
+        c->p1 = c->p2 = c->p1 + 1;
         return Z_NOT_YET_READY;
     }
 
     /* get everything but need to reset (XXX: why?) */
-    tile->x = 0;
-    if (!(b_flag & 2))
+    c->tile_x = 0;
+    if (!(c->b_flag & 2))
         return Z_RESET;
 
     /* process data */
-    switch (packing) {
+    switch (c->packing) {
     case 2:
-        reset_p1_p2(b_flag, p1, p2);
-        load_data(dst + *p2, 0, sprite_w, sprite_h);
+        reset_p1_p2(c->b_flag, &c->p1, &c->p2);
+        load_data(b + c->p2, 0, sw, sh);
     case 1:
-        reset_p1_p2(b_flag, p1, p2);
-        load_data(dst + *p1, flip, sprite_w, sprite_h);
-        xor_buf(dst, flip, *p1, *p2, sprite_w, sprite_h);
+        reset_p1_p2(c->b_flag, &c->p1, &c->p2);
+        load_data(b + c->p1, flip, sw, sh);
+        xor_buf(b, flip, c->p1, c->p2, sw, sh);
         break;
     case 0:
-        load_data(dst        , flip, sprite_w, sprite_h);
-        load_data(dst + 7*7*8, flip, sprite_w, sprite_h);
+        load_data(c->dst,         flip, sw, sh);
+        load_data(c->dst + 7*7*8, flip, sw, sh);
         break;
     }
     return Z_END;
 }
 
-static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
-                        int b_flag, int *p1, int *p2, int sprite_w, int sprite_h,
-                        int packing, int flip)
+static int unpack_n_pkt(struct getbits *gb, struct decode_ctx *c)
 {
     // count number of consecutive 1-bit
     int nb_ones;
@@ -173,8 +181,7 @@ static int read_rle_pkt(u8 *dst, struct tile *tile, struct getbits *gb, int *op,
 
     int r, n = ones + data;
     do {
-        r = unpack(dst, tile, op, b_flag, p1, p2, sprite_w, sprite_h,
-                   packing, flip);
+        r = unpack(c);
         n--;
     } while (n && r == Z_NOT_YET_READY);
     return r;
@@ -193,37 +200,39 @@ static u8 do_op(u8 a, int x)
 static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
 {
     u8 dim;
-    int r = -1, packing = 0, op = OP_ROTATE_2;
+    int r = -1;
     struct getbits gb = {.stream=src, .bit=1};
-    struct tile tile  = {.x = 0, .y = 0};
+    struct decode_ctx c = {
+        .dst  = dst,
+        .op   = OP_ROTATE_2,
+        .flip = flip
+    };
 
     memset(dst, 0, 0x310);
 
     /* Header */
     dim = *gb.stream++;
-    int sprite_w    = high_nibble(dim) * 8;
-    int sprite_h    = low_nibble(dim)  * 8;
-    int buffer_flag = get_next_bit(&gb);
+    c.sprite_w  = high_nibble(dim) * 8;
+    c.sprite_h  = low_nibble(dim)  * 8;
+    c.b_flag    = get_next_bit(&gb);
 
     /* Decompression */
     do {
-        if (r == Z_RESET && !(buffer_flag & 2))
-            buffer_flag = 2 | (buffer_flag^1);
+        if (r == Z_RESET && !(c.b_flag & 2))
+            c.b_flag = 2 | (c.b_flag^1);
 
         /* packing:
          *    0 X → 0
          *    1 0 → 1
          *    1 1 → 2
          */
-        if (buffer_flag & 2)
-            packing = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
+        if (c.b_flag & 2)
+            c.packing = get_next_bit(&gb) ? get_next_bit(&gb)+1 : 0;
 
-        int p1 = (buffer_flag & 1) * 7*7*8;
-        int p2 = p1;
+        c.p1 = c.p2 = (c.b_flag & 1) * 7*7*8;
 
         if (!get_next_bit(&gb)) {
-            r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                             sprite_w, sprite_h, packing, flip);
+            r = unpack_n_pkt(&gb, &c);
             if (r == Z_RESET) continue;
             if (r == Z_END)   break;
         }
@@ -231,12 +240,10 @@ static u8 uncompress_sprite(u8 *dst, const u8 *src, int flip)
         do {
             u8 b = get_next_bit(&gb)<<1 | get_next_bit(&gb);
             if (b) {
-                dst[p1] |= do_op(b, op);
-                r = unpack(dst, &tile, &op, buffer_flag, &p1, &p2,
-                           sprite_w, sprite_h, packing, flip);
+                c.dst[c.p1] |= do_op(b, c.op);
+                r = unpack(&c);
             } else {
-                r = read_rle_pkt(dst, &tile, &gb, &op, buffer_flag, &p1, &p2,
-                                 sprite_w, sprite_h, packing, flip);
+                r = unpack_n_pkt(&gb, &c);
             }
         } while (r == Z_NOT_YET_READY);
     } while (r == Z_RESET);
