@@ -308,14 +308,14 @@ static void interlace_merge(u8 *buffer, int flip)
     }
 }
 
-static void place_pic(u8 *dst, int w, int h, int start_skip)
+static void place_pic(u8 *dst, int w, int h)
 {
     u8 *src = dst + 0x188;
 
     memset(dst, 0, 0x188);
-    dst += start_skip;
+    dst += 8 * (7 * ((8 - w) >> 1) + 7 - h); // align
     for (int x = 0; x < w; x++, dst += 7*8)
-        for (int y = 0; y < h; y++)
+        for (int y = 0; y < h*8; y++)
             dst[y] = *src++;
 }
 
@@ -325,12 +325,11 @@ void load_sprite(u8 *pixbuf, const u8 *src, int flip)
     u8 b[3 * 0x188];
     u8 sprite_dim = uncompress_sprite(b+0x188, src, flip);
 
-    int width      =     low_nibble(sprite_dim);
-    int height     = 8 * high_nibble(sprite_dim);
-    int start_skip = 8 * (7 * ((8 - width) >> 1) + 7 - high_nibble(sprite_dim));
+    int width  = low_nibble(sprite_dim);
+    int height = high_nibble(sprite_dim);
 
-    place_pic(b,       width, height, start_skip);
-    place_pic(b+0x188, width, height, start_skip);
+    place_pic(b,       width, height);
+    place_pic(b+0x188, width, height);
     interlace_merge(b, flip);
     runlength_dec_sprite(pixbuf, b + 0x188, flip);
 }
