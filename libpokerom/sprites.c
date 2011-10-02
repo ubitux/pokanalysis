@@ -42,19 +42,6 @@ static u8 get_next_bit(struct getbits *gb)
     return gb->byte & 1;
 }
 
-enum {
-    OP_UNCHANGED   = 0,
-    OP_SHIFTLEFT_2 = 1,
-    OP_BSWAP       = 2,
-    OP_ROTATE_2    = 3,
-};
-
-static void reset_p1_p2(int b, int *p1, int *p2)
-{
-    if (b & 1) *p1 =     0, *p2 = 7*7*8;
-    else       *p1 = 7*7*8, *p2 =     0;
-}
-
 static const u8 tileid_map[] = {
      0,  1,  3,  2,  7,  6,  4,  5, 15, 14, 12, 13,  8,  9, 11, 10,
     15, 14, 12, 13,  8,  9, 11, 10,  0,  1,  3,  2,  7,  6,  4,  5,
@@ -82,8 +69,6 @@ static void load_data(u8 *dst, int flip, int sprite_h, int sprite_w)
     }
 }
 
-enum {Z_NOT_YET_READY, Z_END, Z_RESET};
-
 static const u8 col_flip_reorder[] = {
     0, 8, 4,12,
     2,10, 6,14,
@@ -103,6 +88,21 @@ static void xor_buf(u8 *dst, int flip, int i, int j,
         }
     }
 }
+
+enum {
+    OP_UNCHANGED   = 0,
+    OP_SHIFTLEFT_2 = 1,
+    OP_BSWAP       = 2,
+    OP_ROTATE_2    = 3,
+};
+
+static void reset_p1_p2(int b, int *p1, int *p2)
+{
+    if (b & 1) *p1 =     0, *p2 = 7*7*8;
+    else       *p1 = 7*7*8, *p2 =     0;
+}
+
+enum {Z_NOT_YET_READY, Z_END, Z_RESET};
 
 struct tile { int x, y; };
 
