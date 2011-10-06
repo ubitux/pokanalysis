@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkListStore" id="liststore_asm_banks">
     <columns>
       <!-- column-name bank -->
@@ -136,6 +137,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hscrollbar_policy">never</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <property name="shadow_type">etched-in</property>
                 <child>
                   <object class="GtkTreeView" id="treeview_pokedex">
@@ -145,9 +147,6 @@
                     <property name="headers_clickable">False</property>
                     <property name="search_column">0</property>
                     <signal name="cursor-changed" handler="on_treeview_pokedex_cursor_changed" swapped="no"/>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="treeview-selection1"/>
-                    </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn_id">
                         <property name="title">#</property>
@@ -257,6 +256,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="hscrollbar_policy">never</property>
+                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTextView" id="textview_pkmn_info_small">
@@ -279,6 +279,8 @@
                               <object class="GtkScrolledWindow" id="scrolledwindow_evolutions">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="hscrollbar_policy">automatic</property>
+                                <property name="vscrollbar_policy">never</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkIconView" id="iconview_evolutions">
@@ -606,6 +608,8 @@
                                   <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_info">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
+                                    <property name="hscrollbar_policy">never</property>
+                                    <property name="vscrollbar_policy">automatic</property>
                                     <property name="shadow_type">etched-in</property>
                                     <child>
                                       <object class="GtkTextView" id="textview_pkmn_info">
@@ -633,6 +637,8 @@
                               <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_attacks">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="hscrollbar_policy">never</property>
+                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTreeView" id="treeview_pkmn_attacks">
@@ -641,9 +647,6 @@
                                     <property name="model">liststore_pkmn_attacks</property>
                                     <property name="headers_clickable">False</property>
                                     <property name="search_column">0</property>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection" id="treeview-selection2"/>
-                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_level">
                                         <property name="title">Level</property>
@@ -679,15 +682,14 @@
                               <object class="GtkScrolledWindow" id="scrolledwindow_pkmn_TM_HM">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="hscrollbar_policy">never</property>
+                                <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">etched-in</property>
                                 <child>
                                   <object class="GtkTreeView" id="treeview_pkmn_TM_HM">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="model">liststore_pkmn_HM_TM</property>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection" id="treeview-selection3"/>
-                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_TM_HM_id">
                                         <property name="title">TM/HM</property>
@@ -809,6 +811,8 @@
                   <object class="GtkScrolledWindow" id="scrolledwindow_gameinfo">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="hscrollbar_policy">never</property>
+                    <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
                       <object class="GtkTreeView" id="treeview_gameinfo">
@@ -820,9 +824,6 @@
                         <property name="search_column">0</property>
                         <signal name="cursor-changed" handler="on_treeview_gameinfo_cursor_changed" swapped="no"/>
                         <signal name="row-activated" handler="on_treeview_gameinfo_row_activated" swapped="no"/>
-                        <child internal-child="selection">
-                          <object class="GtkTreeSelection" id="treeview-selection4"/>
-                        </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeviewcolumn_gameinfo">
                             <property name="title">column</property>
@@ -869,6 +870,8 @@
                   <object class="GtkScrolledWindow" id="scrolledwindow_map">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="hscrollbar_policy">automatic</property>
+                    <property name="vscrollbar_policy">automatic</property>
                     <child>
                       <object class="GtkViewport" id="viewport_map">
                         <property name="visible">True</property>
@@ -942,9 +945,6 @@
                                     <property name="headers_clickable">False</property>
                                     <property name="search_column">0</property>
                                     <signal name="row-activated" handler="on_treeview_wild_pkmn_row_activated" swapped="no"/>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection" id="treeview-selection5"/>
-                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_grass_wild_pkmn_name">
                                         <property name="title">Pokémon</property>
@@ -1019,9 +1019,6 @@
                                     <property name="headers_clickable">False</property>
                                     <property name="search_column">0</property>
                                     <signal name="row-activated" handler="on_treeview_wild_pkmn_row_activated" swapped="no"/>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection" id="treeview-selection6"/>
-                                    </child>
                                     <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn_water_wild_pkmn_name">
                                         <property name="title">Pokémon</property>
@@ -1095,9 +1092,6 @@
                     <property name="model">liststore_specials</property>
                     <property name="headers_clickable">False</property>
                     <property name="search_column">0</property>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="treeview-selection7"/>
-                    </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn_item">
                         <property name="title">Item</property>
@@ -1200,6 +1194,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hscrollbar_policy">never</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <property name="shadow_type">etched-in</property>
                 <child>
                   <object class="GtkTreeView" id="treeview_trainers">
@@ -1207,9 +1202,6 @@
                     <property name="can_focus">True</property>
                     <property name="model">liststore_trainers</property>
                     <signal name="cursor-changed" handler="on_treeview_trainers_cursor_changed" swapped="no"/>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="treeview-selection8"/>
-                    </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn_trainer">
                         <property name="title" translatable="yes">Trainer</property>
@@ -1316,6 +1308,8 @@
               <object class="GtkScrolledWindow" id="scrolledwindow_asm">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hscrollbar_policy">never</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <property name="shadow_type">etched-in</property>
                 <child>
                   <object class="GtkTextView" id="textview_asm">
