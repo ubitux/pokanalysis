@@ -36,7 +36,7 @@ PyObject *get_special_items(u8 *stream, int map_id)
         u8 *item_data = &stream[ROM_ADDR(0x11, GET_ADDR(ROM_ADDR(0x11, 0x6a96 + idx)))];
         while (item_data[0] != 0xff) {
             u16 addr = *(u16*)&item_data[4];
-            if (item_data[3] == 0x1d && addr == 0x6689) {
+            if (item_data[3] == 0x1d && (addr == 0x6688 || addr == 0x6689)) {
                 char iname[30];
 
                 get_item_name(stream, iname, item_data[2], sizeof(iname));
