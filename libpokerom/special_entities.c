@@ -38,7 +38,7 @@ PyObject *get_special_items(u8 *stream, int map_id)
             u16 addr = *(u16*)&item_data[4];
             if (item_data[3] == 0x1d) {
                 char iname[30];
-                if (addr == 0x6688 || addr == 0x6689)
+                if (item_data[5] == 0x66)
                     get_item_name(stream, iname, item_data[2], sizeof(iname));
                 else
                     snprintf(iname, sizeof(iname), "%d coins", item_data[0]);
