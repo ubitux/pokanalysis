@@ -71,9 +71,6 @@ void apply_filter(u8 *stream, u8 *pixbuf, int map_id, int w)
             char *c = stream[item_addr + 3] == 0x1d ? "\xff\x00\x00" : "\x00\xff\x00";
             int i;
 
-            if (x == 0xff || y == 0xff)
-                return;
-
             for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*3             ], c, 3);
             for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*w*16*3        ], c, 3);
             for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*w*16*3  + 15*3], c, 3);
