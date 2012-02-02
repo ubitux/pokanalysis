@@ -35,13 +35,14 @@ PyObject *get_special_items(u8 *stream, int map_id)
             continue;
         u8 *item_data = &stream[ROM_ADDR(0x11, GET_ADDR(ROM_ADDR(0x11, 0x6a96 + idx)))];
         while (item_data[0] != 0xff) {
-            if (item_data[3] == 0x1d) {
+            u16 addr = *(u16*)&item_data[4];
+            if (item_data[3] == 0x1d && addr == 0x6689) {
                 char iname[30];
 
                 get_item_name(stream, iname, item_data[2], sizeof(iname));
-                PyList_Append(list, Py_BuildValue("iisii", item_data[0], item_data[1], iname, item_data[3], *(u16*)&item_data[4]));
+                PyList_Append(list, Py_BuildValue("iisii", item_data[0], item_data[1], iname, item_data[3], addr));
             } else {
-                PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], *(u16*)&item_data[4]));
+                PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], addr));
             }
             item_data += 6;
         }
