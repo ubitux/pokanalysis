@@ -1126,10 +1126,10 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkTreeViewColumn" id="treeviewcolumn_type">
-                        <property name="title">Type</property>
+                      <object class="GtkTreeViewColumn" id="treeviewcolumn_spbank">
+                        <property name="title">Bank</property>
                         <child>
-                          <object class="GtkCellRendererText" id="cellrenderertext_type"/>
+                          <object class="GtkCellRendererText" id="cellrenderertext_sptype"/>
                           <attributes>
                             <attribute name="text">3</attribute>
                           </attributes>
