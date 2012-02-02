@@ -394,7 +394,7 @@ static struct submap *get_submap(struct rom *rom, struct submap *maps, int id, i
     PyDict_SetItemString(dict, "entities", list);
 
     current_map->pixbuf = get_map_pic_raw(stream, current_map);
-    apply_filter(stream, current_map->pixbuf, id, map_w * 2);
+    apply_filter(stream, current_map->pixbuf, id, map_w * 2, map_h * 2);
 
     PyDict_SetItemString(dict, "map_pic", Py_BuildValue("s#", current_map->pixbuf, PIXBUF_BLOCK_SIZE * map_w * map_h));
 

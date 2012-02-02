@@ -67,7 +67,7 @@ PyObject *str_getbin(struct rom *, PyObject *);
 
 char *get_pkmn_char(u8, char *);
 void add_trainer(struct rom *rom, int map_id, int x, int y, int extra1, int extra2);
-void apply_filter(u8 *stream, u8 *pixbuf, int map_id, int w);
+void apply_filter(u8 *stream, u8 *pixbuf, int map_id, int w, int h);
 
 void get_pkmn_name(     u8 *stream, char *pname, u8 pkmn_id,    size_t max_len);
 void get_item_name(     u8 *stream, char *iname, u8 item_id,    size_t max_len);
