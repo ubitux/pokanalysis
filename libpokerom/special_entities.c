@@ -35,15 +35,15 @@ PyObject *get_special_items(u8 *stream, int map_id)
             continue;
         u8 *item_data = &stream[ROM_ADDR(0x11, GET_ADDR(ROM_ADDR(0x11, 0x6a96 + idx)))];
         while (item_data[0] != 0xff) {
-        if (item_data[3] == 0x1d) {
-            char iname[30];
+            if (item_data[3] == 0x1d) {
+                char iname[30];
 
-            get_item_name(stream, iname, item_data[2], sizeof(iname));
-            PyList_Append(list, Py_BuildValue("iisii", item_data[0], item_data[1], iname, item_data[3], *(u16*)&item_data[4]));
-        } else {
-            PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], *(u16*)&item_data[4]));
-        }
-        item_data += 6;
+                get_item_name(stream, iname, item_data[2], sizeof(iname));
+                PyList_Append(list, Py_BuildValue("iisii", item_data[0], item_data[1], iname, item_data[3], *(u16*)&item_data[4]));
+            } else {
+                PyList_Append(list, Py_BuildValue("iiiii", item_data[0], item_data[1], item_data[2], item_data[3], *(u16*)&item_data[4]));
+            }
+            item_data += 6;
         }
     }
     return list;
@@ -64,20 +64,20 @@ void apply_filter(u8 *stream, u8 *pixbuf, int map_id, int w)
         int item_ptr_addr = ROM_ADDR(0x11, 0x6a96 + idx);
         int item_addr = ROM_ADDR(0x11, GET_ADDR(item_ptr_addr));
         while (stream[item_addr] != 0xff) {
-        int y = stream[item_addr];
-        int x = stream[item_addr + 1];
-        int offset = (y*16*w*16 + x*16) * 3;
-        char *c = stream[item_addr + 3] == 0x1d ? "\xff\x00\x00" : "\x00\xff\x00";
-        int i;
+            int y = stream[item_addr];
+            int x = stream[item_addr + 1];
+            int offset = (y*16*w*16 + x*16) * 3;
+            char *c = stream[item_addr + 3] == 0x1d ? "\xff\x00\x00" : "\x00\xff\x00";
+            int i;
 
-        if (x == 0xff || y == 0xff)
-            return;
+            if (x == 0xff || y == 0xff)
+                return;
 
-        for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*3             ], c, 3);
-        for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*w*16*3        ], c, 3);
-        for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*w*16*3  + 15*3], c, 3);
-        for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + w*16*3*15 + i*3 ], c, 3);
-        item_addr += 6;
+            for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*3             ], c, 3);
+            for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*w*16*3        ], c, 3);
+            for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + i*w*16*3  + 15*3], c, 3);
+            for (i = 0; i < 16; i++) memcpy(&pixbuf[offset + w*16*3*15 + i*3 ], c, 3);
+            item_addr += 6;
         }
     }
 }
