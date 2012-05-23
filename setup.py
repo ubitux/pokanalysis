@@ -11,7 +11,7 @@ setup(
     author='Clément Bœsch',
     author_email='ubitux@gmail.com',
     url='http://pokanalysis.ubitux.fr',
-    license='GPLv3',
+    license='ISC',
     ext_modules=[Extension(
         'pokerom',
         sources=glob.glob('libpokerom/*.c'),
