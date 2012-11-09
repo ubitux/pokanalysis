@@ -1,5 +1,5 @@
 all:
-	python setup.py build_ext --inplace
+	python2 setup.py build_ext --inplace
 clean:
 	$(RM) -r build
 distclean: clean
