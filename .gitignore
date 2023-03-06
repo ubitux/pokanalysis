@@ -1,4 +1,3 @@
-build
-pokerom.so
-tags
-tests/results
+www/out
+www/ref
+extractor/target

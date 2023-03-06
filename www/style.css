@@ -1,0 +1,208 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  font-family: ui-monospace, Cascadia Mono, Segoe UI Mono, Liberation Mono, Menlo, Monaco, Consolas, monospace;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: #222;
+  padding: 30px;
+  color: white;
+
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  text-align: center;
+  background-color: #444;
+  border: 1px solid #aaa;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+section {
+  padding: 0;
+  margin: 0;
+}
+
+section#maps_tab {
+  border: 1px solid #aaa;
+  background-color: #444;
+  padding: 1px;
+
+  flex-grow: 1;
+  min-height: 0;
+  border-radius: 6px;
+}
+
+section#pokedex_tab {
+  border: 1px solid #aaa;
+  background-color: #444;
+  padding: 1px;
+
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+
+  min-height: 0;
+  height: 100%;
+  border-radius: 6px;
+}
+
+div#maps_viewport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+  height: 100%;
+}
+
+div#pokedex_grid {
+  padding: 10px;
+  flex: 1 1 auto;
+  overflow-y: scroll;
+}
+
+div#pokedex_info {
+  flex: 0 0 300px;
+  padding: 10px;
+  overflow-y: scroll;
+  font-size: 12px;
+}
+
+div#pokedex_grid,
+div#evos {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, 110px);
+}
+
+div.trainer_team {
+  display: table;
+  border-spacing: 5px;
+}
+
+div.trainer_team div {
+  display: table-cell;
+}
+
+div.pkmn {
+  background-color: #e8e8e8;
+  color: #101010;
+  text-align: center;
+  padding: 10px;
+  font-size: 10px;
+  border-radius: 6px;
+}
+
+div.pkmn:hover {
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.field_value {
+  font-weight: bold;
+}
+
+div#pokedex_info h1 {
+  border-bottom: 1px solid #ddd;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+table th {
+  background-color: #222;
+}
+
+table td {
+  background-color: #666;
+}
+
+table td,
+table th {
+  border: 1px solid #222;
+  padding: 3px;
+}
+
+form {
+  display: table;
+}
+
+form p {
+  display: table-row;
+}
+
+form p label {
+  display: table-cell;
+  padding-right: 1em;
+}
+
+form p meter {
+  display: table-cell;
+}
+
+form p span {
+  display: table-cell;
+}
+
+img#maps_img {
+  margin: 0;
+}
+
+div.tooltip {
+  display: none;
+  padding: 4px;
+  font-size: 14px;
+  color: black;
+  position: absolute;
+  border-radius: 6px;
+  box-shadow: 3px 3px 9px;
+  z-index: 1;
+}
+
+div.tooltip_warp {
+  background-color: #e79faf;
+}
+
+div.tooltip_sign {
+  background-color: #b2daff;
+}
+
+div.tooltip_npc {
+  background-color: #e68aea;
+}
+
+div.tooltip_trainer {
+  background-color: #f970ff;
+  /* XXX ugly */
+  text-align: center;
+}
+
+div.tooltip_pkmn {
+  background-color: #dc83fe;
+}
+
+div.tooltip_item {
+  background-color: #81e789;
+}
+
+div.tooltip_hidden {
+  background-color: #ffa855;
+}

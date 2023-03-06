@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>Pokanalysis</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script src="index.js"></script>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body onload="populate()">
+
+  <header>
+    <nav>
+      <button id="btn_maps" onclick="show_maps()">Maps</button>
+      <button id="btn_pdex" onclick="show_pokedex()">Pokedex</button>
+    </nav>
+  </header>
+
+  <section id="maps_tab">
+    <div id="maps_viewport">
+      <img id="maps_img" usemap="#maps_map" mousedown="mapMoveStart()" mouseup="mapMoveStop()"
+        mouseleave="mapMoveLeave()" mousemove="mapMove()" draggable="false">
+    </div>
+    <map id="maps_map"></map>
+    <div id="maps_tooltips"></div>
+  </section>
+
+  <section id="pokedex_tab">
+    <div id="pokedex_grid">
+    </div>
+
+    <div id="pokedex_info">
+      <h1 id="field_name">Name</h1>
+
+      <img id="back_sprite">
+      <img id="front_sprite">
+
+      <p id="field_types" class="field_value">Type(s)</p>
+
+      <form>
+        <p><label>Specie:</label><span class="field_value" id="field_species_name"></span></p>
+        <p><label>Height:</label><span class="field_value" id="field_height"></span></p>
+        <p><label>Weight:</label><span class="field_value" id="field_weight"></span></p>
+        <p><label>Growth rate:</label><span class="field_value" id="field_growth_rate"></span></p>
+      </form>
+
+      <p id="field_desc">Description</p>
+
+      <form>
+        <p>
+          <label for="hp">Health Points</label>
+          <meter id="hp" min="0" max="255" low="50" high="80" optimum="255"></meter>
+        </p>
+        <p>
+          <label for="atk">Attack</label>
+          <meter id="atk" min="0" max="255" low="50" high="80" optimum="255"></meter>
+        </p>
+        <p>
+          <label for="def">Defense</label>
+          <meter id="def" min="0" max="255" low="50" high="80" optimum="255"></meter>
+        </p>
+        <p>
+          <label for="spd">Speed</label>
+          <meter id="spd" min="0" max="255" low="50" high="80" optimum="255"></meter>
+        </p>
+        <p>
+          <label for="spe">Special</label>
+          <meter id="spe" min="0" max="255" low="50" high="80" optimum="255"></meter>
+        </p>
+        <p>
+          <label for="cap">Capture Rate</label>
+          <meter id="cap" min="0" max="255" low="75" high="190" optimum="255"></meter>
+        </p>
+        <p>
+          <label for="exp">Base Exp. yield</label>
+          <meter id="exp" min="0" max="255" low="75" high="190" optimum="255"></meter>
+        </p>
+      </form>
+
+      <div id="evos_container">
+        <h2>Evolutions</h2>
+        <div id="evos"></div>
+      </div>
+
+      <hr>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Move</th>
+          </tr>
+        </thead>
+        <tbody id="attacks">
+        </tbody>
+      </table>
+
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">TM/HM</th>
+          </tr>
+        </thead>
+        <tbody id="tmhm">
+        </tbody>
+      </table>
+
+    </div>
+  </section>
+</body>
+
+</html>
